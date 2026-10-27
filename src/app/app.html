@@ -1,0 +1,81 @@
+<header class="topo">
+  <a class="marca" routerLink="/">dev<b>Tools</b></a>
+  <span class="versao" [title]="'Build ' + versaoData">
+    v{{ versao.numero }}{{ versao.commit ? ' · ' + versao.commit : '' }}
+  </span>
+  <nav>
+    <a routerLink="/cards" routerLinkActive="ativo">Cards <small>{{ store.cards().length }}</small></a>
+    <a routerLink="/notas" routerLinkActive="ativo">Notas <small>{{ store.notas().length }}</small></a>
+    <a routerLink="/kanban" routerLinkActive="ativo">
+      Kanban <small>{{ store.tarefas().length }}</small>
+      @if (atrasadas()) {
+        <span class="alerta-nav" title="Tarefas com prazo vencido">{{ atrasadas() }}</span>
+      }
+    </a>
+  </nav>
+  <div class="acoes">
+    <button class="btn ghost" (click)="ui.painel.set('dados')" title="Backup, importar e exportar">
+      Dados
+      @if (backup.lembrete() || backup.estado() === 'reativar') {
+        <span class="ponto"></span>
+      }
+    </button>
+    <button class="btn ghost icone" (click)="ui.painel.set('cofre')" [title]="cofre.ativo() ? (cofre.bloqueado() ? 'Cofre bloqueado' : 'Cofre aberto') : 'Senha mestra'">
+      {{ cofre.ativo() && !cofre.bloqueado() ? '🔓' : '🔒' }}
+    </button>
+    <button class="btn ghost icone" (click)="ui.painel.set('atalhos')" title="Atalhos (?)">⌨</button>
+    <button class="btn ghost icone" (click)="alternarTema()" [title]="'Tema ' + (tema() === 'dark' ? 'claro' : 'escuro')">
+      {{ tema() === 'dark' ? '☀' : '☾' }}
+    </button>
+  </div>
+</header>
+
+@if (store.restaurado()) {
+  <div class="banner">
+    {{ store.restaurado() }}
+    <button class="btn mini ghost" (click)="store.restaurado.set('')">OK</button>
+  </div>
+}
+@if (backup.estado() === 'reativar') {
+  <div class="banner">
+    Backup automático pausado: o navegador pede confirmação de acesso à pasta "{{ backup.nomePasta() }}".
+    <button class="btn mini primario" (click)="backup.reativar()">Reativar</button>
+  </div>
+} @else if (backup.lembrete()) {
+  <div class="banner">
+    {{ backup.dias() === null ? 'Nenhum backup feito ainda.' : 'Último backup há ' + backup.dias() + ' dias.' }}
+    <button class="btn mini primario" (click)="ui.painel.set('dados')">Fazer backup</button>
+  </div>
+}
+
+<main>
+  <router-outlet />
+</main>
+
+@switch (ui.painel()) {
+  @case ('dados') {
+    <app-painel-dados (fechar)="ui.painel.set(null)" />
+  }
+  @case ('cofre') {
+    <app-painel-cofre (fechar)="ui.painel.set(null)" />
+  }
+  @case ('atalhos') {
+    <div class="overlay" (click)="ui.painel.set(null)">
+      <div class="dialogo atalhos" (click)="$event.stopPropagation()">
+        <h2>Atalhos</h2>
+        <dl>
+          <dt><kbd>/</kbd></dt><dd>Buscar</dd>
+          <dt><kbd>n</kbd></dt><dd>Novo (card, nota ou tarefa)</dd>
+          <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dt><dd>Cards, Notas, Kanban</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Fechar janela</dd>
+          <dt><kbd>Ctrl</kbd> + <kbd>Enter</kbd></dt><dd>Salvar formulário</dd>
+          <dt><kbd>?</kbd></dt><dd>Esta ajuda</dd>
+        </dl>
+      </div>
+    </div>
+  }
+}
+
+@if (ui.toast()) {
+  <div class="toast">{{ ui.toast() }}</div>
+}

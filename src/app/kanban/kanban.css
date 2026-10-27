@@ -1,0 +1,179 @@
+.barra .busca {
+  max-width: 360px;
+}
+.barra .filtro {
+  max-width: 200px;
+}
+.fim {
+  margin-left: auto;
+}
+.quadro {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  gap: 14px;
+  align-items: start;
+  overflow-x: auto;
+}
+.coluna {
+  background: var(--bg-2);
+  border-radius: 12px;
+  padding: 10px;
+  border-top: 3px solid var(--cor-col);
+}
+.coluna[data-status='todo'] {
+  --cor-col: var(--texto-2);
+}
+.coluna[data-status='doing'] {
+  --cor-col: var(--acento);
+}
+.coluna[data-status='blocked'] {
+  --cor-col: var(--perigo);
+}
+.coluna[data-status='done'] {
+  --cor-col: var(--p-baixa);
+}
+.coluna header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.coluna h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.coluna .add {
+  margin-left: auto;
+  font-size: 16px;
+}
+.lista {
+  min-height: 80px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.vazia {
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+  color: var(--texto-2);
+  font-size: 12px;
+  border: 1px dashed var(--borda);
+  border-radius: 8px;
+}
+
+.tarefa {
+  background: var(--bg-elev);
+  border: 1px solid var(--borda);
+  border-left: 4px solid var(--cor-p);
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: grab;
+}
+.tarefa:hover {
+  border-color: var(--acento);
+  border-left-color: var(--cor-p);
+}
+.tarefa[data-prioridade='urgente'] {
+  --cor-p: var(--p-urgente);
+}
+.tarefa[data-prioridade='alta'] {
+  --cor-p: var(--p-alta);
+}
+.tarefa[data-prioridade='media'] {
+  --cor-p: var(--p-media);
+}
+.tarefa[data-prioridade='baixa'] {
+  --cor-p: var(--p-baixa);
+}
+.tarefa .tags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.tarefa .prio {
+  color: var(--cor-p);
+}
+.tipo[data-tipo='card'] {
+  background: var(--acento-bg);
+  color: var(--acento);
+}
+.tipo[data-tipo='ajuda'] {
+  background: var(--nota-roxo);
+}
+.tipo[data-tipo='verificacao'] {
+  background: var(--nota-amarelo);
+}
+.num {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.tarefa h4 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.tarefa p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--texto-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-line;
+}
+.coluna[data-status='done'] .tarefa h4 {
+  text-decoration: line-through;
+  color: var(--texto-2);
+}
+.registrar {
+  margin-top: 6px;
+  color: var(--acento);
+}
+
+.cdk-drag-preview {
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  border-radius: 8px;
+}
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+.cdk-drag-animating,
+.lista.cdk-drop-list-dragging .tarefa:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+@media (max-width: 1000px) {
+  .quadro {
+    grid-template-columns: repeat(4, 260px);
+  }
+}
+
+.prazo {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--texto-2);
+  background: var(--bg-2);
+}
+.prazo[data-nivel='atrasada'],
+.tag.atrasada {
+  background: var(--perigo);
+  color: #fff;
+}
+.prazo[data-nivel='hoje'] {
+  background: var(--p-alta);
+  color: #fff;
+}
+.prazo[data-nivel='proxima'] {
+  background: var(--nota-amarelo);
+  color: var(--texto);
+}

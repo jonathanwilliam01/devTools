@@ -1,0 +1,132 @@
+<div class="barra">
+  <input
+    class="busca"
+    placeholder="Adicionar rápido: '#7570 Ajuste no boleto' + Enter"
+    [ngModel]="rapida()"
+    (ngModelChange)="rapida.set($event)"
+    (keydown.enter)="adicionarRapida()"
+  />
+  <input data-busca class="busca filtro" type="search" placeholder="Filtrar..." [ngModel]="busca()" (ngModelChange)="busca.set($event)" />
+  <select [ngModel]="tipo()" (ngModelChange)="tipo.set($event)" style="width: auto">
+    <option value="">Todos os tipos</option>
+    @for (t of TIPOS; track t.valor) {
+      <option [value]="t.valor">{{ t.label }}</option>
+    }
+  </select>
+  <select [ngModel]="prioridade()" (ngModelChange)="prioridade.set($event)" style="width: auto">
+    <option value="">Todas as prioridades</option>
+    @for (p of PRIORIDADES; track p.valor) {
+      <option [value]="p.valor">{{ p.label }}</option>
+    }
+  </select>
+  @if (atrasadas()) {
+    <span class="tag atrasada">{{ atrasadas() }} atrasada(s)</span>
+  }
+  <button class="btn primario fim" (click)="nova()" title="Nova tarefa (n)">+ Nova tarefa</button>
+</div>
+
+<div class="quadro" cdkDropListGroup>
+  @for (col of COLUNAS; track col.status) {
+    <section class="coluna" [attr.data-status]="col.status">
+      <header>
+        <h3>{{ col.titulo }}</h3>
+        <span class="tag">{{ colunas()[col.status].length }}</span>
+        @if (col.status === 'done' && colunas().done.length) {
+          <button class="btn mini ghost" (click)="limparConcluidos()" title="Remover concluídos">Limpar</button>
+        }
+        <button class="btn mini ghost add" (click)="nova(col.status)" title="Adicionar">+</button>
+      </header>
+
+      <div
+        class="lista"
+        cdkDropList
+        [id]="col.status"
+        [cdkDropListData]="colunas()[col.status]"
+        (cdkDropListDropped)="soltar($event, col.status)"
+      >
+        @for (t of colunas()[col.status]; track t.id) {
+          <article class="tarefa" cdkDrag [cdkDragData]="t" [attr.data-prioridade]="t.prioridade" (click)="editar(t)">
+            <div class="tags">
+              <span class="tag tipo" [attr.data-tipo]="t.tipo">{{ label(TIPOS, t.tipo) }}</span>
+              <span class="tag prio">{{ label(PRIORIDADES, t.prioridade) }}</span>
+              @if (t.numeroCard) {
+                <a class="num" [href]="ISSUE_URL + t.numeroCard" target="_blank" rel="noopener" (click)="$event.stopPropagation()">
+                  #{{ t.numeroCard }}
+                </a>
+              }
+            </div>
+            <h4>{{ t.titulo }}</h4>
+            @if (prazo(t); as p) {
+              <span class="prazo" [attr.data-nivel]="p.nivel" [title]="'Prazo: ' + t.prazo">⏱ {{ p.texto }}</span>
+            }
+            @if (t.descricao) {
+              <p>{{ t.descricao }}</p>
+            }
+            @if (podeRegistrar(t)) {
+              <button class="btn mini registrar" (click)="$event.stopPropagation(); registrarCard(t)">
+                Registrar em Cards →
+              </button>
+            }
+          </article>
+        } @empty {
+          <p class="vazia">Arraste aqui</p>
+        }
+      </div>
+    </section>
+  }
+</div>
+
+@if (form(); as f) {
+  <div class="overlay" (click)="form.set(null)">
+    <form class="dialogo" (click)="$event.stopPropagation()" (ngSubmit)="salvar()" (keydown.control.enter)="salvar()">
+      <h2>{{ existe(f) ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
+      <label class="campo">
+        Título
+        <input name="titulo" [(ngModel)]="f.titulo" required autofocus />
+      </label>
+      <div class="grade">
+        <label class="campo">
+          Tipo
+          <select name="tipo" [(ngModel)]="f.tipo">
+            @for (t of TIPOS; track t.valor) {
+              <option [value]="t.valor">{{ t.label }}</option>
+            }
+          </select>
+        </label>
+        <label class="campo">
+          Prioridade
+          <select name="prioridade" [(ngModel)]="f.prioridade">
+            @for (p of PRIORIDADES; track p.valor) {
+              <option [value]="p.valor">{{ p.label }}</option>
+            }
+          </select>
+        </label>
+        <label class="campo">
+          Status
+          <select name="status" [(ngModel)]="f.status">
+            @for (c of COLUNAS; track c.status) {
+              <option [value]="c.status">{{ c.titulo }}</option>
+            }
+          </select>
+        </label>
+        <label class="campo">
+          Nº do card
+          <input type="number" name="numeroCard" [(ngModel)]="f.numeroCard" />
+        </label>
+        <label class="campo">
+          Prazo
+          <input type="date" name="prazo" [(ngModel)]="f.prazo" />
+        </label>
+      </div>
+      <label class="campo">
+        Descrição / anotações
+        <textarea name="descricao" rows="5" [(ngModel)]="f.descricao"></textarea>
+      </label>
+      <div class="rodape">
+        <button type="button" class="btn perigo ghost" style="margin-right: auto" (click)="remover(f)">Excluir</button>
+        <button type="button" class="btn" (click)="form.set(null)">Cancelar</button>
+        <button type="submit" class="btn primario">Salvar</button>
+      </div>
+    </form>
+  </div>
+}

@@ -1,0 +1,123 @@
+<div class="barra">
+  <input data-busca class="busca" type="search" placeholder="Buscar notas... ( / )" [ngModel]="busca()" (ngModelChange)="busca.set($event)" />
+  <span class="dica">Use <code>{{ EXEMPLO }}</code> no conteúdo para preencher na hora de copiar.</span>
+  <button class="btn primario fim" (click)="nova()" title="Nova nota (n)">+ Nova nota</button>
+</div>
+
+@if (fixadas().length) {
+  <h3 class="secao">Fixadas</h3>
+  <div class="mural">
+    @for (n of fixadas(); track n.id) {
+      <ng-container *ngTemplateOutlet="tplNota; context: { $implicit: n }" />
+    }
+  </div>
+}
+
+@if (outras().length) {
+  @if (fixadas().length) {
+    <h3 class="secao">Outras</h3>
+  }
+  <div class="mural">
+    @for (n of outras(); track n.id) {
+      <ng-container *ngTemplateOutlet="tplNota; context: { $implicit: n }" />
+    }
+  </div>
+}
+
+@if (!fixadas().length && !outras().length) {
+  <p class="vazio">Nenhuma nota. Crie uma com blocos copiáveis.</p>
+}
+
+<ng-template #tplNota let-n>
+  <article class="nota" [attr.data-cor]="n.cor">
+    <header>
+      <h4 (dblclick)="editar(n)">{{ n.titulo }}</h4>
+      <button class="btn mini ghost pino" [class.on]="n.fixada" (click)="fixar(n)" [title]="n.fixada ? 'Desafixar' : 'Fixar'">📌</button>
+    </header>
+
+    @for (b of n.blocos; track b.id) {
+      <div class="bloco">
+        @if (b.label) {
+          <span class="label">{{ b.label }}</span>
+        }
+        @if (b.conteudo) {
+          <div class="copiavel" (click)="copiarBloco(b)" title="Clique para copiar">
+            @if (b.secreto) {
+              <pre>{{ exibir(b) }}</pre>
+            } @else {
+              <pre>@for (p of partes(b.conteudo); track $index) {@if (p.v) {<mark>{{ p.t }}</mark>} @else {<ng-container>{{ p.t }}</ng-container>}}</pre>
+            }
+            <span class="acoes-bloco">
+              @if (b.secreto) {
+                <button class="btn mini ghost" (click)="$event.stopPropagation(); alternarVisivel(b)" title="Mostrar/ocultar">
+                  {{ visiveis().has(b.id) ? '◡' : '👁' }}
+                </button>
+              }
+              <span class="copiar">⧉</span>
+            </span>
+          </div>
+        }
+      </div>
+    }
+
+    <footer>
+      <button class="btn mini ghost" (click)="copiarTudo(n)">Copiar tudo</button>
+      <button class="btn mini ghost" (click)="editar(n)">Editar</button>
+    </footer>
+  </article>
+</ng-template>
+
+@if (form(); as f) {
+  <div class="overlay" (click)="salvar()">
+    <form class="dialogo" [attr.data-cor]="f.cor" (click)="$event.stopPropagation()" (ngSubmit)="salvar()" (keydown.control.enter)="salvar()">
+      <input class="titulo" name="titulo" [(ngModel)]="f.titulo" placeholder="Título" autofocus />
+
+      @for (b of f.blocos; track b.id; let i = $index) {
+        <div class="bloco-edit">
+          <div class="linha">
+            <input [name]="'l' + b.id" [(ngModel)]="b.label" placeholder="Rótulo (opcional)" />
+            <label class="chk" [title]="cofre.ativo() ? 'Cifrado com a senha mestra' : 'Oculta na tela; defina a senha mestra (🔒) para cifrar'">
+              <input type="checkbox" [name]="'s' + b.id" [(ngModel)]="b.secreto" /> secreto
+            </label>
+            <button type="button" class="btn mini ghost" (click)="moverBloco(f, i, -1)" title="Subir">↑</button>
+            <button type="button" class="btn mini ghost" (click)="moverBloco(f, i, 1)" title="Descer">↓</button>
+            <button type="button" class="btn mini ghost perigo" (click)="f.blocos.splice(i, 1)" title="Remover bloco">✕</button>
+          </div>
+          <textarea [name]="'c' + b.id" [(ngModel)]="b.conteudo" rows="3" [placeholder]="'Conteúdo copiável (aceita ' + EXEMPLO + ')'"></textarea>
+        </div>
+      }
+      <button type="button" class="btn" (click)="addBloco(f)">+ Bloco</button>
+
+      <div class="cores">
+        @for (c of CORES; track c) {
+          <button type="button" class="cor" [attr.data-cor]="c" [class.on]="f.cor === c" (click)="f.cor = c" [title]="c || 'padrão'"></button>
+        }
+      </div>
+
+      <div class="rodape">
+        <button type="button" class="btn perigo ghost" style="margin-right: auto" (click)="remover(f)">Excluir</button>
+        <button type="button" class="btn" (click)="form.set(null)">Cancelar</button>
+        <button type="submit" class="btn primario">Salvar</button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (preencher(); as p) {
+  <div class="overlay" (click)="preencher.set(null)">
+    <form class="dialogo vars" (click)="$event.stopPropagation()" (ngSubmit)="confirmarPreencher()">
+      <h2>Preencher e copiar</h2>
+      @for (c of p.campos; track c.nome; let primeiro = $first) {
+        <label class="campo">
+          {{ c.nome }}
+          <input [name]="c.nome" [(ngModel)]="c.valor" [attr.autofocus]="primeiro ? '' : null" />
+        </label>
+      }
+      <pre class="previa">@for (x of partes(p.texto); track $index) {@if (x.v) {<mark>{{ valorDe(p, x.t) }}</mark>} @else {<ng-container>{{ x.t }}</ng-container>}}</pre>
+      <div class="rodape">
+        <button type="button" class="btn" (click)="preencher.set(null)">Cancelar</button>
+        <button type="submit" class="btn primario">Copiar</button>
+      </div>
+    </form>
+  </div>
+}

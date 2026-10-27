@@ -1,0 +1,281 @@
+<section class="resumo">
+  <div class="tile">
+    <span>Total {{ ano() }}</span>
+    <strong>{{ resumo().total }}</strong>
+  </div>
+  <div class="tile destaque">
+    <span>{{ resumo().nomeMes }}</span>
+    <strong>{{ resumo().mesAtual }}</strong>
+  </div>
+  <div class="tile">
+    <span>Meses anteriores</span>
+    <strong>{{ resumo().anteriores }}</strong>
+  </div>
+  <div class="tile">
+    <span>Média / mês</span>
+    <strong>{{ resumo().media }}</strong>
+  </div>
+
+  <div class="meses">
+    @for (q of porMes(); track $index) {
+      <button
+        class="mes"
+        [class.ativo]="mes() === $index + 1"
+        [class.zero]="!q"
+        (click)="filtrarMes($index + 1)"
+        [title]="MESES[$index] + ': ' + q"
+      >
+        <span class="qtd">{{ q || '' }}</span>
+        <span class="barra-mes" [style.height.%]="(q / maxMes()) * 100"></span>
+        <span class="nome">{{ MESES[$index].slice(0, 3) }}</span>
+      </button>
+    }
+  </div>
+</section>
+
+@if (graficos()) {
+  <section class="graficos">
+    @for (g of [
+      { titulo: 'Por sistema', barras: graficoSistemas(), clicavel: true },
+      { titulo: 'Por linguagem', barras: graficoLinguagens(), clicavel: false }
+    ]; track g.titulo) {
+      <div class="grafico">
+        <h3>{{ g.titulo }} <small>{{ mes() ? MESES[mes() - 1] : ano() }}</small></h3>
+        @for (b of g.barras; track b.nome) {
+          <button
+            class="linha-barra"
+            [class.ativa]="g.clicavel && sistema() === b.nome"
+            [class.estatica]="!g.clicavel"
+            (click)="g.clicavel && filtrarSistema(b.nome)"
+            [title]="b.nome + ': ' + b.qtd + ' cards (' + b.pct + '%)'"
+          >
+            <span class="rotulo">{{ b.nome }}</span>
+            <span class="trilho"><span class="valor" [style.width.%]="(b.qtd / g.barras[0].qtd) * 100"></span></span>
+            <span class="numero">{{ b.qtd }}</span>
+          </button>
+        } @empty {
+          <p class="vazio-mini">Sem dados</p>
+        }
+      </div>
+    }
+  </section>
+}
+
+<div class="barra">
+  <input data-busca class="busca" type="search" placeholder="Buscar nº, descrição, sistema... ( / )" [ngModel]="busca()" (ngModelChange)="busca.set($event)" />
+  <select [ngModel]="ano()" (ngModelChange)="ano.set(+$event)" style="width: auto">
+    @for (a of anos(); track a) {
+      <option [value]="a">{{ a }}</option>
+    }
+  </select>
+  <select [ngModel]="sistema()" (ngModelChange)="sistema.set($event)" style="width: auto">
+    <option value="">Todos os sistemas</option>
+    @for (s of sistemas(); track s.id) {
+      <option [value]="s.nome">{{ s.nome }}</option>
+    }
+  </select>
+  @if (mes()) {
+    <button class="btn mini" (click)="mes.set(0)">{{ MESES[mes() - 1] }} ✕</button>
+  }
+  <div class="fim grupo-botoes">
+    <button class="btn ghost" (click)="alternarGraficos()">{{ graficos() ? 'Ocultar' : 'Mostrar' }} gráficos</button>
+    <button class="btn ghost" (click)="painelSistemas.set(true)">
+      Sistemas
+      @if (sugestoes().length) {
+        <span class="tag aviso">{{ sugestoes().length }}</span>
+      }
+    </button>
+    <button class="btn ghost" (click)="copiarPlanilha()" title="Copia os cards filtrados para colar na planilha">Copiar p/ planilha</button>
+    <button class="btn ghost" (click)="exportarCsv()" title="Baixa os cards filtrados em CSV">CSV</button>
+    <button class="btn primario" (click)="novo()" title="Novo card (n)">+ Novo card</button>
+  </div>
+</div>
+
+@for (g of grupos(); track g.mes) {
+  <section class="grupo">
+    <header>
+      <h2>{{ MESES[g.mes - 1] }} <small>{{ ano() }}</small></h2>
+      <span class="tag">{{ g.total }} no mês</span>
+      <span class="tag">{{ g.anteriores }} meses anteriores</span>
+      <span class="tag">{{ g.anteriores + g.total }} acumulado</span>
+      <span class="semanas">
+        @for (s of g.semanas; track s.n) {
+          <span title="{{ s.n }}ª semana">S{{ s.n }}: {{ s.qtd }}</span>
+        }
+      </span>
+      <button class="btn mini ghost fim" (click)="copiarMes(g)" title="Copiar lista do mês">Copiar lista</button>
+    </header>
+
+    <div class="tabela">
+      <table>
+        <thead>
+          <tr>
+            <th>Nº</th>
+            <th>Descrição</th>
+            <th>Sistema</th>
+            <th>Área</th>
+            <th>Time</th>
+            <th>Linguagem</th>
+            <th>Conclusão</th>
+            <th>O que foi feito</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of g.cards; track c.id) {
+            <tr>
+              <td class="num">
+                <a [href]="url(c)" target="_blank" rel="noopener">#{{ c.numero }}</a>
+              </td>
+              <td class="desc">{{ c.descricao }}</td>
+              <td>@if (c.sistema) {<span class="tag">{{ c.sistema }}</span>}</td>
+              <td>{{ c.area }}</td>
+              <td>{{ c.time }}</td>
+              <td>{{ c.linguagem }}</td>
+              <td class="data">{{ dataBr(c.data) }}</td>
+              <td class="obs" [title]="c.obs">{{ c.obs }}</td>
+              <td class="acoes-linha">
+                <button class="btn mini ghost" (click)="ui.copiar(url(c), 'Link copiado')" title="Copiar link">⧉</button>
+                <button class="btn mini ghost" (click)="editar(c)" title="Editar">✎</button>
+                <button class="btn mini ghost perigo" (click)="remover(c)" title="Remover">✕</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+} @empty {
+  <p class="vazio">Nenhum card encontrado. Cadastre um novo ou importe o JSON.</p>
+}
+
+@if (form(); as f) {
+  <div class="overlay" (click)="form.set(null)">
+    <form class="dialogo" (click)="$event.stopPropagation()" (ngSubmit)="salvar()" (keydown.control.enter)="salvar()">
+      <h2>{{ f.numero ? 'Card #' + f.numero : 'Novo card' }}</h2>
+      <div class="grade">
+        <label class="campo">
+          Número do card
+          <input type="number" name="numero" [(ngModel)]="f.numero" required autofocus />
+        </label>
+        <label class="campo">
+          Data de conclusão
+          <input type="date" name="data" [(ngModel)]="f.data" required />
+        </label>
+        <label class="campo">
+          Sistema
+          <select name="sistema" [ngModel]="novoSistema() ? NOVO : f.sistema" (ngModelChange)="escolherSistema(f, $event)">
+            <option value="">—</option>
+            @for (s of sistemas(); track s.id) {
+              <option [value]="s.nome">{{ s.nome }}</option>
+            }
+            <option [value]="NOVO">+ Novo sistema…</option>
+          </select>
+        </label>
+        @if (novoSistema()) {
+          <label class="campo">
+            Nome do novo sistema
+            <input name="novoSistema" [(ngModel)]="nomeNovoSistema" autofocus />
+          </label>
+        }
+        <label class="campo">
+          Área técnica
+          <input name="area" [(ngModel)]="f.area" list="dl-areas" />
+        </label>
+        <label class="campo">
+          Time
+          <input name="time" [(ngModel)]="f.time" list="dl-times" />
+        </label>
+        <label class="campo">
+          Linguagem
+          <input name="linguagem" [(ngModel)]="f.linguagem" list="dl-linguagens" />
+        </label>
+      </div>
+      @if (duplicado(f)) {
+        <small class="alerta">Já existe um card com este número.</small>
+      }
+      <label class="campo">
+        Descrição
+        <input name="descricao" [(ngModel)]="f.descricao" />
+      </label>
+      <label class="campo">
+        O que foi feito
+        <textarea name="obs" rows="4" [(ngModel)]="f.obs"></textarea>
+      </label>
+      @if (f.numero) {
+        <small class="link">{{ url(f) }}</small>
+      }
+      <div class="rodape">
+        <button type="button" class="btn" (click)="form.set(null)">Cancelar</button>
+        <button type="submit" class="btn primario">Salvar</button>
+      </div>
+    </form>
+  </div>
+}
+
+@if (painelSistemas()) {
+  <div class="overlay" (click)="painelSistemas.set(false)">
+    <div class="dialogo sistemas" (click)="$event.stopPropagation()">
+      <h2>Sistemas</h2>
+      <p class="dica">
+        Mesclar move os cards e guarda o nome antigo como apelido: cards importados ou digitados com o apelido caem no
+        sistema certo.
+      </p>
+
+      @if (sugestoes().length) {
+        <div class="sugestoes">
+          <strong>Nomes parecidos</strong>
+          @for (s of sugestoes(); track s.origem.id + s.destino.id) {
+            <div class="sug">
+              <span><b>{{ s.origem.nome }}</b> ({{ contagemSistemas().get(s.origem.nome) ?? 0 }}) → <b>{{ s.destino.nome }}</b> ({{ contagemSistemas().get(s.destino.nome) ?? 0 }})</span>
+              <button class="btn mini" (click)="mesclar(s.origem, s.destino.id)">Mesclar</button>
+              <button class="btn mini ghost" (click)="mesclar(s.destino, s.origem.id)" title="Mesclar no sentido inverso">⇄</button>
+            </div>
+          }
+        </div>
+      }
+
+      <form class="adicionar" (ngSubmit)="adicionarSistema()">
+        <input name="add" [(ngModel)]="nomeAdicionar" placeholder="Novo sistema" />
+        <button class="btn primario" type="submit">Adicionar</button>
+      </form>
+
+      <div class="lista-sistemas">
+        @for (s of sistemas(); track s.id) {
+          <div class="sis">
+            <input
+              class="nome-sis"
+              [value]="s.nome"
+              (change)="store.renomearSistema(s.id, $any($event.target).value)"
+              title="Renomear (Enter)"
+            />
+            <span class="tag">{{ contagemSistemas().get(s.nome) ?? 0 }}</span>
+            <span class="aliases">
+              @for (a of s.aliases; track a) {
+                <span class="tag alias">{{ a }} <button (click)="store.removerAlias(s.id, a)" title="Remover apelido">✕</button></span>
+              }
+            </span>
+            <select class="mesclar" (change)="mesclarSelecionado(s, $event)">
+              <option value="">Mesclar em…</option>
+              @for (d of sistemas(); track d.id) {
+                @if (d.id !== s.id) {
+                  <option [value]="d.id">{{ d.nome }}</option>
+                }
+              }
+            </select>
+            @if (!contagemSistemas().get(s.nome)) {
+              <button class="btn mini ghost perigo" (click)="store.removerSistema(s.id)" title="Remover">✕</button>
+            }
+          </div>
+        }
+      </div>
+      <div class="rodape">
+        <button class="btn" (click)="painelSistemas.set(false)">Fechar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<datalist id="dl-areas">@for (s of areas(); track s) {<option [value]="s"></option>}</datalist>
+<datalist id="dl-times">@for (s of times(); track s) {<option [value]="s"></option>}</datalist>
+<datalist id="dl-linguagens">@for (s of linguagens(); track s) {<option [value]="s"></option>}</datalist>
