@@ -14,7 +14,7 @@ import { PainelCofre } from './shell/painel-cofre';
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
-  host: { '(document:keydown)': 'tecla($event)' },
+  host: { '(document:keydown)': 'tecla($event)', '(document:click)': 'menuTema.set(false)' },
 })
 export class App {
   protected readonly store = inject(Store);
@@ -24,7 +24,11 @@ export class App {
   private readonly router = inject(Router);
   protected readonly versao = VERSAO;
   protected readonly versaoData = new Date(VERSAO.data).toLocaleString('pt-BR');
+  protected readonly MODOS = MODOS;
+  protected readonly CORES_TEMA = CORES_TEMA;
   protected readonly tema = signal(lerTema());
+  protected readonly cor = signal(lerPref('devtools:cor') ?? 'azul');
+  protected readonly menuTema = signal(false);
   protected readonly atrasadas = computed(
     () => this.store.tarefas().filter((t) => t.status !== 'done' && t.prazo && t.prazo < hoje()).length,
   );
@@ -34,21 +38,26 @@ export class App {
     navigator.storage?.persist?.();
   }
 
-  alternarTema() {
-    this.tema.update((t) => (t === 'dark' ? 'light' : 'dark'));
+  escolherTema(tema: Modo, cor: string) {
+    this.tema.set(tema);
+    this.cor.set(cor);
+    this.menuTema.set(false);
     this.aplicarTema();
   }
 
   private aplicarTema() {
     document.documentElement.dataset['theme'] = this.tema();
+    document.documentElement.dataset['cor'] = this.cor();
     try {
       localStorage.setItem('devtools:tema', this.tema());
+      localStorage.setItem('devtools:cor', this.cor());
     } catch {}
   }
 
   tecla(e: KeyboardEvent) {
     if (e.key === 'Escape') {
       this.ui.painel.set(null);
+      this.menuTema.set(false);
       this.ui.atalhos.next('esc');
       return;
     }
@@ -64,10 +73,30 @@ export class App {
   }
 }
 
-function lerTema() {
+type Modo = 'dark' | 'light';
+
+const MODOS: { valor: Modo; label: string }[] = [
+  { valor: 'dark', label: 'Escuro' },
+  { valor: 'light', label: 'Claro' },
+];
+
+// mesmos tons de --acento do styles.css
+const CORES_TEMA = [
+  { valor: 'azul', dark: '#6fa3ff', light: '#2f6fde' },
+  { valor: 'vermelho', dark: '#ff7b84', light: '#c9363e' },
+  { valor: 'verde', dark: '#5ccf7f', light: '#2b8a47' },
+];
+
+function lerPref(chave: string) {
   try {
-    const t = localStorage.getItem('devtools:tema');
-    if (t) return t;
-  } catch {}
+    return localStorage.getItem(chave);
+  } catch {
+    return null;
+  }
+}
+
+function lerTema(): Modo {
+  const t = lerPref('devtools:tema');
+  if (t === 'dark' || t === 'light') return t;
   return matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }

@@ -1,11 +1,14 @@
 import { Component, computed, inject, output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Store } from '../store';
 import { Ui } from '../ui';
 import { Backup } from '../backup';
-import { hoje } from '../models';
+import { Github } from '../github';
+import { ISSUE_URL, hoje } from '../models';
 
 @Component({
   selector: 'app-painel-dados',
+  imports: [FormsModule],
   template: `
     <div class="overlay" (click)="fechar.emit()">
       <div class="dialogo" (click)="$event.stopPropagation()">
@@ -60,6 +63,29 @@ import { hoje } from '../models';
         </section>
 
         <section>
+          <h3>GitHub</h3>
+          <p>Com o token, informar o nº do card preenche os dados da issue: título, descrição, labels e campos do quadro (Cards e Kanban).</p>
+          <div class="linha">
+            <input type="password" name="token" [(ngModel)]="token" placeholder="github_pat_..." autocomplete="off" />
+            <button class="btn primario" (click)="salvarToken()">Salvar</button>
+            <button class="btn" (click)="testarToken()" [disabled]="!github.token()">Testar</button>
+          </div>
+          <p class="sub">{{ github.token() ? 'Token configurado neste navegador.' : 'Nenhum token configurado.' }} Fica só aqui: não vai para backup nem cookies.</p>
+          <details>
+            <summary>Como gerar o token</summary>
+            <ol>
+              <li>No GitHub: foto do perfil → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
+              <li>Nome e validade à escolha. <b>Resource owner</b>: {{ dono }}.</li>
+              <li><b>Repository access</b>: <i>Only select repositories</i> → {{ repo }}.</li>
+              <li><b>Permissions</b> → <b>Repository permissions</b> → <b>Issues</b>: <i>Read-only</i> (Metadata entra sozinho).</li>
+              <li>Para ler os campos do quadro (Sistema, Área, Time, Linguagem): <b>Organization permissions</b> → <b>Projects</b>: <i>Read-only</i>.</li>
+              <li><b>Generate token</b>, copiar e colar acima. Se a organização exigir aprovação, aguardar um admin aprovar.</li>
+              <li>Alternativa se o fine-grained for bloqueado: <i>Tokens (classic)</i> com os escopos <b>repo</b> e <b>read:project</b>.</li>
+            </ol>
+          </details>
+        </section>
+
+        <section>
           <h3>Onde os dados ficam</h3>
           <ul>
             <li><b>localStorage</b>: tudo ({{ kbLocal() }} KB).</li>
@@ -110,10 +136,12 @@ import { hoje } from '../models';
       color: var(--texto-2);
     }
     p,
-    ul {
+    ul,
+    ol {
       margin: 0;
     }
-    ul {
+    ul,
+    ol {
       padding-left: 18px;
       display: grid;
       gap: 4px;
@@ -127,12 +155,30 @@ import { hoje } from '../models';
       flex-wrap: wrap;
       gap: 8px;
     }
+    .linha input {
+      flex: 1;
+      min-width: 200px;
+      width: auto;
+    }
+    summary {
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--acento);
+    }
+    details ol {
+      margin-top: 6px;
+      font-size: 12px;
+    }
   `,
 })
 export class PainelDados {
   protected readonly store = inject(Store);
   protected readonly ui = inject(Ui);
   protected readonly backup = inject(Backup);
+  protected readonly github = inject(Github);
+  protected token = this.github.token();
+  protected readonly dono = ISSUE_URL.split('/')[3];
+  protected readonly repo = ISSUE_URL.split('/')[4];
   readonly fechar = output();
   protected readonly persistente = signal(false);
   protected readonly kbLocal = computed(() => (JSON.stringify(this.store.snapshot()).length / 1024).toFixed(1));
@@ -145,6 +191,15 @@ export class PainelDados {
     const ok = (await navigator.storage?.persist?.()) ?? false;
     this.persistente.set(ok);
     this.ui.avisar(ok ? 'Concedido' : 'O navegador recusou; ele concede com o uso frequente do site ou ao instalar como app');
+  }
+
+  salvarToken() {
+    this.github.salvar(this.token);
+    this.ui.avisar(this.token.trim() ? 'Token salvo' : 'Token removido');
+  }
+
+  async testarToken() {
+    this.ui.avisar(await this.github.testar());
   }
 
   exportar() {

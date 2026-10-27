@@ -3,7 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Store } from '../store';
 import { Ui } from '../ui';
-import { Card, ISSUE_URL, MESES, Sistema, chaveNome, dataBr, hoje, novoId } from '../models';
+import { Card, CampoCard, ISSUE_URL, MESES, Sistema, chaveNome, dataBr, hoje, novoId, partes } from '../models';
+import { Multi } from '../multi';
+import { Github, Issue } from '../github';
 
 interface Semana {
   n: number;
@@ -27,21 +29,22 @@ interface Barra {
   pct: number;
 }
 
-const NOVO = '__novo';
 const COLUNAS_PLANILHA = ['Número do Card', 'Descrição', 'Sistema', 'Área Tecnica', 'Time', 'Linguagem', 'Data conclusão', 'O que foi feito'];
 
 @Component({
   selector: 'app-cards',
-  imports: [FormsModule],
+  imports: [FormsModule, Multi],
   templateUrl: './cards.html',
   styleUrl: './cards.css',
+  host: { '(document:mousedown)': 'fecharMenu($event)', '(window:scroll)': 'menu.set(null)', '(window:resize)': 'menu.set(null)' },
 })
 export class Cards {
   protected readonly store = inject(Store);
   protected readonly ui = inject(Ui);
+  private readonly github = inject(Github);
   protected readonly MESES = MESES;
-  protected readonly NOVO = NOVO;
   protected readonly dataBr = dataBr;
+  protected readonly partes = partes;
   protected readonly url = (c: Card) => ISSUE_URL + c.numero;
 
   protected readonly busca = signal('');
@@ -83,16 +86,17 @@ export class Cards {
   protected readonly graficoLinguagens = computed(() => barras(this.baseGraficos().map((c) => c.linguagem)));
 
   protected readonly sistemas = computed(() => [...this.store.sistemas()].sort((a, b) => a.nome.localeCompare(b.nome)));
-  protected readonly areas = computed(() => unicos(this.store.cards().map((c) => c.area)));
+  protected readonly nomesSistemas = computed(() => this.sistemas().map((s) => s.nome));
+  protected readonly areas = computed(() => unicos(this.store.cards().flatMap((c) => partes(c.area))));
   protected readonly times = computed(() => unicos(this.store.cards().map((c) => c.time)));
-  protected readonly linguagens = computed(() => unicos(this.store.cards().map((c) => c.linguagem)));
+  protected readonly linguagens = computed(() => unicos(this.store.cards().flatMap((c) => partes(c.linguagem))));
 
   protected readonly filtrados = computed(() => {
     const termo = normalizar(this.busca());
     return this.doAno().filter(
       (c) =>
         (!this.mes() || mesDe(c) === this.mes()) &&
-        (!this.sistema() || c.sistema === this.sistema()) &&
+        (!this.sistema() || partes(c.sistema).includes(this.sistema())) &&
         (!termo || normalizar(`${c.numero} ${c.descricao} ${c.sistema} ${c.linguagem} ${c.obs}`).includes(termo)),
     );
   });
@@ -113,14 +117,16 @@ export class Cards {
   });
 
   protected readonly form = signal<Card | null>(null);
-  protected readonly novoSistema = signal(false);
-  protected nomeNovoSistema = '';
+  protected readonly CAMPOS = CAMPOS;
+  protected readonly labelsIssue = signal<string[] | null>(null);
+  protected readonly mapaLabels = computed(() => this.store.config().labels ?? {});
+  protected readonly menu = signal<{ card?: Card; label?: string; direita?: number; esquerda?: number; topo?: number; base?: number } | null>(null);
 
   protected readonly painelSistemas = signal(false);
   protected nomeAdicionar = '';
   protected readonly contagemSistemas = computed(() => {
     const m = new Map<string, number>();
-    this.store.cards().forEach((c) => m.set(c.sistema, (m.get(c.sistema) ?? 0) + 1));
+    this.store.cards().forEach((c) => partes(c.sistema).forEach((n) => m.set(n, (m.get(n) ?? 0) + 1)));
     return m;
   });
   // nomes parecidos: iguais sem pontuação ou um começa com o outro
@@ -149,12 +155,13 @@ export class Cards {
       if (a === 'esc') {
         this.form.set(null);
         this.painelSistemas.set(false);
+        this.menu.set(null);
       } else if (a === 'novo' && !this.form() && !this.painelSistemas()) this.novo();
     });
   }
 
   novo(base: Partial<Card> = {}) {
-    this.novoSistema.set(false);
+    this.labelsIssue.set(null);
     this.form.set({
       id: novoId(),
       numero: 0,
@@ -170,18 +177,122 @@ export class Cards {
   }
 
   editar(c: Card) {
-    this.novoSistema.set(false);
+    this.labelsIssue.set(null);
     this.form.set({ ...c });
   }
 
-  escolherSistema(f: Card, valor: string) {
-    if (valor === NOVO) {
-      this.novoSistema.set(true);
-      this.nomeNovoSistema = '';
-    } else {
-      this.novoSistema.set(false);
-      f.sistema = valor;
+  // card novo: descrição e campos vindos da issue; só preenche o que está vazio
+  async buscarIssue(f: Card) {
+    const n = +f.numero;
+    if (!n || this.store.cards().some((c) => c.id === f.id)) return;
+    const i = await this.github.issue(n);
+    if (!i) return;
+    const l = this.camposDaIssue(i);
+    this.labelsIssue.set(i.labels);
+    this.form.update((x) =>
+      x?.id === f.id
+        ? {
+            ...x,
+            descricao: x.descricao || i.titulo,
+            sistema: x.sistema || l.sistema,
+            area: x.area || l.area,
+            time: x.time || l.time,
+            linguagem: x.linguagem || l.linguagem,
+          }
+        : x,
+    );
+  }
+
+  // "Campo: valor" (label, quadro ou corpo) vai direto; label solta usa o mapa aprendido ou os valores já usados
+  private camposDaIssue(i: Issue) {
+    const campos = { sistema: [] as string[], area: [] as string[], time: [] as string[], linguagem: [] as string[] };
+    const campoDe = (k: string): keyof typeof campos | undefined => {
+      const c = chaveNome(k);
+      if (c.startsWith('SISTEMA')) return 'sistema';
+      if (c.startsWith('AREA')) return 'area';
+      if (c === 'TIME' || c === 'EQUIPE') return 'time';
+      if (c.startsWith('LINGUAGEM') || c === 'LANG') return 'linguagem';
+      return undefined;
+    };
+    const conhecidos: [keyof typeof campos, string[]][] = [
+      ['sistema', this.store.sistemas().flatMap((s) => [s.nome, ...s.aliases])],
+      ['area', this.areas()],
+      ['time', this.times()],
+      ['linguagem', this.linguagens()],
+    ];
+    const pares = [...i.campos];
+    for (const label of i.labels) {
+      const mapa = this.mapaLabels()[chaveNome(label)];
+      if (mapa) {
+        if (mapa !== 'ignorar') pares.push([mapa, label]);
+        continue;
+      }
+      const m = label.match(/^([^:/]+)[:/](.+)$/);
+      if (m && campoDe(m[1])) {
+        pares.push([m[1], m[2].trim()]);
+        continue;
+      }
+      const achado = conhecidos.find(([, lista]) => lista.some((x) => chaveNome(x) === chaveNome(label)));
+      if (achado) pares.push([achado[0], label]);
     }
+    for (const [k, v] of pares) {
+      const c = campoDe(k);
+      if (c) campos[c].push(c === 'sistema' ? this.store.normalizarSistema(v) : v);
+    }
+    return {
+      sistema: partes(campos.sistema.join(',')).join(', '),
+      area: partes(campos.area.join(',')).join(', '),
+      time: campos.time[0] ?? '',
+      linguagem: partes(campos.linguagem.join(',')).join(', '),
+    };
+  }
+
+  campoDaLabel(label: string) {
+    const c = this.mapaLabels()[chaveNome(label)];
+    return c === 'ignorar' ? 'ignorada' : CAMPOS.find((x) => x.valor === c)?.label;
+  }
+
+  // lembra o campo da label e já aplica no formulário (sai dos outros campos)
+  definirLabel(label: string, campo: CampoCard | 'ignorar') {
+    this.store.config.update((c) => ({ ...c, labels: { ...c.labels, [chaveNome(label)]: campo } }));
+    const valor = campo === 'sistema' ? this.store.normalizarSistema(label) : label;
+    this.form.update((x) => {
+      if (!x) return x;
+      const f = { ...x };
+      for (const { valor: c } of CAMPOS) f[c] = partes(f[c]).filter((v) => v !== label && v !== valor).join(', ');
+      if (campo === 'time') f.time = valor;
+      else if (campo !== 'ignorar') f[campo] = partes(`${f[campo]},${valor}`).join(', ');
+      return f;
+    });
+    this.menu.set(null);
+  }
+
+  fecharMenu(ev: MouseEvent) {
+    if (!(ev.target as Element).closest?.('.menu, [data-abre-menu]')) this.menu.set(null);
+  }
+
+  abrirMenu(c: Card, ev: MouseEvent) {
+    this.posicionarMenu({ card: c }, ev);
+  }
+
+  abrirMenuLabel(label: string, ev: MouseEvent) {
+    this.posicionarMenu({ label }, ev);
+  }
+
+  // menu fixo na tela para não ser cortado pela rolagem; abre para cima perto do rodapé
+  private posicionarMenu(alvo: { card?: Card; label?: string }, ev: MouseEvent) {
+    const m = this.menu();
+    if (m && m.card === alvo.card && m.label === alvo.label) return this.menu.set(null);
+    const r = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+    const cima = r.bottom + 180 > innerHeight;
+    this.menu.set({
+      ...alvo,
+      // ações alinham à direita do botão; labels, à esquerda
+      direita: alvo.card ? innerWidth - r.right : undefined,
+      esquerda: alvo.card ? undefined : r.left,
+      topo: cima ? undefined : r.bottom + 4,
+      base: cima ? innerHeight - r.top + 4 : undefined,
+    });
   }
 
   // form é mutado pelo ngModel, por isso método e não computed
@@ -192,12 +303,11 @@ export class Cards {
   salvar() {
     const f = this.form();
     if (!f || !f.numero || !f.data) return;
-    const sistema = this.novoSistema() ? this.nomeNovoSistema : f.sistema;
     // id previsível comprime melhor nos cookies
     const ids = new Set(this.store.cards().map((c) => c.id));
     const padrao = `c-${+f.numero}-${f.data}`;
     const id = ids.has(f.id) || ids.has(padrao) ? f.id : padrao;
-    this.store.salvarCard({ ...f, id, sistema, numero: +f.numero, descricao: f.descricao.trim() });
+    this.store.salvarCard({ ...f, id, numero: +f.numero, descricao: f.descricao.trim() });
     this.ano.set(+f.data.slice(0, 4));
     this.form.set(null);
     this.ui.avisar('Card salvo');
@@ -274,14 +384,24 @@ export class Cards {
   }
 }
 
+const CAMPOS: { valor: CampoCard; label: string }[] = [
+  { valor: 'sistema', label: 'Sistema' },
+  { valor: 'area', label: 'Área técnica' },
+  { valor: 'time', label: 'Time' },
+  { valor: 'linguagem', label: 'Linguagem' },
+];
+
 const mesDe = (c: Card) => +c.data.slice(5, 7);
 const unicos = (l: string[]) => [...new Set(l.filter(Boolean))].sort();
 const normalizar = (s: string) =>
   s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
+// card com vários valores conta em cada um; % sobre o total de cards
 function barras(valores: string[], max = 8): Barra[] {
   const m = new Map<string, number>();
-  valores.forEach((v) => m.set(v || 'Não informado', (m.get(v || 'Não informado') ?? 0) + 1));
+  valores
+    .flatMap((v) => (partes(v).length ? partes(v) : ['Não informado']))
+    .forEach((v) => m.set(v, (m.get(v) ?? 0) + 1));
   const ord = [...m.entries()].sort((a, b) => b[1] - a[1]);
   const topo = ord.slice(0, max);
   const resto = ord.slice(max).reduce((a, [, q]) => a + q, 0);

@@ -1,5 +1,5 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
-import { Card, Config, Dados, Nota, Sistema, Tarefa, chaveNome, novoId } from './models';
+import { Card, Config, Dados, Nota, Sistema, Tarefa, chaveNome, novoId, partes } from './models';
 import { StatusCookie, lerCookies, salvarCookies } from './persist';
 
 const CHAVE = 'devtools:dados';
@@ -66,7 +66,7 @@ export class Store {
 
   private carregar(d: Partial<Dados>) {
     this.sistemas.set(d.sistemas ?? []);
-    this.cards.set((d.cards ?? []).map((c) => ({ ...c, sistema: this.normalizarSistema(c.sistema) })));
+    this.cards.set((d.cards ?? []).map((c) => ({ ...c, sistema: this.normalizarSistemas(c.sistema) })));
     this.notas.set(d.notas ?? []);
     this.tarefas.set(d.tarefas ?? []);
     this.vars.set(d.vars ?? {});
@@ -86,7 +86,7 @@ export class Store {
       return [...m.values()];
     };
     this.sistemas.update((a) => mesclarSistemasPorNome(a, d.sistemas ?? []));
-    this.cards.update((a) => mesclar(a, d.cards).map((c) => ({ ...c, sistema: this.normalizarSistema(c.sistema) })));
+    this.cards.update((a) => mesclar(a, d.cards).map((c) => ({ ...c, sistema: this.normalizarSistemas(c.sistema) })));
     this.notas.update((a) => mesclar(a, d.notas));
     this.tarefas.update((a) => mesclar(a, d.tarefas));
     this.vars.update((v) => ({ ...d.vars, ...v }));
@@ -103,7 +103,7 @@ export class Store {
   }
 
   salvarCard(c: Card) {
-    this.cards.update((l) => upsert(l, { ...c, sistema: this.garantirSistema(c.sistema) }));
+    this.cards.update((l) => upsert(l, { ...c, sistema: this.garantirSistemas(c.sistema) }));
   }
   removerCard(id: string) {
     this.cards.update((l) => l.filter((x) => x.id !== id));
@@ -117,6 +117,14 @@ export class Store {
     return s?.nome ?? nome.trim();
   }
 
+  normalizarSistemas(lista: string) {
+    return unicos(partes(lista).map((n) => this.normalizarSistema(n))).join(', ');
+  }
+
+  garantirSistemas(lista: string) {
+    return unicos(partes(lista).map((n) => this.garantirSistema(n))).join(', ');
+  }
+
   garantirSistema(nome: string) {
     const n = this.normalizarSistema(nome);
     if (n && !this.sistemas().some((s) => s.nome === n)) {
@@ -125,8 +133,10 @@ export class Store {
     return n;
   }
 
+  // sistemas antigos com vírgula viraram listas nos cards
   private sincronizarSistemas() {
-    new Set(this.cards().map((c) => c.sistema)).forEach((n) => this.garantirSistema(n));
+    this.sistemas.update((l) => l.filter((s) => !s.nome.includes(',')));
+    new Set(this.cards().flatMap((c) => partes(c.sistema))).forEach((n) => this.garantirSistema(n));
   }
 
   renomearSistema(id: string, novo: string) {
@@ -138,7 +148,7 @@ export class Store {
     this.sistemas.update((l) =>
       l.map((x) => (x.id === id ? { ...x, nome: novo, aliases: unicos([...x.aliases, s.nome]) } : x)),
     );
-    this.cards.update((l) => l.map((c) => (c.sistema === s.nome ? { ...c, sistema: novo } : c)));
+    this.cards.update((l) => trocarSistema(l, s.nome, novo));
   }
 
   // origem vira alias do destino e os cards passam para o destino
@@ -151,7 +161,7 @@ export class Store {
         .filter((x) => x.id !== o.id)
         .map((x) => (x.id === d.id ? { ...x, aliases: unicos([...x.aliases, o.nome, ...o.aliases]) } : x)),
     );
-    this.cards.update((l) => l.map((c) => (c.sistema === o.nome ? { ...c, sistema: d.nome } : c)));
+    this.cards.update((l) => trocarSistema(l, o.nome, d.nome));
   }
 
   removerAlias(id: string, alias: string) {
@@ -186,6 +196,14 @@ function upsert<T extends { id: string }>(lista: T[], item: T): T[] {
 }
 
 const unicos = (l: string[]) => [...new Set(l)];
+
+function trocarSistema(cards: Card[], de: string, para: string) {
+  return cards.map((c) =>
+    partes(c.sistema).includes(de)
+      ? { ...c, sistema: unicos(partes(c.sistema).map((x) => (x === de ? para : x))).join(', ') }
+      : c,
+  );
+}
 
 function mesclarSistemasPorNome(atual: Sistema[], novos: Sistema[]) {
   const l = [...atual];

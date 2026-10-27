@@ -44,6 +44,23 @@
   color-scheme: dark;
 }
 
+:root[data-cor='vermelho'] {
+  --acento: #c9363e;
+  --acento-bg: #fbe3e5;
+}
+:root[data-cor='verde'] {
+  --acento: #2b8a47;
+  --acento-bg: #dff2e5;
+}
+:root[data-theme='dark'][data-cor='vermelho'] {
+  --acento: #ff7b84;
+  --acento-bg: #401f24;
+}
+:root[data-theme='dark'][data-cor='verde'] {
+  --acento: #5ccf7f;
+  --acento-bg: #1a3424;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -201,4 +218,31 @@ label.campo {
   color: var(--texto-2);
   text-align: center;
   padding: 40px;
+}
+
+.menu {
+  position: fixed;
+  z-index: 60;
+  min-width: 160px;
+  padding: 4px;
+  display: grid;
+  background: var(--bg-elev);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+}
+.menu > button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.menu > button:hover {
+  background: var(--hover);
+}
+.menu > .perigo {
+  color: var(--perigo);
 }

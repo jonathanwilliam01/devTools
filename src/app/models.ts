@@ -49,8 +49,12 @@ export interface Tarefa {
   concluido?: string | null;
 }
 
+export type CampoCard = 'sistema' | 'area' | 'time' | 'linguagem';
+
 export interface Config {
   senha?: { salt: string; verificador: string } | null;
+  // label do GitHub (chaveNome) -> campo do card
+  labels?: Record<string, CampoCard | 'ignorar'>;
 }
 
 export interface Dados {
@@ -95,6 +99,8 @@ export const CORES = ['', 'amarelo', 'verde', 'azul', 'roxo', 'vermelho'];
 export const novoId = () => crypto.randomUUID?.() ?? Date.now().toString(36) + Math.random().toString(36).slice(2);
 export const hoje = () => new Date().toLocaleDateString('sv-SE');
 export const dataBr = (d: string) => d.split('-').reverse().join('/');
+// lista separada por vírgula (sistema, área, linguagem)
+export const partes = (s: string) => [...new Set((s ?? '').split(',').map((x) => x.trim()).filter(Boolean))];
 export const chaveNome = (s: string) =>
   s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
 

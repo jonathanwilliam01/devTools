@@ -24,9 +24,27 @@
       {{ cofre.ativo() && !cofre.bloqueado() ? '🔓' : '🔒' }}
     </button>
     <button class="btn ghost icone" (click)="ui.painel.set('atalhos')" title="Atalhos (?)">⌨</button>
-    <button class="btn ghost icone" (click)="alternarTema()" [title]="'Tema ' + (tema() === 'dark' ? 'claro' : 'escuro')">
-      {{ tema() === 'dark' ? '☀' : '☾' }}
-    </button>
+    <span class="tema">
+      <button class="btn ghost icone" (click)="menuTema.set(!menuTema()); $event.stopPropagation()" title="Tema">◐</button>
+      @if (menuTema()) {
+        <div class="menu menu-tema" (click)="$event.stopPropagation()">
+          @for (m of MODOS; track m.valor) {
+            <span>{{ m.label }}</span>
+            <div class="cores">
+              @for (c of CORES_TEMA; track c.valor) {
+                <button
+                  class="cor"
+                  [class.ativa]="tema() === m.valor && cor() === c.valor"
+                  [style.background]="c[m.valor]"
+                  [title]="m.label + ' ' + c.valor"
+                  (click)="escolherTema(m.valor, c.valor)"
+                ></button>
+              }
+            </div>
+          }
+        </div>
+      }
+    </span>
   </div>
 </header>
 

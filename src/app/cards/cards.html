@@ -131,16 +131,18 @@
                 <a [href]="url(c)" target="_blank" rel="noopener">#{{ c.numero }}</a>
               </td>
               <td class="desc">{{ c.descricao }}</td>
-              <td>@if (c.sistema) {<span class="tag">{{ c.sistema }}</span>}</td>
+              <td>
+                @for (n of partes(c.sistema); track n) {
+                  <span class="tag">{{ n }}</span>
+                }
+              </td>
               <td>{{ c.area }}</td>
               <td>{{ c.time }}</td>
               <td>{{ c.linguagem }}</td>
               <td class="data">{{ dataBr(c.data) }}</td>
               <td class="obs" [title]="c.obs">{{ c.obs }}</td>
               <td class="acoes-linha">
-                <button class="btn mini ghost" (click)="ui.copiar(url(c), 'Link copiado')" title="Copiar link">⧉</button>
-                <button class="btn mini ghost" (click)="editar(c)" title="Editar">✎</button>
-                <button class="btn mini ghost perigo" (click)="remover(c)" title="Remover">✕</button>
+                <button class="btn mini ghost" data-abre-menu [class.aberto]="menu()?.card === c" (click)="abrirMenu(c, $event)" title="Ações">⋮</button>
               </td>
             </tr>
           }
@@ -160,7 +162,7 @@
       <div class="grade">
         <label class="campo">
           Número do card
-          <input type="number" name="numero" [(ngModel)]="f.numero" required autofocus />
+          <input type="number" name="numero" [(ngModel)]="f.numero" (change)="buscarIssue(f)" required autofocus />
         </label>
         <label class="campo">
           Data de conclusão
@@ -168,23 +170,11 @@
         </label>
         <label class="campo">
           Sistema
-          <select name="sistema" [ngModel]="novoSistema() ? NOVO : f.sistema" (ngModelChange)="escolherSistema(f, $event)">
-            <option value="">—</option>
-            @for (s of sistemas(); track s.id) {
-              <option [value]="s.nome">{{ s.nome }}</option>
-            }
-            <option [value]="NOVO">+ Novo sistema…</option>
-          </select>
+          <app-multi [(valor)]="f.sistema" [opcoes]="nomesSistemas()" />
         </label>
-        @if (novoSistema()) {
-          <label class="campo">
-            Nome do novo sistema
-            <input name="novoSistema" [(ngModel)]="nomeNovoSistema" autofocus />
-          </label>
-        }
         <label class="campo">
           Área técnica
-          <input name="area" [(ngModel)]="f.area" list="dl-areas" />
+          <app-multi [(valor)]="f.area" [opcoes]="areas()" />
         </label>
         <label class="campo">
           Time
@@ -192,11 +182,21 @@
         </label>
         <label class="campo">
           Linguagem
-          <input name="linguagem" [(ngModel)]="f.linguagem" list="dl-linguagens" />
+          <app-multi [(valor)]="f.linguagem" [opcoes]="linguagens()" />
         </label>
       </div>
       @if (duplicado(f)) {
         <small class="alerta">Já existe um card com este número.</small>
+      }
+      @if (labelsIssue(); as ls) {
+        <div class="labels-issue">
+          <small class="dica">{{ ls.length ? 'Labels da issue (clique para definir o campo):' : 'A issue não tem labels.' }}</small>
+          @for (l of ls; track l) {
+            <button type="button" class="tag" data-abre-menu [class.mapeada]="campoDaLabel(l)" (click)="abrirMenuLabel(l, $event)">
+              {{ l }}@if (campoDaLabel(l); as c) {<span> → {{ c }}</span>}
+            </button>
+          }
+        </div>
       }
       <label class="campo">
         Descrição
@@ -280,6 +280,19 @@
   </div>
 }
 
-<datalist id="dl-areas">@for (s of areas(); track s) {<option [value]="s"></option>}</datalist>
 <datalist id="dl-times">@for (s of times(); track s) {<option [value]="s"></option>}</datalist>
-<datalist id="dl-linguagens">@for (s of linguagens(); track s) {<option [value]="s"></option>}</datalist>
+
+@if (menu(); as m) {
+  <div class="menu" [style.right.px]="m.direita" [style.left.px]="m.esquerda" [style.top.px]="m.topo" [style.bottom.px]="m.base">
+    @if (m.card; as c) {
+      <button (click)="ui.copiar(url(c), 'Link copiado'); menu.set(null)">⧉ Copiar link</button>
+      <button (click)="editar(c); menu.set(null)">✎ Editar</button>
+      <button class="perigo" (click)="menu.set(null); remover(c)">✕ Remover</button>
+    } @else if (m.label; as l) {
+      @for (c of CAMPOS; track c.valor) {
+        <button (click)="definirLabel(l, c.valor)">{{ c.label }}</button>
+      }
+      <button (click)="definirLabel(l, 'ignorar')">Ignorar</button>
+    }
+  </div>
+}

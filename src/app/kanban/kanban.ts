@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { Store } from '../store';
 import { Ui } from '../ui';
+import { Github } from '../github';
 import { COLUNAS, ISSUE_URL, PRIORIDADES, Prioridade, Status, TIPOS, Tarefa, Tipo, dataBr, diasEntre, hoje, novoId } from '../models';
 
 @Component({
@@ -17,6 +18,7 @@ export class Kanban {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   protected readonly ui = inject(Ui);
+  private readonly github = inject(Github);
   protected readonly COLUNAS = COLUNAS;
   protected readonly PRIORIDADES = PRIORIDADES;
   protected readonly TIPOS = TIPOS;
@@ -90,9 +92,10 @@ export class Kanban {
     const txt = this.rapida().trim();
     if (!txt) return;
     const m = txt.match(/^#?(\d{3,})\s*[-–:]?\s*(.*)$/);
+    const id = novoId();
     this.store.setTarefas([
       {
-        id: novoId(),
+        id,
         titulo: m ? m[2] || `Card #${m[1]}` : txt,
         descricao: '',
         status: 'todo',
@@ -104,6 +107,24 @@ export class Kanban {
       ...this.store.tarefas(),
     ]);
     this.rapida.set('');
+    if (m && !m[2]) this.preencherDoGithub(id, +m[1]);
+  }
+
+  // só número informado: título e descrição vêm da issue
+  private async preencherDoGithub(id: string, n: number) {
+    const i = await this.github.issue(n);
+    const t = this.store.tarefas().find((x) => x.id === id);
+    if (i && t) this.store.salvarTarefa({ ...t, titulo: i.titulo, descricao: t.descricao || i.descricao });
+  }
+
+  async buscarIssue(f: Tarefa) {
+    const n = +(f.numeroCard ?? 0);
+    if (!n || f.titulo.trim()) return;
+    const i = await this.github.issue(n);
+    if (!i) return;
+    this.form.update((x) =>
+      x?.id === f.id && !x.titulo.trim() ? { ...x, titulo: i.titulo, descricao: x.descricao || i.descricao } : x,
+    );
   }
 
   nova(status: Status = 'todo') {

@@ -359,3 +359,31 @@ tr:hover .acoes-linha .btn {
 tbody tr.sep-semana:hover {
   background: none;
 }
+.acoes-linha .btn.aberto {
+  opacity: 1;
+  background: var(--hover);
+}
+
+.labels-issue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.labels-issue .dica {
+  width: 100%;
+}
+.labels-issue button.tag {
+  border: 0;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.labels-issue button.tag:hover {
+  background: var(--hover);
+}
+.labels-issue button.tag.mapeada {
+  background: var(--acento-bg);
+  color: var(--acento);
+}
