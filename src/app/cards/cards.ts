@@ -5,12 +5,20 @@ import { Store } from '../store';
 import { Ui } from '../ui';
 import { Card, ISSUE_URL, MESES, Sistema, chaveNome, dataBr, hoje, novoId } from '../models';
 
+interface Semana {
+  n: number;
+  inicio: number;
+  fim: number;
+  total: number;
+  cards: Card[];
+}
+
 interface Grupo {
   mes: number;
   cards: Card[];
   total: number;
   anteriores: number;
-  semanas: { n: number; qtd: number }[];
+  semanas: Semana[];
 }
 
 interface Barra {
@@ -100,7 +108,7 @@ export class Cards {
         cards: cards.sort((a, b) => b.data.localeCompare(a.data) || b.numero - a.numero),
         total: qtd[mes - 1],
         anteriores: qtd.slice(0, mes - 1).reduce((a, b) => a + b, 0),
-        semanas: semanas(this.ano(), mes, this.doAno().filter((c) => mesDe(c) === mes)),
+        semanas: semanas(this.ano(), mes, cards, this.doAno().filter((c) => mesDe(c) === mes)),
       }));
   });
 
@@ -282,15 +290,27 @@ function barras(valores: string[], max = 8): Barra[] {
   return topo.map(([nome, qtd]) => ({ nome, qtd, pct: Math.round((qtd / total) * 100) }));
 }
 
-// semanas do mês começando na segunda-feira
-function semanas(ano: number, mes: number, cards: Card[]) {
+// semanas do mês começando na segunda-feira, mais recente primeiro
+function semanas(ano: number, mes: number, visiveis: Card[], doMes: Card[]): Semana[] {
   const offset = (new Date(ano, mes - 1, 1).getDay() + 6) % 7;
-  const qtd = new Map<number, number>();
-  cards.forEach((c) => {
-    const n = Math.floor((+c.data.slice(8, 10) - 1 + offset) / 7) + 1;
-    qtd.set(n, (qtd.get(n) ?? 0) + 1);
+  const ultimoDia = new Date(ano, mes, 0).getDate();
+  const semana = (c: Card) => Math.floor((+c.data.slice(8, 10) - 1 + offset) / 7) + 1;
+  const mapa = new Map<number, Semana>();
+  visiveis.forEach((c) => {
+    const n = semana(c);
+    if (!mapa.has(n)) {
+      const inicio = (n - 1) * 7 - offset + 1;
+      mapa.set(n, {
+        n,
+        inicio: Math.max(1, inicio),
+        fim: Math.min(ultimoDia, inicio + 6),
+        total: doMes.filter((x) => semana(x) === n).length,
+        cards: [],
+      });
+    }
+    mapa.get(n)!.cards.push(c);
   });
-  return [...qtd.entries()].sort(([a], [b]) => a - b).map(([n, q]) => ({ n, qtd: q }));
+  return [...mapa.values()].sort((a, b) => b.n - a.n);
 }
 
 function lerPref(chave: string, padrao: string) {

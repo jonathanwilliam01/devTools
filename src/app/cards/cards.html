@@ -98,11 +98,6 @@
       <span class="tag">{{ g.total }} no mês</span>
       <span class="tag">{{ g.anteriores }} meses anteriores</span>
       <span class="tag">{{ g.anteriores + g.total }} acumulado</span>
-      <span class="semanas">
-        @for (s of g.semanas; track s.n) {
-          <span title="{{ s.n }}ª semana">S{{ s.n }}: {{ s.qtd }}</span>
-        }
-      </span>
       <button class="btn mini ghost fim" (click)="copiarMes(g)" title="Copiar lista do mês">Copiar lista</button>
     </header>
 
@@ -122,7 +117,15 @@
           </tr>
         </thead>
         <tbody>
-          @for (c of g.cards; track c.id) {
+          @for (s of g.semanas; track s.n) {
+            <tr class="sep-semana">
+              <td colspan="9">
+                <b>{{ s.n }}ª semana</b>
+                <span>{{ s.inicio }}–{{ s.fim }}/{{ g.mes < 10 ? '0' + g.mes : g.mes }}</span>
+                <span class="qtd-semana">{{ s.cards.length === s.total ? s.total : s.cards.length + ' de ' + s.total }} {{ s.total === 1 ? 'card' : 'cards' }}</span>
+              </td>
+            </tr>
+          @for (c of s.cards; track c.id) {
             <tr>
               <td class="num">
                 <a [href]="url(c)" target="_blank" rel="noopener">#{{ c.numero }}</a>
@@ -140,6 +143,7 @@
                 <button class="btn mini ghost perigo" (click)="remover(c)" title="Remover">✕</button>
               </td>
             </tr>
+          }
           }
         </tbody>
       </table>

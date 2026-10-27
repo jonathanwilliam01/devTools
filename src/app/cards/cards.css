@@ -100,13 +100,6 @@
   color: var(--texto-2);
   font-weight: 400;
 }
-.semanas {
-  display: flex;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--texto-2);
-  font-family: var(--mono);
-}
 .fim {
   margin-left: auto;
 }
@@ -341,4 +334,28 @@ tr:hover .acoes-linha .btn {
 .mesclar {
   width: 150px;
   padding: 4px 8px;
+}
+
+.sep-semana td {
+  padding: 5px 10px;
+  background: var(--acento-bg);
+  border-top: 2px solid var(--acento);
+  font-size: 12px;
+}
+.sep-semana b {
+  color: var(--acento);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 10px;
+}
+.sep-semana span {
+  color: var(--texto-2);
+  font-variant-numeric: tabular-nums;
+}
+.qtd-semana {
+  float: right;
+  font-weight: 600;
+}
+tbody tr.sep-semana:hover {
+  background: none;
 }
