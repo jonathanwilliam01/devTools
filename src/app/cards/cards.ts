@@ -164,7 +164,7 @@ export class Cards {
     this.labelsIssue.set(null);
     this.form.set({
       id: novoId(),
-      numero: 0,
+      numero: null as unknown as number,
       descricao: '',
       sistema: '',
       area: '',
