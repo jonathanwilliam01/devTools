@@ -186,3 +186,23 @@
   background: var(--nota-amarelo);
   color: var(--texto);
 }
+.rotulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.desc-vis {
+  max-height: 40vh;
+  overflow: auto;
+  padding: 7px 10px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--texto);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.desc-vis img {
+  max-width: 100%;
+}

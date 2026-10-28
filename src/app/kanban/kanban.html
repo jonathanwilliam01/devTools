@@ -119,8 +119,17 @@
         </label>
       </div>
       <label class="campo">
-        Descrição / anotações
-        <textarea name="descricao" rows="5" [(ngModel)]="f.descricao"></textarea>
+        <span class="rotulo">
+          Descrição / anotações
+          @if (temHtml(f.descricao)) {
+            <button type="button" class="btn mini ghost" (click)="verHtml.set(!verHtml())">{{ verHtml() ? 'Editar' : 'Visualizar' }}</button>
+          }
+        </span>
+        @if (verHtml() && temHtml(f.descricao)) {
+          <div class="desc-vis" [innerHTML]="f.descricao"></div>
+        } @else {
+          <textarea name="descricao" rows="5" [(ngModel)]="f.descricao"></textarea>
+        }
       </label>
       <div class="rodape">
         <button type="button" class="btn perigo ghost" style="margin-right: auto" (click)="remover(f)">Excluir</button>

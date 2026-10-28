@@ -29,6 +29,7 @@ export class Kanban {
   protected readonly prioridade = signal<Prioridade | ''>('');
   protected readonly rapida = signal('');
   protected readonly form = signal<Tarefa | null>(null);
+  protected readonly verHtml = signal(true);
 
   private readonly visivel = (t: Tarefa) => {
     const b = this.busca().toLowerCase().trim();
@@ -142,7 +143,12 @@ export class Kanban {
   }
 
   editar(t: Tarefa) {
+    this.verHtml.set(true);
     this.form.set({ ...t });
+  }
+
+  temHtml(s: string) {
+    return /<[a-z][^>]*>/i.test(s);
   }
 
   salvar() {
