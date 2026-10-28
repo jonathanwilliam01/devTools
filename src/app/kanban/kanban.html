@@ -60,7 +60,7 @@
               <span class="prazo" [attr.data-nivel]="p.nivel" [title]="'Prazo: ' + t.prazo">⏱ {{ p.texto }}</span>
             }
             @if (t.descricao) {
-              <p>{{ t.descricao }}</p>
+              <div class="desc" [innerHTML]="t.descricao"></div>
             }
             @if (podeRegistrar(t)) {
               <button class="btn mini registrar" (click)="$event.stopPropagation(); registrarCard(t)">
