@@ -9,6 +9,7 @@ export interface Issue {
   titulo: string;
   descricao: string;
   labels: string[];
+  descLabels: Record<string, string>;
   // campos do GitHub Projects e linhas "Campo: valor" do corpo
   campos: [string, string][];
 }
@@ -38,6 +39,7 @@ export class Github {
         titulo: j.title,
         descricao: corpo.trim(),
         labels: (j.labels ?? []).map((l: any) => l.name ?? l),
+        descLabels: Object.fromEntries((j.labels ?? []).filter((l: any) => l.description).map((l: any) => [l.name, l.description])),
         campos: [...(await this.camposProjeto(n)), ...doCorpo],
       };
     }

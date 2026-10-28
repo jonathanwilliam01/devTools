@@ -91,6 +91,7 @@ export class Store {
     this.tarefas.update((a) => mesclar(a, d.tarefas));
     this.vars.update((v) => ({ ...d.vars, ...v }));
     this.sincronizarSistemas();
+    this.config.update((c) => ({ ...c, labels: { ...d.config?.labels, ...c.labels } }));
     const senhaArq = d.config?.senha;
     if (!senhaArq) return '';
     if (!this.config().senha) {

@@ -6,6 +6,7 @@ import { Ui } from '../ui';
 import { Card, CampoCard, ISSUE_URL, MESES, Sistema, chaveNome, dataBr, hoje, novoId, partes } from '../models';
 import { Multi } from '../multi';
 import { Github, Issue } from '../github';
+import { Destino, LABELS_PADRAO, SIGLAS_AREA, chavesLabel, destinoLabel, semPrefixo } from '../labels';
 
 interface Semana {
   n: number;
@@ -119,7 +120,8 @@ export class Cards {
   protected readonly form = signal<Card | null>(null);
   protected readonly CAMPOS = CAMPOS;
   protected readonly labelsIssue = signal<string[] | null>(null);
-  protected readonly mapaLabels = computed(() => this.store.config().labels ?? {});
+  private readonly descLabels = signal<Record<string, string>>({});
+  protected readonly mapaLabels = computed(() => ({ ...LABELS_PADRAO, ...this.store.config().labels }));
   protected readonly menu = signal<{ card?: Card; label?: string; direita?: number; esquerda?: number; topo?: number; base?: number } | null>(null);
 
   protected readonly painelSistemas = signal(false);
@@ -189,6 +191,7 @@ export class Cards {
     if (!i) return;
     const l = this.camposDaIssue(i);
     this.labelsIssue.set(i.labels);
+    this.descLabels.set(i.descLabels);
     this.form.update((x) =>
       x?.id === f.id
         ? {
@@ -222,9 +225,9 @@ export class Cards {
     ];
     const pares = [...i.campos];
     for (const label of i.labels) {
-      const mapa = this.mapaLabels()[chaveNome(label)];
+      const mapa = destinoLabel(this.mapaLabels(), label, i.descLabels[label]);
       if (mapa) {
-        if (mapa !== 'ignorar') pares.push([mapa, label]);
+        if (mapa !== 'ignorar') pares.push([mapa, this.valorLabel(label, mapa)]);
         continue;
       }
       const m = label.match(/^([^:/]+)[:/](.+)$/);
@@ -248,18 +251,28 @@ export class Cards {
   }
 
   campoDaLabel(label: string) {
-    const c = this.mapaLabels()[chaveNome(label)];
+    const c = destinoLabel(this.mapaLabels(), label, this.descLabels()[label]);
     return c === 'ignorar' ? 'ignorada' : CAMPOS.find((x) => x.valor === c)?.label;
   }
 
-  // lembra o campo da label e já aplica no formulário (sai dos outros campos)
-  definirLabel(label: string, campo: CampoCard | 'ignorar') {
-    this.store.config.update((c) => ({ ...c, labels: { ...c.labels, [chaveNome(label)]: campo } }));
-    const valor = campo === 'sistema' ? this.store.normalizarSistema(label) : label;
+  // App-ISSW vira o sistema ISSW; Arrecadação vira ARR
+  private valorLabel(label: string, campo: Destino) {
+    if (campo === 'area') return SIGLAS_AREA[chaveNome(label)] ?? label;
+    if (campo !== 'sistema') return label;
+    const n = this.store.normalizarSistema(label);
+    return n !== label.trim() ? n : this.store.normalizarSistema(semPrefixo(label));
+  }
+
+  // lembra o campo da label e da família dela (descrição e prefixo) e já aplica no formulário
+  definirLabel(label: string, campo: Destino) {
+    const familia = Object.fromEntries(chavesLabel(label, this.descLabels()[label]).map((k) => [k, campo]));
+    this.store.config.update((c) => ({ ...c, labels: { ...c.labels, ...familia } }));
+    const valor = this.valorLabel(label, campo);
+    const antigos = [label, valor, this.valorLabel(label, 'sistema'), this.valorLabel(label, 'area')];
     this.form.update((x) => {
       if (!x) return x;
       const f = { ...x };
-      for (const { valor: c } of CAMPOS) f[c] = partes(f[c]).filter((v) => v !== label && v !== valor).join(', ');
+      for (const { valor: c } of CAMPOS) f[c] = partes(f[c]).filter((v) => !antigos.includes(v)).join(', ');
       if (campo === 'time') f.time = valor;
       else if (campo !== 'ignorar') f[campo] = partes(`${f[campo]},${valor}`).join(', ');
       return f;
