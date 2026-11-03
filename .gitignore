@@ -49,3 +49,6 @@ devtools-*.json
 
 # gerado no build
 src/app/versao.ts
+
+# token do servidor local de SQL
+.sql-token
