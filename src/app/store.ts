@@ -1,5 +1,5 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
-import { Card, Config, Dados, Nota, Sistema, Tarefa, chaveNome, novoId, partes } from './models';
+import { Card, Config, Dados, Nota, Sistema, Tarefa, chaveNome, hoje, novoId, partes } from './models';
 import { StatusCookie, lerCookies, salvarCookies } from './persist';
 
 const CHAVE = 'devtools:dados';
@@ -105,6 +105,12 @@ export class Store {
 
   salvarCard(c: Card) {
     this.cards.update((l) => upsert(l, { ...c, sistema: this.garantirSistemas(c.sistema) }));
+    // card registrado conclui a tarefa do kanban com o mesmo número
+    if (this.tarefas().some((t) => t.numeroCard === c.numero && t.status !== 'done')) {
+      this.tarefas.update((l) =>
+        l.map((t) => (t.numeroCard === c.numero && t.status !== 'done' ? { ...t, status: 'done', concluido: c.data || hoje() } : t)),
+      );
+    }
   }
   removerCard(id: string) {
     this.cards.update((l) => l.filter((x) => x.id !== id));

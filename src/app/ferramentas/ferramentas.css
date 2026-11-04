@@ -1,0 +1,372 @@
+/* sem encapsulamento: estilos compartilhados pelas ferramentas, todos sob .ferr */
+.ferr {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.ferr-menu {
+  position: sticky;
+  top: 16px;
+  display: grid;
+  gap: 14px;
+}
+.ferr-grupo {
+  display: grid;
+  gap: 2px;
+}
+.ferr-menu h3 {
+  margin: 0 0 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--texto-2);
+}
+.ferr-menu a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  color: var(--texto);
+  text-decoration: none;
+  font-size: 14px;
+}
+.ferr-menu a:hover {
+  background: var(--hover);
+}
+.ferr-menu a.ativo {
+  background: var(--acento-bg);
+  color: var(--acento);
+  font-weight: 600;
+}
+.ferr-menu .ico {
+  flex: none;
+  width: 28px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--bg-2);
+  color: var(--texto-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+.ferr-menu a.ativo .ico {
+  background: var(--acento);
+  color: var(--bg-elev);
+}
+.ferr-nada {
+  color: var(--texto-2);
+  font-size: 13px;
+  margin: 0 10px;
+}
+
+.ferr-cabeca {
+  margin-bottom: 18px;
+}
+.ferr-trilha {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--acento);
+}
+.ferr-cabeca h2 {
+  margin: 2px 0 4px;
+  font-size: 22px;
+  font-weight: 600;
+}
+.ferr-cabeca p {
+  margin: 0;
+  color: var(--texto-2);
+}
+
+/* blocos das ferramentas */
+.ferr .ft {
+  display: grid;
+  gap: 16px;
+}
+.ferr .ft-duas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.ferr .ft-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 14px;
+}
+.ferr .ft-painel {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  background: var(--bg-elev);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  padding: 16px;
+}
+.ferr .ft-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--texto-2);
+}
+.ferr .ft-titulo .ft-selo,
+.ferr .ft-titulo .ft-chk {
+  text-transform: none;
+  letter-spacing: 0;
+}
+.ferr .ft-titulo .fim,
+.ferr .ft-linha .fim {
+  margin-left: auto;
+}
+.ferr .ft-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.ferr .ft-linha > input,
+.ferr .ft-linha > select {
+  width: auto;
+}
+.ferr .ft-rotulo {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--texto-2);
+}
+.ferr .ft-chk {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--texto-2);
+  cursor: pointer;
+  user-select: none;
+}
+.ferr .ft-chk input {
+  width: auto;
+  accent-color: var(--acento);
+}
+.ferr textarea.ft-texto {
+  font-family: var(--mono);
+  font-size: 13px;
+  min-height: 160px;
+  line-height: 1.5;
+}
+.ferr textarea.ft-texto[readonly] {
+  background: var(--bg-2);
+}
+.ferr .ft-mono {
+  font-family: var(--mono);
+}
+
+/* segmentado */
+.ferr .ft-seg {
+  display: inline-flex;
+  justify-self: start;
+  padding: 2px;
+  gap: 2px;
+  border-radius: 8px;
+  background: var(--bg-2);
+}
+.ferr .ft-seg button {
+  all: unset;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--texto-2);
+  cursor: pointer;
+}
+.ferr .ft-seg button:hover {
+  color: var(--texto);
+}
+.ferr .ft-seg button.on {
+  background: var(--bg-elev);
+  color: var(--acento);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+}
+
+/* valor grande copiável */
+.ferr .ft-valor {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--bg-2);
+  font-family: var(--mono);
+  font-size: 16px;
+  cursor: copy;
+  word-break: break-all;
+}
+.ferr .ft-valor:hover,
+.ferr .ft-valor:focus-visible {
+  border-color: var(--acento);
+}
+.ferr .ft-valor::after {
+  content: '⧉';
+  opacity: 0.35;
+  font-size: 14px;
+}
+.ferr .ft-valor:hover::after {
+  opacity: 1;
+  color: var(--acento);
+}
+
+/* tabela rótulo / valor */
+.ferr .ft-kv {
+  display: grid;
+  grid-template-columns: minmax(120px, max-content) minmax(0, 1fr);
+  margin: 0;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ferr .ft-kv > dt,
+.ferr .ft-kv > dd {
+  padding: 8px 12px;
+  border-top: 1px solid var(--borda);
+}
+.ferr .ft-kv > :nth-child(-n + 2) {
+  border-top: 0;
+}
+.ferr .ft-kv > dt {
+  background: var(--bg-2);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--texto-2);
+}
+.ferr .ft-kv > dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.ferr .ft-copia {
+  cursor: copy;
+}
+.ferr .ft-copia:hover {
+  color: var(--acento);
+  background: var(--acento-bg);
+}
+
+/* tabela de resultados */
+.ferr .ft-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.ferr .ft-tabela th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--texto-2);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--borda);
+}
+.ferr .ft-tabela td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--borda);
+}
+.ferr .ft-tabela tr:last-child td {
+  border-bottom: 0;
+}
+.ferr .ft-tabela td.ft-mono {
+  word-break: break-all;
+}
+
+/* selos de status */
+.ferr .ft-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--bg-2);
+  color: var(--texto-2);
+}
+.ferr .ft-selo.ok {
+  background: color-mix(in srgb, var(--p-baixa) 16%, transparent);
+  color: var(--p-baixa);
+}
+.ferr .ft-selo.erro {
+  background: color-mix(in srgb, var(--perigo) 14%, transparent);
+  color: var(--perigo);
+}
+.ferr .ft-aviso {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: color-mix(in srgb, var(--perigo) 10%, transparent);
+  color: var(--perigo);
+  border: 1px solid color-mix(in srgb, var(--perigo) 30%, transparent);
+}
+.ferr .ft-aviso.ok {
+  background: color-mix(in srgb, var(--p-baixa) 10%, transparent);
+  color: var(--p-baixa);
+  border-color: color-mix(in srgb, var(--p-baixa) 30%, transparent);
+}
+.ferr .ft-dica {
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-2);
+}
+.ferr .ft-grande {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+@media (max-width: 800px) {
+  .ferr {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .ferr-menu {
+    position: static;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 4px;
+  }
+  .ferr-menu input {
+    display: none;
+  }
+  .ferr-grupo {
+    display: contents;
+  }
+  .ferr-menu h3 {
+    display: none;
+  }
+  .ferr-menu a {
+    flex: none;
+    border: 1px solid var(--borda);
+  }
+}

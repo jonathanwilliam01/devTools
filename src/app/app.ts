@@ -99,7 +99,7 @@ export class App {
     }
     const alvo = e.target as HTMLElement;
     if (e.ctrlKey || e.metaKey || e.altKey || this.ui.painel() || alvo.closest('input, textarea, select, [contenteditable]')) return;
-    const rotas: Record<string, string> = { '1': '/cards', '2': '/notas', '3': '/kanban' };
+    const rotas: Record<string, string> = { '1': '/cards', '2': '/notas', '3': '/kanban', '4': '/ferramentas' };
     if (e.key === '/') document.querySelector<HTMLInputElement>('[data-busca]')?.focus();
     else if (e.key === 'n') this.ui.atalhos.next('novo');
     else if (e.key === '?') this.ui.painel.set('atalhos');

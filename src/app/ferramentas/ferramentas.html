@@ -1,0 +1,46 @@
+<div class="ferr">
+  <aside class="ferr-menu">
+    <input
+      data-busca
+      type="search"
+      placeholder="Buscar ferramenta... ( / )"
+      [(ngModel)]="busca"
+      (keydown.enter)="abrirPrimeira()"
+    />
+    @for (g of grupos(); track g.nome) {
+      <div class="ferr-grupo">
+        <h3>{{ g.nome }}</h3>
+        @for (f of g.itens; track f.id) {
+          <a [routerLink]="['/ferramentas', f.id]" [class.ativo]="f.id === atual().id" (click)="lembrar(f.id)">
+            <span class="ico">{{ f.icone }}</span>
+            {{ f.nome }}
+          </a>
+        }
+      </div>
+    } @empty {
+      <p class="ferr-nada">Nada encontrado.</p>
+    }
+  </aside>
+
+  <section class="ferr-corpo">
+    <header class="ferr-cabeca">
+      <span class="ferr-trilha">{{ atual().grupo }}</span>
+      <h2>{{ atual().nome }}</h2>
+      <p>{{ atual().desc }}</p>
+    </header>
+
+    @switch (atual().id) {
+      @case ('gerador') { <ft-gerador /> }
+      @case ('validador') { <ft-validador /> }
+      @case ('mascara') { <ft-mascara /> }
+      @case ('boleto') { <ft-boleto /> }
+      @case ('datas') { <ft-datas /> }
+      @case ('tempo') { <ft-tempo /> }
+      @case ('sql') { <ft-sql /> }
+      @case ('formatador') { <ft-formatador /> }
+      @case ('base64') { <ft-base64 /> }
+      @case ('jwt') { <ft-jwt /> }
+      @case ('hash') { <ft-hash /> }
+    }
+  </section>
+</div>

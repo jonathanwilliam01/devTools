@@ -12,6 +12,7 @@
         <span class="alerta-nav" title="Tarefas com prazo vencido">{{ atrasadas() }}</span>
       }
     </a>
+    <a routerLink="/ferramentas" routerLinkActive="ativo">Ferramentas</a>
   </nav>
   <div class="acoes">
     <button class="btn ghost" (click)="ui.painel.set('dados')" title="Backup, importar e exportar">
@@ -83,8 +84,8 @@
         <h2>Atalhos</h2>
         <dl>
           <dt><kbd>/</kbd></dt><dd>Buscar</dd>
-          <dt><kbd>n</kbd></dt><dd>Novo (card, nota ou tarefa)</dd>
-          <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dt><dd>Cards, Notas, Kanban</dd>
+          <dt><kbd>n</kbd></dt><dd>Novo (card, nota ou tarefa) / gerar de novo</dd>
+          <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Cards, Notas, Kanban, Ferramentas</dd>
           <dt><kbd>Esc</kbd></dt><dd>Fechar janela</dd>
           <dt><kbd>Ctrl</kbd> + <kbd>Enter</kbd></dt><dd>Salvar formulário</dd>
           <dt><kbd>?</kbd></dt><dd>Esta ajuda</dd>
