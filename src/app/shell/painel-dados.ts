@@ -65,6 +65,7 @@ import { ISSUE_URL, hoje } from '../models';
         <section>
           <h3>GitHub</h3>
           <p>Com o token, informar o nº do card preenche os dados da issue: título, descrição, labels e campos do quadro (Cards e Kanban).</p>
+          <p>Issues atribuídas a você entram no kanban sozinhas, e quando a issue vai para <b>Validar</b> no quadro o card é registrado com a linguagem e o "o que foi feito" do comentário de entrega. Isso exige a permissão de <b>Projects</b> abaixo; sem ela nada é registrado.</p>
           <div class="linha">
             <input type="password" name="token" [(ngModel)]="token" placeholder="github_pat_..." autocomplete="off" />
             <button class="btn primario" (click)="salvarToken()">Salvar</button>
@@ -78,7 +79,7 @@ import { ISSUE_URL, hoje } from '../models';
               <li>Nome e validade à escolha. <b>Resource owner</b>: {{ dono }}.</li>
               <li><b>Repository access</b>: <i>Only select repositories</i> → {{ repo }}.</li>
               <li><b>Permissions</b> → <b>Repository permissions</b> → <b>Issues</b>: <i>Read-only</i> (Metadata entra sozinho).</li>
-              <li>Para ler os campos do quadro (Sistema, Área, Time, Linguagem): <b>Organization permissions</b> → <b>Projects</b>: <i>Read-only</i>.</li>
+              <li>Para ler os campos e o Status do quadro (Sistema, Área, Time, Linguagem, registro ao ir para Validar): <b>Organization permissions</b> → <b>Projects</b>: <i>Read-only</i>.</li>
               <li><b>Generate token</b>, copiar e colar acima. Se a organização exigir aprovação, aguardar um admin aprovar.</li>
               <li>Alternativa se o fine-grained for bloqueado: <i>Tokens (classic)</i> com os escopos <b>repo</b> e <b>read:project</b>.</li>
             </ol>

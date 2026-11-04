@@ -129,6 +129,9 @@
             <tr>
               <td class="num">
                 <a [href]="url(c)" target="_blank" rel="noopener">#{{ c.numero }}</a>
+                @if (c.incompleto) {
+                  <span class="tag aviso" title="Registrado ao ir para Validar; falta linguagem ou o que foi feito">incompleto</span>
+                }
               </td>
               <td class="desc">{{ c.descricao }}</td>
               <td>

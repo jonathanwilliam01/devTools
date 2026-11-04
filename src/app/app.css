@@ -148,7 +148,8 @@ kbd {
   color: var(--texto-2);
 }
 .cores {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 22px);
   gap: 6px;
 }
 .cor {

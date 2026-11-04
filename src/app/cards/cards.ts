@@ -5,8 +5,8 @@ import { Store } from '../store';
 import { Ui } from '../ui';
 import { Card, CampoCard, ISSUE_URL, MESES, Sistema, chaveNome, dataBr, hoje, novoId, partes } from '../models';
 import { Multi } from '../multi';
-import { Github, Issue } from '../github';
-import { Destino, LABELS_PADRAO, SIGLAS_AREA, chavesLabel, destinoLabel, semPrefixo } from '../labels';
+import { Github } from '../github';
+import { Destino, chavesLabel, destinoLabel } from '../labels';
 
 interface Semana {
   n: number;
@@ -96,9 +96,9 @@ export class Cards {
 
   protected readonly sistemas = computed(() => [...this.store.sistemas()].sort((a, b) => a.nome.localeCompare(b.nome)));
   protected readonly nomesSistemas = computed(() => this.sistemas().map((s) => s.nome));
-  protected readonly areas = computed(() => unicos(this.store.cards().flatMap((c) => partes(c.area))));
-  protected readonly times = computed(() => unicos(this.store.cards().map((c) => c.time)));
-  protected readonly linguagens = computed(() => unicos(this.store.cards().flatMap((c) => partes(c.linguagem))));
+  protected readonly areas = this.store.areas;
+  protected readonly times = this.store.times;
+  protected readonly linguagens = this.store.linguagens;
 
   protected readonly filtrados = computed(() => {
     const termo = normalizar(this.busca());
@@ -129,7 +129,6 @@ export class Cards {
   protected readonly CAMPOS = CAMPOS;
   protected readonly labelsIssue = signal<string[] | null>(null);
   private readonly descLabels = signal<Record<string, string>>({});
-  protected readonly mapaLabels = computed(() => ({ ...LABELS_PADRAO, ...this.store.config().labels }));
   protected readonly menu = signal<{ card?: Card; label?: string; exportar?: boolean; direita?: number; esquerda?: number; topo?: number; base?: number } | null>(null);
 
   protected readonly painelSistemas = signal(false);
@@ -252,7 +251,7 @@ export class Cards {
     if (!n || this.store.cards().some((c) => c.id === f.id)) return;
     const i = await this.github.issue(n);
     if (!i) return;
-    const l = this.camposDaIssue(i);
+    const l = this.store.camposDaIssue(i);
     this.labelsIssue.set(i.labels);
     this.descLabels.set(i.descLabels);
     this.form.update((x) =>
@@ -269,69 +268,17 @@ export class Cards {
     );
   }
 
-  // "Campo: valor" (label, quadro ou corpo) vai direto; label solta usa o mapa aprendido ou os valores já usados
-  private camposDaIssue(i: Issue) {
-    const campos = { sistema: [] as string[], area: [] as string[], time: [] as string[], linguagem: [] as string[] };
-    const campoDe = (k: string): keyof typeof campos | undefined => {
-      const c = chaveNome(k);
-      if (c.startsWith('SISTEMA')) return 'sistema';
-      if (c.startsWith('AREA')) return 'area';
-      if (c === 'TIME' || c === 'EQUIPE') return 'time';
-      if (c.startsWith('LINGUAGEM') || c === 'LANG') return 'linguagem';
-      return undefined;
-    };
-    const conhecidos: [keyof typeof campos, string[]][] = [
-      ['sistema', this.store.sistemas().flatMap((s) => [s.nome, ...s.aliases])],
-      ['area', this.areas()],
-      ['time', this.times()],
-      ['linguagem', this.linguagens()],
-    ];
-    const pares = [...i.campos];
-    for (const label of i.labels) {
-      const mapa = destinoLabel(this.mapaLabels(), label, i.descLabels[label]);
-      if (mapa) {
-        if (mapa !== 'ignorar') pares.push([mapa, this.valorLabel(label, mapa)]);
-        continue;
-      }
-      const m = label.match(/^([^:/]+)[:/](.+)$/);
-      if (m && campoDe(m[1])) {
-        pares.push([m[1], m[2].trim()]);
-        continue;
-      }
-      const achado = conhecidos.find(([, lista]) => lista.some((x) => chaveNome(x) === chaveNome(label)));
-      if (achado) pares.push([achado[0], label]);
-    }
-    for (const [k, v] of pares) {
-      const c = campoDe(k);
-      if (c) campos[c].push(c === 'sistema' ? this.store.normalizarSistema(v) : v);
-    }
-    return {
-      sistema: partes(campos.sistema.join(',')).join(', '),
-      area: partes(campos.area.join(',')).join(', '),
-      time: campos.time[0] ?? '',
-      linguagem: partes(campos.linguagem.join(',')).join(', '),
-    };
-  }
-
   campoDaLabel(label: string) {
-    const c = destinoLabel(this.mapaLabels(), label, this.descLabels()[label]);
+    const c = destinoLabel(this.store.mapaLabels(), label, this.descLabels()[label]);
     return c === 'ignorar' ? 'ignorada' : CAMPOS.find((x) => x.valor === c)?.label;
-  }
-
-  // App-ISSW vira o sistema ISSW; Arrecadação vira ARR
-  private valorLabel(label: string, campo: Destino) {
-    if (campo === 'area') return SIGLAS_AREA[chaveNome(label)] ?? label;
-    if (campo !== 'sistema') return label;
-    const n = this.store.normalizarSistema(label);
-    return n !== label.trim() ? n : this.store.normalizarSistema(semPrefixo(label));
   }
 
   // lembra o campo da label e da família dela (descrição e prefixo) e já aplica no formulário
   definirLabel(label: string, campo: Destino) {
     const familia = Object.fromEntries(chavesLabel(label, this.descLabels()[label]).map((k) => [k, campo]));
     this.store.config.update((c) => ({ ...c, labels: { ...c.labels, ...familia } }));
-    const valor = this.valorLabel(label, campo);
-    const antigos = [label, valor, this.valorLabel(label, 'sistema'), this.valorLabel(label, 'area')];
+    const valor = this.store.valorLabel(label, campo);
+    const antigos = [label, valor, this.store.valorLabel(label, 'sistema'), this.store.valorLabel(label, 'area')];
     this.form.update((x) => {
       if (!x) return x;
       const f = { ...x };
@@ -387,7 +334,7 @@ export class Cards {
     const ids = new Set(this.store.cards().map((c) => c.id));
     const padrao = `c-${+f.numero}-${f.data}`;
     const id = ids.has(f.id) || ids.has(padrao) ? f.id : padrao;
-    this.store.salvarCard({ ...f, id, numero: +f.numero, descricao: f.descricao.trim() });
+    this.store.salvarCard({ ...f, id, numero: +f.numero, descricao: f.descricao.trim(), incompleto: undefined });
     this.ano.set(+f.data.slice(0, 4));
     this.form.set(null);
     this.ui.avisar('Card salvo');
@@ -511,7 +458,6 @@ const CAMPOS: { valor: CampoCard; label: string }[] = [
 ];
 
 const mesDe = (c: Card) => +c.data.slice(5, 7);
-const unicos = (l: string[]) => [...new Set(l.filter(Boolean))].sort();
 const normalizar = (s: string) =>
   s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 

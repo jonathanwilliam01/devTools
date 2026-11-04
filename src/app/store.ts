@@ -1,6 +1,8 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
 import { Card, Config, Dados, Nota, Sistema, Tarefa, chaveNome, hoje, novoId, partes } from './models';
 import { StatusCookie, lerCookies, salvarCookies } from './persist';
+import { Issue } from './github';
+import { Destino, LABELS_PADRAO, LINGUAGEM_PADRAO, SIGLAS_AREA, destinoLabel, semPrefixo } from './labels';
 
 const CHAVE = 'devtools:dados';
 
@@ -26,6 +28,11 @@ export class Store {
     vars: this.vars(),
     config: this.config(),
   }));
+
+  readonly areas = computed(() => unicos(this.cards().flatMap((c) => partes(c.area))).sort());
+  readonly times = computed(() => unicos(this.cards().map((c) => c.time)).filter(Boolean).sort());
+  readonly linguagens = computed(() => unicos(this.cards().flatMap((c) => partes(c.linguagem))).sort());
+  readonly mapaLabels = computed(() => ({ ...LABELS_PADRAO, ...this.config().labels }));
 
   private timerCookie?: ReturnType<typeof setTimeout>;
 
@@ -114,6 +121,64 @@ export class Store {
   }
   removerCard(id: string) {
     this.cards.update((l) => l.filter((x) => x.id !== id));
+  }
+
+  // "Campo: valor" (label, quadro ou corpo) vai direto; label solta usa o mapa aprendido ou os valores já usados
+  camposDaIssue(i: Issue) {
+    const campos = { sistema: [] as string[], area: [] as string[], time: [] as string[], linguagem: [] as string[] };
+    const campoDe = (k: string): keyof typeof campos | undefined => {
+      const c = chaveNome(k);
+      if (c.startsWith('SISTEMA')) return 'sistema';
+      if (c.startsWith('AREA')) return 'area';
+      if (c === 'TIME' || c === 'EQUIPE') return 'time';
+      if (c.startsWith('LINGUAGEM') || c === 'LANG') return 'linguagem';
+      return undefined;
+    };
+    const conhecidos: [keyof typeof campos, string[]][] = [
+      ['sistema', this.sistemas().flatMap((s) => [s.nome, ...s.aliases])],
+      ['area', this.areas()],
+      ['time', this.times()],
+      ['linguagem', this.linguagens()],
+    ];
+    const pares = [...i.campos];
+    for (const label of i.labels) {
+      const mapa = destinoLabel(this.mapaLabels(), label, i.descLabels[label]);
+      if (mapa) {
+        if (mapa !== 'ignorar') pares.push([mapa, this.valorLabel(label, mapa)]);
+        continue;
+      }
+      const m = label.match(/^([^:/]+)[:/](.+)$/);
+      if (m && campoDe(m[1])) {
+        pares.push([m[1], m[2].trim()]);
+        continue;
+      }
+      const achado = conhecidos.find(([, lista]) => lista.some((x) => chaveNome(x) === chaveNome(label)));
+      if (achado) pares.push([achado[0], label]);
+    }
+    for (const [k, v] of pares) {
+      const c = campoDe(k);
+      if (c) campos[c].push(c === 'sistema' ? this.normalizarSistema(v) : v);
+    }
+    return {
+      sistema: partes(campos.sistema.join(',')).join(', '),
+      area: partes(campos.area.join(',')).join(', '),
+      time: campos.time[0] ?? '',
+      linguagem: partes(campos.linguagem.join(',')).join(', ') || this.linguagemPadrao(campos.sistema),
+    };
+  }
+
+  // todos os sistemas precisam estar no mapa, senão volta vazio
+  private linguagemPadrao(sistemas: string[]) {
+    const l = partes(sistemas.join(',')).map((n) => LINGUAGEM_PADRAO[chaveNome(n)]);
+    return l.length && l.every(Boolean) ? unicos(l).join(', ') : '';
+  }
+
+  // App-ISSW vira o sistema ISSW; Arrecadação vira ARR
+  valorLabel(label: string, campo: Destino) {
+    if (campo === 'area') return SIGLAS_AREA[chaveNome(label)] ?? label;
+    if (campo !== 'sistema') return label;
+    const n = this.normalizarSistema(label);
+    return n !== label.trim() ? n : this.normalizarSistema(semPrefixo(label));
   }
 
   // nome canônico pelo nome ou alias; desconhecido volta como veio

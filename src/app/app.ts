@@ -4,7 +4,7 @@ import { Store } from './store';
 import { Ui } from './ui';
 import { Backup } from './backup';
 import { Cofre } from './cofre';
-import { hoje, novoId } from './models';
+import { chaveNome, hoje, novoId } from './models';
 import { Github } from './github';
 import { VERSAO } from './versao';
 import { PainelDados } from './shell/painel-dados';
@@ -47,6 +47,37 @@ export class App {
   private async sincronizarIssues() {
     const l = await this.github.atribuidas();
     if (!l) return;
+    await this.adicionarAtribuidas(l);
+    await this.registrarValidados();
+  }
+
+  // tarefa de card que foi para Validar no quadro vira card registrado; card já registrado não repete (demanda que volta)
+  private async registrarValidados() {
+    const registrados = new Set(this.store.cards().map((c) => c.numero));
+    const tarefas = this.store.tarefas().filter((t) => t.tipo === 'card' && t.numeroCard && !registrados.has(t.numeroCard));
+    const status = await this.github.statusProjeto([...new Set(tarefas.map((t) => t.numeroCard!))]);
+    for (const t of tarefas) {
+      const s = status.get(t.numeroCard!);
+      if (!s || !chaveNome(s.status).includes('VALIDA') || this.store.cards().some((c) => c.numero === t.numeroCard)) continue;
+      const i = await this.github.issue(t.numeroCard!);
+      if (!i) continue;
+      const obs = (await this.github.trabalhoExecutado(t.numeroCard!, i.descricao)) ?? '';
+      const campos = this.store.camposDaIssue(i);
+      this.store.salvarCard({
+        id: `c-${t.numeroCard}-${s.data}`,
+        numero: t.numeroCard!,
+        descricao: t.titulo,
+        ...campos,
+        data: s.data,
+        obs,
+        ...(!campos.linguagem || !obs ? { incompleto: true } : {}),
+      });
+      const falta = [!campos.linguagem && 'linguagem', !obs && 'o que foi feito'].filter(Boolean).join(' e ');
+      this.ui.avisar(`Card #${t.numeroCard} registrado` + (falta ? ` (incompleto: falta ${falta})` : ''));
+    }
+  }
+
+  private async adicionarAtribuidas(l: { numero: number; titulo: string; descricao: string }[]) {
     const vistas = new Set(this.store.config().issuesVistas ?? []);
     const conhecidas = new Set<number | null | undefined>([
       ...this.store.tarefas().map((t) => t.numeroCard),
@@ -121,6 +152,11 @@ const CORES_TEMA = [
   { valor: 'azul', dark: '#6fa3ff', light: '#2f6fde' },
   { valor: 'vermelho', dark: '#ff7b84', light: '#c9363e' },
   { valor: 'verde', dark: '#5ccf7f', light: '#2b8a47' },
+  { valor: 'roxo', dark: '#b293ff', light: '#7c4dcc' },
+  { valor: 'laranja', dark: '#ff9e5c', light: '#c4570f' },
+  { valor: 'rosa', dark: '#ff7ab8', light: '#c2367a' },
+  { valor: 'ciano', dark: '#4fd1de', light: '#0f7f8f' },
+  { valor: 'grafite', dark: '#b0b8c4', light: '#4b5563' },
 ];
 
 function lerPref(chave: string) {

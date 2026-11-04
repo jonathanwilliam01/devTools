@@ -47,7 +47,7 @@ function compactar(d: Dados, qtdCards: number) {
   const cards = [...d.cards]
     .sort((a, b) => b.data.localeCompare(a.data))
     .slice(0, qtdCards)
-    .map((c) => [c.id === idPadrao(c.numero, c.data) ? 0 : c.id, c.numero, c.descricao, c.sistema, c.area, c.time, c.linguagem, c.data, c.obs]);
+    .map((c) => [c.id === idPadrao(c.numero, c.data) ? 0 : c.id, c.numero, c.descricao, c.sistema, c.area, c.time, c.linguagem, c.data, c.obs, c.incompleto ? 1 : 0]);
   // secreto sem senha mestra não vai para cookie (iria em texto puro em todo request)
   const notas = d.notas.map((n) => ({
     ...n,
@@ -90,8 +90,9 @@ export async function lerCookies(): Promise<(Partial<Dados> & { totalCards?: num
     let valor = '';
     for (let i = 0; i < n; i++) valor += mapa[`${PREFIXO}${i}`] ?? '';
     const d = JSON.parse(await descomprimir(valor));
-    d.cards = (d.cards as any[][]).map(([id, numero, descricao, sistema, area, time, linguagem, data, obs]) => ({
+    d.cards = (d.cards as any[][]).map(([id, numero, descricao, sistema, area, time, linguagem, data, obs, incompleto]) => ({
       id: id || idPadrao(numero, data), numero, descricao, sistema, area, time, linguagem, data, obs,
+      ...(incompleto ? { incompleto: true } : {}),
     }));
     return d;
   } catch {

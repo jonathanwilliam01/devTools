@@ -8,6 +8,8 @@ export interface Card {
   linguagem: string;
   data: string; // yyyy-mm-dd
   obs: string;
+  // registrado sozinho ao ir para Validar sem linguagem ou "o que foi feito"
+  incompleto?: boolean;
 }
 
 export interface Sistema {

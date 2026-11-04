@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { ISSUE_URL } from './models';
+import { ISSUE_URL, chaveNome } from './models';
 import { Ui } from './ui';
 
 const CHAVE = 'devtools:gh-token';
@@ -20,6 +20,14 @@ const CAMPOS_PROJETO = `query($o: String!, $r: String!, $n: Int!) {
     ... on ProjectV2ItemFieldTextValue { text field { ... on ProjectV2FieldCommon { name } } }
   } } } } } }
 }`;
+
+const STATUS_PROJETO = (nums: number[]) => `query($o: String!, $r: String!) { repository(owner: $o, name: $r) {
+  ${nums.map((n) => `i${n}: issue(number: ${n}) { projectItems(first: 10) { nodes { fieldValueByName(name: "Status") {
+    ... on ProjectV2ItemFieldSingleSelectValue { name updatedAt } } } } }`).join('\n')}
+} }`;
+
+// títulos que abrem o "o que foi feito" no comentário de entrega
+const SECOES = ['DESCRICAO DA ALTERACAO', 'TRABALHO EXECUTADO'];
 
 // token fica só neste navegador: fora do backup e dos cookies
 @Injectable({ providedIn: 'root' })
@@ -64,6 +72,32 @@ export class Github {
       .flatMap((i: any) => i?.fieldValues?.nodes ?? [])
       .filter((v: any) => v?.field?.name && (v.name ?? v.text))
       .map((v: any) => [v.field.name, v.name ?? v.text]);
+  }
+
+  // Status do quadro por issue, com a data em que mudou; vazio se o token não lê Projects
+  async statusProjeto(nums: number[]): Promise<Map<number, { status: string; data: string }>> {
+    const res = new Map<number, { status: string; data: string }>();
+    if (!nums.length || !this.token()) return res;
+    const [o, r] = ISSUE_URL.split('/').slice(3, 5);
+    const resp = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${this.token()}` },
+      body: JSON.stringify({ query: STATUS_PROJETO(nums), variables: { o, r } }),
+    }).catch(() => null);
+    const j = resp?.ok ? await resp.json().catch(() => null) : null;
+    for (const n of nums) {
+      const v = (j?.data?.repository?.[`i${n}`]?.projectItems?.nodes ?? []).map((x: any) => x?.fieldValueByName).find((x: any) => x?.name);
+      if (v) res.set(n, { status: v.name, data: new Date(v.updatedAt).toLocaleDateString('sv-SE') });
+    }
+    return res;
+  }
+
+  // "o que foi feito" do comentário de entrega mais recente (ou do corpo); null se não deu para consultar
+  async trabalhoExecutado(n: number, corpo: string): Promise<string | null> {
+    const c = await this.chamar(`${API}${n}/comments?per_page=100`);
+    if (!c?.ok) return null;
+    const textos = [corpo, ...((await c.json()) as any[]).map((x) => x.body ?? '')];
+    return textos.map(secaoTrabalho).filter(Boolean).pop() ?? '';
   }
 
   // issues abertas atribuídas ao dono do token, sem PRs; null se não deu para consultar
@@ -115,4 +149,20 @@ function ler() {
   } catch {
     return '';
   }
+}
+
+// linhas entre o título da seção e o próximo título, item numerado ou "---"
+function secaoTrabalho(texto: string) {
+  const titulo = (l: string) => chaveNome(l.replace(/^[\s#*_\d.)-]*|[\s*_:]*$/g, '').replace(/[^\p{L} ]/gu, ''));
+  const fim = (l: string) => /^\s*(#|\d+\s*-\s|\*\*[^*]+\*\*:?\s*$)/.test(l);
+  const linhas = texto.split(/\r?\n/);
+  const ini = linhas.findIndex((l) => SECOES.some((s) => titulo(l.split(':')[0]) === s));
+  if (ini < 0) return '';
+  const resto = linhas[ini].includes(':') ? linhas[ini].slice(linhas[ini].indexOf(':') + 1) : '';
+  const corpo: string[] = [];
+  for (const l of [resto, ...linhas.slice(ini + 1)]) {
+    if (fim(l) || (/^\s*---/.test(l) && corpo.some((x) => x.trim()))) break;
+    corpo.push(l);
+  }
+  return corpo.map((l) => l.replace(/^\s*([-*•]|---)\s*/, '').trim()).filter(Boolean).join('\n');
 }

@@ -60,6 +60,46 @@
   --acento: #5ccf7f;
   --acento-bg: #1a3424;
 }
+:root[data-cor='roxo'] {
+  --acento: #7c4dcc;
+  --acento-bg: #ece4fa;
+}
+:root[data-cor='laranja'] {
+  --acento: #c4570f;
+  --acento-bg: #fbe8da;
+}
+:root[data-cor='rosa'] {
+  --acento: #c2367a;
+  --acento-bg: #fbe1ee;
+}
+:root[data-cor='ciano'] {
+  --acento: #0f7f8f;
+  --acento-bg: #d9f1f4;
+}
+:root[data-cor='grafite'] {
+  --acento: #4b5563;
+  --acento-bg: #e6e8ec;
+}
+:root[data-theme='dark'][data-cor='roxo'] {
+  --acento: #b293ff;
+  --acento-bg: #2c2344;
+}
+:root[data-theme='dark'][data-cor='laranja'] {
+  --acento: #ff9e5c;
+  --acento-bg: #3d2716;
+}
+:root[data-theme='dark'][data-cor='rosa'] {
+  --acento: #ff7ab8;
+  --acento-bg: #3e1e2f;
+}
+:root[data-theme='dark'][data-cor='ciano'] {
+  --acento: #4fd1de;
+  --acento-bg: #12343a;
+}
+:root[data-theme='dark'][data-cor='grafite'] {
+  --acento: #b0b8c4;
+  --acento-bg: #2a2e35;
+}
 
 * {
   box-sizing: border-box;
