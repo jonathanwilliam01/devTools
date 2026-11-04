@@ -4,7 +4,8 @@ import { Store } from './store';
 import { Ui } from './ui';
 import { Backup } from './backup';
 import { Cofre } from './cofre';
-import { hoje } from './models';
+import { hoje, novoId } from './models';
+import { Github } from './github';
 import { VERSAO } from './versao';
 import { PainelDados } from './shell/painel-dados';
 import { PainelCofre } from './shell/painel-cofre';
@@ -22,6 +23,7 @@ export class App {
   protected readonly backup = inject(Backup);
   protected readonly cofre = inject(Cofre);
   private readonly router = inject(Router);
+  private readonly github = inject(Github);
   protected readonly versao = VERSAO;
   protected readonly versaoData = new Date(VERSAO.data).toLocaleString('pt-BR');
   protected readonly MODOS = MODOS;
@@ -36,6 +38,40 @@ export class App {
   constructor() {
     this.aplicarTema();
     navigator.storage?.persist?.();
+    // espera a restauração dos cookies antes da primeira checagem
+    setTimeout(() => this.sincronizarIssues(), 3000);
+    setInterval(() => this.sincronizarIssues(), 5 * 60_000);
+  }
+
+  // issue atribuída nova vira tarefa em "A fazer"
+  private async sincronizarIssues() {
+    const l = await this.github.atribuidas();
+    if (!l) return;
+    const vistas = new Set(this.store.config().issuesVistas ?? []);
+    const conhecidas = new Set<number | null | undefined>([
+      ...this.store.tarefas().map((t) => t.numeroCard),
+      ...this.store.cards().map((c) => c.numero),
+    ]);
+    const novas = l.filter((i) => !vistas.has(i.numero) && !conhecidas.has(i.numero));
+    const atuais = l.map((i) => i.numero).sort((a, b) => a - b);
+    if (atuais.join() !== [...vistas].sort((a, b) => a - b).join()) {
+      this.store.config.update((c) => ({ ...c, issuesVistas: atuais }));
+    }
+    if (!novas.length) return;
+    this.store.setTarefas([
+      ...novas.map((i) => ({
+        id: novoId(),
+        titulo: i.titulo,
+        descricao: i.descricao,
+        status: 'todo' as const,
+        prioridade: 'media' as const,
+        tipo: 'card' as const,
+        numeroCard: i.numero,
+        criado: hoje(),
+      })),
+      ...this.store.tarefas(),
+    ]);
+    this.ui.avisar(novas.length === 1 ? `Issue #${novas[0].numero} adicionada ao kanban` : `${novas.length} issues adicionadas ao kanban`);
   }
 
   escolherTema(tema: Modo, cor: string) {

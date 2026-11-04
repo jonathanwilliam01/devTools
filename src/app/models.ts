@@ -55,6 +55,8 @@ export interface Config {
   senha?: { salt: string; verificador: string } | null;
   // label do GitHub (chaveNome) -> campo do card
   labels?: Record<string, CampoCard | 'ignorar'>;
+  // issues atribuídas já levadas ao kanban, para não recriar tarefa removida
+  issuesVistas?: number[];
 }
 
 export interface Dados {

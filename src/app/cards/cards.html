@@ -86,8 +86,7 @@
       }
     </button>
     <button class="btn ghost" (click)="abrirResumo()" title="Resumo dos concluídos por período ou datas, para a daily">Resumo daily</button>
-    <button class="btn ghost" (click)="copiarPlanilha()" title="Copia os cards filtrados para colar na planilha">Copiar p/ planilha</button>
-    <button class="btn ghost" (click)="exportarCsv()" title="Baixa os cards filtrados em CSV">CSV</button>
+    <button class="btn ghost" data-abre-menu (click)="abrirMenuExportar($event)" title="Exportar os cards filtrados">Exportar ▾</button>
     <button class="btn primario" (click)="novo()" title="Novo card (n)">+ Novo card</button>
   </div>
 </div>
@@ -344,6 +343,9 @@
         <button (click)="definirLabel(l, c.valor)">{{ c.label }}</button>
       }
       <button (click)="definirLabel(l, 'ignorar')">Ignorar</button>
+    } @else if (m.exportar) {
+      <button (click)="copiarPlanilha(); menu.set(null)" title="Copia os cards filtrados para colar na planilha">⧉ Copiar p/ planilha</button>
+      <button (click)="exportarCsv(); menu.set(null)" title="Baixa os cards filtrados em CSV">⤓ Baixar CSV</button>
     }
   </div>
 }

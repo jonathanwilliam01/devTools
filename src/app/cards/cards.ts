@@ -130,7 +130,7 @@ export class Cards {
   protected readonly labelsIssue = signal<string[] | null>(null);
   private readonly descLabels = signal<Record<string, string>>({});
   protected readonly mapaLabels = computed(() => ({ ...LABELS_PADRAO, ...this.store.config().labels }));
-  protected readonly menu = signal<{ card?: Card; label?: string; direita?: number; esquerda?: number; topo?: number; base?: number } | null>(null);
+  protected readonly menu = signal<{ card?: Card; label?: string; exportar?: boolean; direita?: number; esquerda?: number; topo?: number; base?: number } | null>(null);
 
   protected readonly painelSistemas = signal(false);
   protected nomeAdicionar = '';
@@ -355,17 +355,21 @@ export class Cards {
     this.posicionarMenu({ label }, ev);
   }
 
+  abrirMenuExportar(ev: MouseEvent) {
+    this.posicionarMenu({ exportar: true }, ev);
+  }
+
   // menu fixo na tela para não ser cortado pela rolagem; abre para cima perto do rodapé
-  private posicionarMenu(alvo: { card?: Card; label?: string }, ev: MouseEvent) {
+  private posicionarMenu(alvo: { card?: Card; label?: string; exportar?: boolean }, ev: MouseEvent) {
     const m = this.menu();
-    if (m && m.card === alvo.card && m.label === alvo.label) return this.menu.set(null);
+    if (m && m.card === alvo.card && m.label === alvo.label && m.exportar === alvo.exportar) return this.menu.set(null);
     const r = (ev.currentTarget as HTMLElement).getBoundingClientRect();
     const cima = r.bottom + 180 > innerHeight;
     this.menu.set({
       ...alvo,
-      // ações alinham à direita do botão; labels, à esquerda
-      direita: alvo.card ? innerWidth - r.right : undefined,
-      esquerda: alvo.card ? undefined : r.left,
+      // ações e exportar alinham à direita do botão; labels, à esquerda
+      direita: alvo.label ? undefined : innerWidth - r.right,
+      esquerda: alvo.label ? r.left : undefined,
       topo: cima ? undefined : r.bottom + 4,
       base: cima ? innerHeight - r.top + 4 : undefined,
     });
