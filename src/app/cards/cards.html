@@ -85,6 +85,7 @@
         <span class="tag aviso">{{ sugestoes().length }}</span>
       }
     </button>
+    <button class="btn ghost" (click)="abrirResumo()" title="Resumo dos concluídos por período ou datas, para a daily">Resumo daily</button>
     <button class="btn ghost" (click)="copiarPlanilha()" title="Copia os cards filtrados para colar na planilha">Copiar p/ planilha</button>
     <button class="btn ghost" (click)="exportarCsv()" title="Baixa os cards filtrados em CSV">CSV</button>
     <button class="btn primario" (click)="novo()" title="Novo card (n)">+ Novo card</button>
@@ -275,6 +276,52 @@
       </div>
       <div class="rodape">
         <button class="btn" (click)="painelSistemas.set(false)">Fechar</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (painelResumo()) {
+  <div class="overlay" (click)="painelResumo.set(false)">
+    <div class="dialogo resumo-daily" (click)="$event.stopPropagation()">
+      <h2>Resumo de concluídos</h2>
+      <div class="linha-resumo">
+        <button class="btn mini" [class.primario]="modoResumo() === 'periodo'" (click)="modoResumo.set('periodo')">Período</button>
+        <button class="btn mini" [class.primario]="modoResumo() === 'datas'" (click)="modoResumo.set('datas')">Datas específicas</button>
+      </div>
+      @if (modoResumo() === 'periodo') {
+        <div class="linha-resumo">
+          <button class="btn mini ghost" (click)="navegarDaily(-1)" title="Intervalo anterior">◀</button>
+          <input type="date" [ngModel]="resumoDe()" (ngModelChange)="resumoDe.set($event)" />
+          <span>a</span>
+          <input type="date" [ngModel]="resumoAte()" (ngModelChange)="resumoAte.set($event)" />
+          <button class="btn mini ghost" (click)="navegarDaily(1)" title="Próximo intervalo">▶</button>
+          <button class="btn mini" (click)="desdeUltimaDaily()" title="Da última daily até hoje">Última daily</button>
+        </div>
+        <div class="linha-resumo">
+          <small class="dica">Dias da daily:</small>
+          @for (d of SEMANA; track $index) {
+            <button class="btn mini" [class.primario]="diasDaily().includes($index)" (click)="alternarDiaDaily($index)">{{ d }}</button>
+          }
+        </div>
+      } @else {
+        <div class="linha-resumo">
+          <input #dataNova type="date" (change)="adicionarDataResumo(dataNova.value); dataNova.value = ''" />
+          @for (d of resumoDatas(); track d) {
+            <span class="tag alias">{{ diaBr(d) }} <button (click)="removerDataResumo(d)" title="Remover data">✕</button></span>
+          } @empty {
+            <small class="dica">Escolha as datas</small>
+          }
+        </div>
+      }
+      <label class="linha-resumo dica">
+        <input type="checkbox" [ngModel]="resumoTarefas()" (ngModelChange)="resumoTarefas.set($event)" />
+        Incluir tarefas concluídas do kanban
+      </label>
+      <pre class="texto-resumo">{{ textoResumo() }}</pre>
+      <div class="rodape">
+        <button class="btn" (click)="painelResumo.set(false)">Fechar</button>
+        <button class="btn primario" [disabled]="!itensResumo().length" (click)="ui.copiar(textoResumo(), 'Resumo copiado')">Copiar</button>
       </div>
     </div>
   </div>

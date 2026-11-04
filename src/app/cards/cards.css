@@ -387,3 +387,23 @@ tbody tr.sep-semana:hover {
   background: var(--acento-bg);
   color: var(--acento);
 }
+
+.linha-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.linha-resumo input {
+  width: auto;
+}
+.texto-resumo {
+  margin: 0;
+  padding: 10px 12px;
+  max-height: 45vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  font: 12px/1.5 var(--mono);
+  background: var(--bg-2);
+  border-radius: 8px;
+}

@@ -30,6 +30,14 @@ interface Barra {
   pct: number;
 }
 
+interface ItemResumo {
+  data: string;
+  titulo: string;
+  obs: string;
+}
+
+const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
 const COLUNAS_PLANILHA = ['Número do Card', 'Descrição', 'Sistema', 'Área Tecnica', 'Time', 'Linguagem', 'Data conclusão', 'O que foi feito'];
 
 @Component({
@@ -147,6 +155,58 @@ export class Cards {
     return r;
   });
 
+  // resumo para a daily: período (navegando entre dias de daily) ou datas avulsas
+  protected readonly SEMANA = SEMANA;
+  protected readonly diaBr = diaBr;
+  protected readonly painelResumo = signal(false);
+  protected readonly modoResumo = signal<'periodo' | 'datas'>('periodo');
+  protected readonly resumoDe = signal('');
+  protected readonly resumoAte = signal('');
+  protected readonly resumoDatas = signal<string[]>([]);
+  protected readonly resumoTarefas = signal(true);
+  protected readonly diasDaily = signal(lerPref('devtools:daily', '1,3').split(',').filter(Boolean).map(Number));
+
+  protected readonly itensResumo = computed<ItemResumo[]>(() => {
+    const datas = this.resumoDatas();
+    const [de, ate] = [this.resumoDe(), this.resumoAte()];
+    const dentro = this.modoResumo() === 'datas' ? (d: string) => datas.includes(d) : (d: string) => d >= de && d <= ate;
+    const cards = this.store
+      .cards()
+      .filter((c) => dentro(c.data))
+      .sort((a, b) => a.numero - b.numero)
+      .map((c) => ({ data: c.data, titulo: `#${c.numero} - ${c.descricao}${c.sistema ? ` [${c.sistema}]` : ''}`, obs: c.obs }));
+    const tarefas = !this.resumoTarefas()
+      ? []
+      : this.store
+          .tarefas()
+          .filter((t) => t.status === 'done' && t.concluido && dentro(t.concluido) && !(t.numeroCard && this.registrados().has(t.numeroCard)))
+          .map((t) => ({
+            data: t.concluido!,
+            titulo: t.numeroCard ? `#${t.numeroCard} - ${t.titulo}` : `${t.tipo === 'verificacao' ? 'Verificação' : 'Ajuda'}: ${t.titulo}`,
+            obs: '',
+          }));
+    return [...cards, ...tarefas].sort((a, b) => a.data.localeCompare(b.data));
+  });
+
+  protected readonly textoResumo = computed(() => {
+    const itens = this.itensResumo();
+    const titulo =
+      this.modoResumo() === 'datas'
+        ? `Concluídos em ${this.resumoDatas().map(diaBr).join(', ') || '—'}`
+        : `Concluídos de ${diaBr(this.resumoDe())} a ${diaBr(this.resumoAte())}`;
+    if (!itens.length) return `${titulo}\n\nNenhum concluído.`;
+    const linhas = [`${titulo} (${itens.length})`];
+    let dia = '';
+    for (const i of itens) {
+      if (i.data !== dia) linhas.push('', diaBr((dia = i.data)));
+      linhas.push(`- ${i.titulo}`);
+      linhas.push(...i.obs.split('\n').filter((l) => l.trim()).map((l) => `  ${l.trim()}`));
+    }
+    return linhas.join('\n');
+  });
+
+  private readonly registrados = computed(() => new Set(this.store.cards().map((c) => c.numero)));
+
   constructor() {
     const r = this.store.rascunhoCard();
     if (r) {
@@ -157,8 +217,9 @@ export class Cards {
       if (a === 'esc') {
         this.form.set(null);
         this.painelSistemas.set(false);
+        this.painelResumo.set(false);
         this.menu.set(null);
-      } else if (a === 'novo' && !this.form() && !this.painelSistemas()) this.novo();
+      } else if (a === 'novo' && !this.form() && !this.painelSistemas() && !this.painelResumo()) this.novo();
     });
   }
 
@@ -369,6 +430,40 @@ export class Cards {
     this.ui.copiar(tsv, `${linhas.length} linhas copiadas`);
   }
 
+  abrirResumo() {
+    this.desdeUltimaDaily();
+    this.painelResumo.set(true);
+  }
+
+  desdeUltimaDaily() {
+    this.resumoAte.set(hoje());
+    this.resumoDe.set(outraDaily(hoje(), this.diasDaily(), -1));
+  }
+
+  // anda um intervalo entre dailies para trás ou para frente
+  navegarDaily(passo: 1 | -1) {
+    if (passo < 0) {
+      this.resumoAte.set(this.resumoDe());
+      this.resumoDe.set(outraDaily(this.resumoDe(), this.diasDaily(), -1));
+    } else {
+      this.resumoDe.set(this.resumoAte());
+      this.resumoAte.set(outraDaily(this.resumoAte(), this.diasDaily(), 1));
+    }
+  }
+
+  alternarDiaDaily(d: number) {
+    this.diasDaily.update((l) => (l.includes(d) ? l.filter((x) => x !== d) : [...l, d].sort()));
+    salvarPref('devtools:daily', this.diasDaily().join(','));
+  }
+
+  adicionarDataResumo(d: string) {
+    if (d && !this.resumoDatas().includes(d)) this.resumoDatas.update((l) => [...l, d].sort());
+  }
+
+  removerDataResumo(d: string) {
+    this.resumoDatas.update((l) => l.filter((x) => x !== d));
+  }
+
   adicionarSistema() {
     const n = this.nomeAdicionar.trim();
     if (!n) return;
@@ -444,6 +539,23 @@ function semanas(ano: number, mes: number, visiveis: Card[], doMes: Card[]): Sem
     mapa.get(n)!.cards.push(c);
   });
   return [...mapa.values()].sort((a, b) => b.n - a.n);
+}
+
+const somaDias = (d: string, n: number) => {
+  const x = new Date(d + 'T00:00');
+  x.setDate(x.getDate() + n);
+  return x.toLocaleDateString('sv-SE');
+};
+const diaSemana = (d: string) => new Date(d + 'T00:00').getDay();
+const diaBr = (d: string) => (d ? `${SEMANA[diaSemana(d)]} ${dataBr(d).slice(0, 5)}` : '—');
+
+// dia de daily mais próximo antes (-1) ou depois (1) de d; sem dias marcados anda uma semana
+function outraDaily(d: string, dias: number[], passo: 1 | -1) {
+  for (let i = 1; i <= 7; i++) {
+    const x = somaDias(d, i * passo);
+    if (dias.includes(diaSemana(x))) return x;
+  }
+  return somaDias(d, 7 * passo);
 }
 
 function lerPref(chave: string, padrao: string) {
