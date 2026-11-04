@@ -318,6 +318,10 @@
         <input type="checkbox" [ngModel]="resumoTarefas()" (ngModelChange)="resumoTarefas.set($event)" />
         Incluir tarefas concluídas do kanban
       </label>
+      <label class="linha-resumo dica">
+        <input type="checkbox" [ngModel]="resumoObs()" (ngModelChange)="alternarObsResumo($event)" />
+        Exibir o que foi feito
+      </label>
       <pre class="texto-resumo">{{ textoResumo() }}</pre>
       <div class="rodape">
         <button class="btn" (click)="painelResumo.set(false)">Fechar</button>

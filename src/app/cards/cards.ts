@@ -164,6 +164,7 @@ export class Cards {
   protected readonly resumoAte = signal('');
   protected readonly resumoDatas = signal<string[]>([]);
   protected readonly resumoTarefas = signal(true);
+  protected readonly resumoObs = signal(lerPref('devtools:daily-obs', '1') === '1');
   protected readonly diasDaily = signal(lerPref('devtools:daily', '1,3').split(',').filter(Boolean).map(Number));
 
   protected readonly itensResumo = computed<ItemResumo[]>(() => {
@@ -199,8 +200,9 @@ export class Cards {
     let dia = '';
     for (const i of itens) {
       if (i.data !== dia) linhas.push('', diaBr((dia = i.data)));
+      else linhas.push('');
       linhas.push(`- ${i.titulo}`);
-      linhas.push(...i.obs.split('\n').filter((l) => l.trim()).map((l) => `  ${l.trim()}`));
+      if (this.resumoObs()) linhas.push(...i.obs.split('\n').filter((l) => l.trim()).map((l) => `  ${l.trim()}`));
     }
     return linhas.join('\n');
   });
@@ -454,6 +456,11 @@ export class Cards {
   alternarDiaDaily(d: number) {
     this.diasDaily.update((l) => (l.includes(d) ? l.filter((x) => x !== d) : [...l, d].sort()));
     salvarPref('devtools:daily', this.diasDaily().join(','));
+  }
+
+  alternarObsResumo(v: boolean) {
+    this.resumoObs.set(v);
+    salvarPref('devtools:daily-obs', v ? '1' : '0');
   }
 
   adicionarDataResumo(d: string) {
