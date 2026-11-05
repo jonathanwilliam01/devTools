@@ -15,6 +15,7 @@
     <a routerLink="/ferramentas" routerLinkActive="ativo">Ferramentas</a>
   </nav>
   <div class="acoes">
+    <a class="btn ghost" [href]="urlBug()" target="_blank" rel="noopener" title="Reportar bug ou sugerir melhoria no devTools">Reportar bug</a>
     <button class="btn ghost" (click)="ui.painel.set('dados')" title="Backup, importar e exportar">
       Dados
       @if (backup.lembrete() || backup.estado() === 'reativar') {
@@ -83,8 +84,7 @@
       <div class="dialogo atalhos" (click)="$event.stopPropagation()">
         <h2>Atalhos</h2>
         <dl>
-          <dt><kbd>/</kbd></dt><dd>Buscar</dd>
-          <dt><kbd>n</kbd></dt><dd>Novo (card, nota ou tarefa) / gerar de novo</dd>
+          <dt><kbd>/</kbd></dt><dd>Buscar</dd>          <dt><kbd>n</kbd></dt><dd>Novo (card, nota ou tarefa) / gerar de novo</dd>
           <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Cards, Notas, Kanban, Ferramentas</dd>
           <dt><kbd>Esc</kbd></dt><dd>Fechar janela</dd>
           <dt><kbd>Ctrl</kbd> + <kbd>Enter</kbd></dt><dd>Salvar formulário</dd>

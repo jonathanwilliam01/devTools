@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Ui } from '../../ui';
 import { cnpj, cnpjAlfa, cpf, mascarar, rg, TipoDoc } from '../lib/docs';
@@ -13,6 +14,7 @@ const lerMascara = () => {
 
 @Component({
   selector: 'ft-gerador',
+  imports: [FormsModule],
   template: `
     <div class="ft">
       <div class="ft-linha">
@@ -37,11 +39,27 @@ const lerMascara = () => {
           </article>
         }
       </div>
+      <div class="ft-painel">
+        <h4 class="ft-titulo">
+          Em lote
+          <button class="btn mini fim" [disabled]="!lote()" (click)="ui.copiar(lote(), 'Lote copiado!')">Copiar</button>
+        </h4>
+        <div class="ft-linha">
+          <select [(ngModel)]="loteTipo">
+            @for (g of itens; track g.nome) {
+              <option [ngValue]="$index">{{ g.nome }}</option>
+            }
+          </select>
+          <input type="number" min="1" max="5000" [(ngModel)]="loteQtd" style="width: 100px" />
+          <button class="btn" (click)="gerarLote()">Gerar</button>
+        </div>
+        <textarea class="ft-texto" readonly rows="8" [value]="lote()"></textarea>
+      </div>
     </div>
   `,
 })
 export class Gerador {
-  private readonly ui = inject(Ui);
+  protected readonly ui = inject(Ui);
   protected readonly comMascara = signal(lerMascara());
   protected readonly itens = [
     this.item('CPF', 'CPF', cpf),
@@ -49,6 +67,10 @@ export class Gerador {
     this.item('CNPJ alfanumérico', 'CNPJ', cnpjAlfa, 'novo'),
     this.item('RG', 'RG', rg, 'padrão SP'),
   ];
+
+  protected readonly loteTipo = signal(0);
+  protected readonly loteQtd = signal(10);
+  protected readonly lote = signal('');
 
   constructor() {
     this.ui.atalhos.pipe(takeUntilDestroyed()).subscribe((a) => a === 'novo' && this.gerarTodos());
@@ -72,6 +94,15 @@ export class Gerador {
 
   copiar(g: (typeof this.itens)[number]) {
     this.ui.copiar(this.texto(g), `${g.nome} copiado!`);
+  }
+
+  // sem repetidos; com máscara conforme a opção acima
+  gerarLote() {
+    const g = this.itens[this.loteTipo()];
+    const qtd = Math.min(Math.max(Math.floor(this.loteQtd()) || 1, 1), 5000);
+    const l = new Set<string>();
+    while (l.size < qtd) l.add(g.gerar());
+    this.lote.set([...l].map((v) => (this.comMascara() ? mascarar(g.tipo, v) : v)).join('\n'));
   }
 
   alternarMascara() {

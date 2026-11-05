@@ -105,6 +105,12 @@ export class App {
     this.ui.avisar(novas.length === 1 ? `Issue #${novas[0].numero} adicionada ao kanban` : `${novas.length} issues adicionadas ao kanban`);
   }
 
+  // issue nova no repo do devTools, já com versão e tela atual
+  protected urlBug() {
+    const corpo = `**O que aconteceu**\n\n\n**Como reproduzir**\n1. \n\n---\nVersão: v${VERSAO.numero}${VERSAO.commit ? ' · ' + VERSAO.commit : ''}\nTela: ${this.router.url}\nNavegador: ${navigator.userAgent}`;
+    return `${REPO_DEVTOOLS}/issues/new?body=${encodeURIComponent(corpo)}`;
+  }
+
   escolherTema(tema: Modo, cor: string) {
     this.tema.set(tema);
     this.cor.set(cor);
@@ -131,14 +137,15 @@ export class App {
     const alvo = e.target as HTMLElement;
     if (e.ctrlKey || e.metaKey || e.altKey || this.ui.painel() || alvo.closest('input, textarea, select, [contenteditable]')) return;
     const rotas: Record<string, string> = { '1': '/cards', '2': '/notas', '3': '/kanban', '4': '/ferramentas' };
-    if (e.key === '/') document.querySelector<HTMLInputElement>('[data-busca]')?.focus();
-    else if (e.key === 'n') this.ui.atalhos.next('novo');
+    if (e.key === '/') document.querySelector<HTMLInputElement>('[data-busca]')?.focus();    else if (e.key === 'n') this.ui.atalhos.next('novo');
     else if (e.key === '?') this.ui.painel.set('atalhos');
     else if (rotas[e.key]) this.router.navigateByUrl(rotas[e.key]);
     else return;
     e.preventDefault();
   }
 }
+
+const REPO_DEVTOOLS = 'https://github.com/jonathanwilliam01/devTools';
 
 type Modo = 'dark' | 'light';
 
