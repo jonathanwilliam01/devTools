@@ -9,7 +9,7 @@ const RAMOS = ['Comércio de Alimentos', 'Serviços Contábeis', 'Construções'
 const SUFIXOS = ['Ltda', 'ME', 'EPP', 'S/A'];
 
 // [cidade, UF, IBGE, DDD, CEP inicial, CEP final] (faixas de 5 dígitos)
-const CIDADES: [string, string, string, string, number, number][] = [
+export const CIDADES: [string, string, string, string, number, number][] = [
   ['São Paulo', 'SP', '3550308', '11', 1000, 5999],
   ['Guaratinguetá', 'SP', '3518404', '12', 12500, 12519],
   ['Lorena', 'SP', '3527207', '12', 12600, 12614],

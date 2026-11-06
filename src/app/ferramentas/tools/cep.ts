@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
+import { CIDADES } from '../lib/fake';
 
 interface Endereco {
   cep: string;
@@ -14,6 +15,7 @@ interface Endereco {
   ddd: string;
 }
 
+const TERMOS = ['rua', 'avenida', 'sao', 'jose', 'santa', 'silva', 'maria', 'joao', 'brasil', 'antonio'];
 const UFS = 'AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO'.split(' ');
 
 @Component({
@@ -44,6 +46,10 @@ const UFS = 'AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR R
             <button class="btn primario" (click)="porEndereco()" [disabled]="carregando()">Buscar</button>
           </div>
         </div>
+      </div>
+      <div class="ft-linha">
+        <button class="btn" (click)="gerar()" [disabled]="carregando()">Gerar CEP</button>
+        <span class="ft-dica">Sorteia um CEP que existe na cidade/UF de "Por endereço" (vazia = cidade aleatória).</span>
       </div>
 
       @if (erro()) {
@@ -122,15 +128,37 @@ export class Cep {
     this.buscar(`${this.uf()}/${encodeURIComponent(cidade)}/${encodeURIComponent(rua)}/json/`);
   }
 
-  private async buscar(caminho: string) {
+  // busca logradouros comuns na cidade e sorteia um dos resultados
+  async gerar() {
+    let [uf, cidade] = [this.uf(), this.cidade().trim()];
+    if (cidade.length < 3) [cidade, uf] = CIDADES[Math.floor(Math.random() * CIDADES.length)];
+    const termos = [...TERMOS].sort(() => Math.random() - 0.5).slice(0, 4);
+    await this.executar(async () => {
+      for (const t of termos) {
+        const l = await this.consultar(`${uf}/${encodeURIComponent(cidade)}/${t}/json/`);
+        if (l.length) return [l[Math.floor(Math.random() * l.length)]];
+      }
+      return [];
+    });
+  }
+
+  private buscar(caminho: string) {
+    return this.executar(() => this.consultar(caminho));
+  }
+
+  private async consultar(caminho: string): Promise<Endereco[]> {
+    const r = await fetch('https://viacep.com.br/ws/' + caminho);
+    if (!r.ok) throw new Error(`ViaCEP respondeu ${r.status}.`);
+    const j = await r.json();
+    return Array.isArray(j) ? j : j.erro ? [] : [j];
+  }
+
+  private async executar(f: () => Promise<Endereco[]>) {
     this.erro.set('');
     this.lista.set([]);
     this.carregando.set(true);
     try {
-      const r = await fetch('https://viacep.com.br/ws/' + caminho);
-      if (!r.ok) throw new Error(`ViaCEP respondeu ${r.status}.`);
-      const j = await r.json();
-      const l: Endereco[] = Array.isArray(j) ? j : j.erro ? [] : [j];
+      const l = await f();
       if (!l.length) this.erro.set('Nada encontrado.');
       this.lista.set(l);
     } catch (e) {

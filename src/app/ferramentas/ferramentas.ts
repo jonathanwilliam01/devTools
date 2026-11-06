@@ -31,6 +31,7 @@ import { Caixa } from './tools/caixa';
 import { Encoding } from './tools/encoding';
 import { Contador } from './tools/contador';
 import { Senha } from './tools/senha';
+import { Lote } from './tools/lote';
 import { FERRAMENTAS, Ferramenta, prepararColado } from './lista';
 
 const CHAVE = 'devtools:ferramenta';
@@ -39,7 +40,7 @@ const CHAVE_FAV_ANTIGA = 'devtools:favoritas';
 
 @Component({
   selector: 'app-ferramentas',
-  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha],
+  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote],
   templateUrl: './ferramentas.html',
   styleUrl: './ferramentas.css',
   encapsulation: ViewEncapsulation.None,
