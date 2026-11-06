@@ -9,6 +9,7 @@ import { Github } from './github';
 import { VERSAO } from './versao';
 import { PainelDados } from './shell/painel-dados';
 import { PainelCofre } from './shell/painel-cofre';
+import { iniciarFeed } from './feed';
 
 @Component({
   imports: [RouterOutlet, RouterLink, RouterLinkActive, PainelDados, PainelCofre],
@@ -41,6 +42,7 @@ export class App {
 
   constructor() {
     this.aplicarTema();
+    iniciarFeed();
     navigator.storage?.persist?.();
     // espera a restauração dos cookies antes da primeira checagem
     setTimeout(() => this.sincronizarIssues(), 3000);
