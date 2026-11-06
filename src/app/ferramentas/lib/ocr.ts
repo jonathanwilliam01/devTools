@@ -5,11 +5,16 @@ let worker: Promise<Worker> | null = null;
 let progresso: (p: number) => void = () => {};
 
 function carregar() {
-  return (worker ??= import('tesseract.js').then((t) =>
-    t.createWorker(['por', 'eng'], 1, {
-      logger: (m) => m.status === 'recognizing text' && progresso(m.progress),
+  // CommonJS: no build de produção as exportações vêm em default
+  return (worker ??= import('tesseract.js').then((m) =>
+    (m.default ?? m).createWorker(['por', 'eng'], 1, {
+      logger: (l) => l.status === 'recognizing text' && progresso(l.progress),
     }),
-  ));
+  ).catch((e) => {
+    // falhou (rede, CDN): tenta de novo na próxima imagem
+    worker = null;
+    throw e;
+  }));
 }
 
 // print de tela tem pouca resolução; ampliar melhora bastante o reconhecimento

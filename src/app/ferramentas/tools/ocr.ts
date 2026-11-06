@@ -100,7 +100,8 @@ export class Ocr implements OnDestroy {
       const t = await lerTexto(img, (p) => this.etapa.set(`Lendo ${Math.round(p * 100)}%`));
       this.texto.set(t);
       if (!t) this.ui.avisar('Nenhum texto encontrado na imagem');
-    } catch {
+    } catch (e) {
+      console.error(e);
       this.ui.avisar('Falha ao ler a imagem');
     } finally {
       this.lendo.set(false);
