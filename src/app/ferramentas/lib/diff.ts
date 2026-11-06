@@ -47,3 +47,46 @@ export function diffLinhas(antes: string, depois: string, o: { espacos: boolean;
   for (let k = 0; k < a.length - fa; k++) igual(fa + k, fb + k);
   return res;
 }
+
+export interface DifJson {
+  caminho: string;
+  tipo: '+' | '-' | '~';
+  antes?: string;
+  depois?: string;
+}
+
+// compara por estrutura: chave a chave nos objetos, posição a posição nos arrays
+export function diffJson(antes: string, depois: string): DifJson[] {
+  const ler = (s: string, lado: string) => {
+    try {
+      return JSON.parse(s);
+    } catch (e) {
+      throw new Error(`JSON inválido em ${lado}: ${(e as Error).message}`);
+    }
+  };
+  const tipo = (v: unknown) => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
+  const fmt = (v: unknown) => JSON.stringify(v);
+  const filho = (cam: string, k: string | number) =>
+    typeof k === 'number' ? `${cam}[${k}]` : /^[A-Za-z_$][\w$]*$/.test(k) ? `${cam}${cam ? '.' : ''}${k}` : `${cam}[${JSON.stringify(k)}]`;
+  const out: DifJson[] = [];
+
+  const andar = (a: any, b: any, cam: string) => {
+    const t = tipo(a);
+    if (t !== tipo(b) || (t !== 'object' && t !== 'array')) {
+      if (fmt(a) !== fmt(b)) out.push({ caminho: cam || '(raiz)', tipo: '~', antes: fmt(a), depois: fmt(b) });
+      return;
+    }
+    const chaves: (string | number)[] =
+      t === 'array' ? [...Array(Math.max(a.length, b.length)).keys()] : [...new Set([...Object.keys(a), ...Object.keys(b)])];
+    for (const k of chaves) {
+      const c = filho(cam, k);
+      const temA = t === 'array' ? (k as number) < a.length : Object.hasOwn(a, k);
+      const temB = t === 'array' ? (k as number) < b.length : Object.hasOwn(b, k);
+      if (!temB) out.push({ caminho: c, tipo: '-', antes: fmt(a[k]) });
+      else if (!temA) out.push({ caminho: c, tipo: '+', depois: fmt(b[k]) });
+      else andar(a[k], b[k], c);
+    }
+  };
+  andar(ler(antes, 'Antes'), ler(depois, 'Depois'), '');
+  return out;
+}

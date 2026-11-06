@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Ui } from '../../ui';
@@ -68,8 +69,8 @@ export class Gerador {
     this.item('RG', 'RG', rg, 'padrão SP'),
   ];
 
-  protected readonly loteTipo = signal(0);
-  protected readonly loteQtd = signal(10);
+  protected readonly loteTipo = lembrado('gerador.loteTipo', 0);
+  protected readonly loteQtd = lembrado('gerador.loteQtd', 10);
   protected readonly lote = signal('');
 
   constructor() {

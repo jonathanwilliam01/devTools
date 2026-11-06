@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { contarUteis, deIso, DIA, diferencaCalendario, extenso, feriadosNoPeriodo, hojeIso, paraIso, somarUteis } from '../lib/datas';
@@ -92,13 +93,13 @@ import { contarUteis, deIso, DIA, diferencaCalendario, extenso, feriadosNoPeriod
 })
 export class Datas {
   protected readonly ui = inject(Ui);
-  protected readonly usarFeriados = signal(true);
-  protected readonly facultativos = signal(false);
-  protected readonly inicio = signal(hojeIso());
-  protected readonly fim = signal(paraIso(deIso(hojeIso()) + 30 * DIA));
-  protected readonly base = signal(hojeIso());
-  protected readonly dias = signal<number | null>(30);
-  protected readonly somarUteis = signal(false);
+  protected readonly usarFeriados = lembrado('datas.usarFeriados', true);
+  protected readonly facultativos = lembrado('datas.facultativos', false);
+  protected readonly inicio = lembrado('datas.inicio', hojeIso());
+  protected readonly fim = lembrado('datas.fim', paraIso(deIso(hojeIso()) + 30 * DIA));
+  protected readonly base = lembrado('datas.base', hojeIso());
+  protected readonly dias = lembrado<number | null>('datas.dias', 30);
+  protected readonly somarUteis = lembrado('datas.somarUteis', false);
 
   private readonly opcoes = computed(() => ({ feriados: this.usarFeriados(), facultativos: this.facultativos() }));
 

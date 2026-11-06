@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { converterCasos } from '../lib/caixa';
@@ -24,6 +25,6 @@ import { converterCasos } from '../lib/caixa';
 })
 export class Caixa {
   protected readonly ui = inject(Ui);
-  protected readonly texto = signal('');
+  protected readonly texto = lembrado('caixa.texto', '');
   protected readonly resultado = computed(() => converterCasos(this.texto()));
 }

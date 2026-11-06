@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 
@@ -88,10 +89,10 @@ const FLAGS = [
 export class Regex {
   protected readonly ui = inject(Ui);
   protected readonly FLAGS = FLAGS;
-  protected readonly padrao = signal('');
-  protected readonly flags = signal('g');
-  protected readonly texto = signal('');
-  protected readonly troca = signal('');
+  protected readonly padrao = lembrado('regex.padrao', '');
+  protected readonly flags = lembrado('regex.flags', 'g');
+  protected readonly texto = lembrado('regex.texto', '');
+  protected readonly troca = lembrado('regex.troca', '');
 
   protected readonly resultado = computed(() => {
     const vazio = { erro: '', matches: [] as RegExpExecArray[], pedacos: [{ t: this.texto(), m: false }], substituido: '' };

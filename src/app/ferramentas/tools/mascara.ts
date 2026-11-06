@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { identificar, limpar, mascarar } from '../lib/docs';
@@ -39,9 +40,9 @@ import { identificar, limpar, mascarar } from '../lib/docs';
 })
 export class Mascara {
   protected readonly ui = inject(Ui);
-  protected readonly texto = signal('');
-  protected readonly modo = signal<'por' | 'tirar'>('por');
-  protected readonly aspas = signal(false);
+  protected readonly texto = lembrado('mascara.texto', '');
+  protected readonly modo = lembrado<'por' | 'tirar'>('mascara.modo', 'por');
+  protected readonly aspas = lembrado('mascara.aspas', false);
 
   private readonly itens = computed(() =>
     this.texto()

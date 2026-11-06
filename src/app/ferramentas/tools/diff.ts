@@ -1,6 +1,7 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
-import { diffLinhas } from '../lib/diff';
+import { diffJson, diffLinhas } from '../lib/diff';
 
 @Component({
   selector: 'ft-diff',
@@ -8,9 +9,17 @@ import { diffLinhas } from '../lib/diff';
   template: `
     <div class="ft">
       <div class="ft-linha">
-        <label class="ft-chk"><input type="checkbox" [(ngModel)]="espacos" /> Ignorar espaços</label>
-        <label class="ft-chk"><input type="checkbox" [(ngModel)]="caixa" /> Ignorar maiúsculas</label>
-        <label class="ft-chk"><input type="checkbox" [(ngModel)]="soDif" /> Só diferenças</label>
+        <div class="ft-seg">
+          <button [class.on]="modo() === 'texto'" (click)="modo.set('texto')">Texto</button>
+          <button [class.on]="modo() === 'json'" (click)="modo.set('json')">JSON</button>
+        </div>
+        @if (modo() === 'texto') {
+          <label class="ft-chk"><input type="checkbox" [(ngModel)]="espacos" /> Ignorar espaços</label>
+          <label class="ft-chk"><input type="checkbox" [(ngModel)]="caixa" /> Ignorar maiúsculas</label>
+          <label class="ft-chk"><input type="checkbox" [(ngModel)]="soDif" /> Só diferenças</label>
+        } @else {
+          <span class="ft-dica">Compara chave a chave; ordem das chaves e formatação não contam. Arrays por posição.</span>
+        }
         <button class="btn mini ghost fim" (click)="trocar()">⇄ Trocar lados</button>
       </div>
       <div class="ft-duas">
@@ -23,7 +32,41 @@ import { diffLinhas } from '../lib/diff';
           <textarea class="ft-texto" [(ngModel)]="depois" rows="10" spellcheck="false"></textarea>
         </div>
       </div>
-      @if (resultado(); as r) {
+      @if (modo() === 'json') {
+        @if (resultadoJson(); as r) {
+          @if (r.erro) {
+            <p class="ft-aviso">{{ r.erro }}</p>
+          } @else {
+            <div class="ft-painel">
+              <h4 class="ft-titulo">
+                Diferenças
+                @if (r.difs.length) {
+                  <span class="ft-selo erro">−{{ r.rem }}</span>
+                  <span class="ft-selo ok">+{{ r.inc }}</span>
+                  <span class="ft-selo">~{{ r.alt }}</span>
+                } @else {
+                  <span class="ft-selo ok">✓ JSON equivalentes</span>
+                }
+              </h4>
+              @if (r.difs.length) {
+                <table class="ft-tabela">
+                  <thead><tr><th></th><th>Caminho</th><th>Antes</th><th>Depois</th></tr></thead>
+                  <tbody>
+                    @for (d of r.difs; track $index) {
+                      <tr>
+                        <td [class]="'ft-dj ' + (d.tipo === '-' ? 'rem' : d.tipo === '+' ? 'inc' : 'alt')">{{ d.tipo }}</td>
+                        <td class="ft-mono">{{ d.caminho }}</td>
+                        <td class="ft-mono">{{ d.antes ?? '' }}</td>
+                        <td class="ft-mono">{{ d.depois ?? '' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+            </div>
+          }
+        }
+      } @else if (resultado(); as r) {
         @if (r.erro) {
           <p class="ft-aviso">{{ r.erro }}</p>
         } @else {
@@ -48,15 +91,46 @@ import { diffLinhas } from '../lib/diff';
       }
     </div>
   `,
+  styles: `
+    .ft-dj {
+      width: 1%;
+      font-family: var(--mono);
+      font-weight: 700;
+      text-align: center;
+    }
+    .ft-dj.rem {
+      color: var(--perigo);
+    }
+    .ft-dj.inc {
+      color: var(--p-baixa);
+    }
+    .ft-dj.alt {
+      color: var(--acento);
+    }
+  `,
 })
 export class Diff {
-  protected readonly antes = signal('');
-  protected readonly depois = signal('');
-  protected readonly espacos = signal(false);
-  protected readonly caixa = signal(false);
-  protected readonly soDif = signal(false);
+  protected readonly antes = lembrado('diff.antes', '');
+  protected readonly depois = lembrado('diff.depois', '');
+  protected readonly espacos = lembrado('diff.espacos', false);
+  protected readonly caixa = lembrado('diff.caixa', false);
+  protected readonly soDif = lembrado('diff.soDif', false);
+
+  protected readonly modo = lembrado<'texto' | 'json'>('diff.modo', 'texto');
+
+  protected readonly resultadoJson = computed(() => {
+    if (!this.antes().trim() || !this.depois().trim()) return null;
+    try {
+      const difs = diffJson(this.antes(), this.depois());
+      const n = (t: string) => difs.filter((d) => d.tipo === t).length;
+      return { erro: '', difs, rem: n('-'), inc: n('+'), alt: n('~') };
+    } catch (e) {
+      return { erro: (e as Error).message, difs: [], rem: 0, inc: 0, alt: 0 };
+    }
+  });
 
   protected readonly resultado = computed(() => {
+    if (this.modo() === 'json') return null;
     if (!this.antes() && !this.depois()) return null;
     try {
       const l = diffLinhas(this.antes(), this.depois(), { espacos: this.espacos(), caixa: this.caixa() });

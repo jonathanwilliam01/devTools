@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { caracteres, corrigir, simularMojibake } from '../lib/encoding';
@@ -55,8 +56,8 @@ import { caracteres, corrigir, simularMojibake } from '../lib/encoding';
 })
 export class Encoding {
   protected readonly ui = inject(Ui);
-  protected readonly texto = signal('');
-  protected readonly modo = signal<'corrigir' | 'simular'>('corrigir');
+  protected readonly texto = lembrado('encoding.texto', '');
+  protected readonly modo = lembrado<'corrigir' | 'simular'>('encoding.modo', 'corrigir');
 
   protected readonly resultado = computed(() => {
     const t = this.texto();

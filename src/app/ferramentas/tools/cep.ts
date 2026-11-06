@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 
@@ -84,13 +85,17 @@ const UFS = 'AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR R
 export class Cep {
   protected readonly ui = inject(Ui);
   protected readonly UFS = UFS;
-  protected readonly cep = signal('');
-  protected readonly uf = signal('SP');
-  protected readonly cidade = signal('');
-  protected readonly rua = signal('');
+  protected readonly cep = lembrado('cep.cep', '');
+  protected readonly uf = lembrado('cep.uf', 'SP');
+  protected readonly cidade = lembrado('cep.cidade', '');
+  protected readonly rua = lembrado('cep.rua', '');
   protected readonly lista = signal<Endereco[]>([]);
   protected readonly erro = signal('');
   protected readonly carregando = signal(false);
+
+  constructor() {
+    if (this.cep().replace(/\D/g, '').length === 8) this.porCep();
+  }
 
   campos(e: Endereco): [string, string][] {
     return [

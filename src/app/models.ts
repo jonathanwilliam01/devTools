@@ -61,6 +61,8 @@ export interface Config {
   issuesVistas?: number[];
   // ids de MENUS escondidos na barra do topo
   menusOcultos?: string[];
+  // ids das ferramentas favoritas, na ordem em que foram marcadas
+  favoritas?: string[];
 }
 
 export interface Dados {

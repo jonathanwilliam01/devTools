@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { FormatoSql, listaSql } from '../lib/texto';
@@ -55,10 +56,10 @@ export class Sql {
     ['values', 'VALUES'],
     ['union', 'UNION ALL'],
   ];
-  protected readonly texto = signal('');
-  protected readonly formato = signal<FormatoSql>('in');
-  protected readonly aspas = signal<'auto' | 'sim' | 'nao'>('auto');
-  protected readonly distintos = signal(true);
+  protected readonly texto = lembrado('sql.texto', '');
+  protected readonly formato = lembrado<FormatoSql>('sql.formato', 'in');
+  protected readonly aspas = lembrado<'auto' | 'sim' | 'nao'>('sql.aspas', 'auto');
+  protected readonly distintos = lembrado('sql.distintos', true);
 
   protected readonly resultado = computed(() =>
     listaSql(this.texto(), { formato: this.formato(), aspas: this.aspas(), distintos: this.distintos() }),

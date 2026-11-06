@@ -1,4 +1,5 @@
 import { Component, effect, inject, signal } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { hashes } from '../lib/hash';
@@ -35,9 +36,9 @@ import { Charset, paraBin } from '../lib/texto';
 })
 export class Hash {
   protected readonly ui = inject(Ui);
-  protected readonly texto = signal('');
-  protected readonly charset = signal<Charset>('utf-8');
-  protected readonly maiusculo = signal(false);
+  protected readonly texto = lembrado('hash.texto', '');
+  protected readonly charset = lembrado<Charset>('hash.charset', 'utf-8');
+  protected readonly maiusculo = lembrado('hash.maiusculo', false);
   protected readonly resultado = signal<[string, string][]>([]);
 
   constructor() {

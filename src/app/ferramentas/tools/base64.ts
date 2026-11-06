@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { b64Decode, b64Encode, Charset, decode5t, encode5t } from '../lib/texto';
@@ -50,10 +51,10 @@ import { b64Decode, b64Encode, Charset, decode5t, encode5t } from '../lib/texto'
 })
 export class Base64 {
   protected readonly ui = inject(Ui);
-  protected readonly texto = signal('');
-  protected readonly cinco = signal(false);
-  protected readonly modo = signal<'cod' | 'dec'>('cod');
-  protected readonly charset = signal<Charset>('utf-8');
+  protected readonly texto = lembrado('base64.texto', '');
+  protected readonly cinco = lembrado('base64.cinco', false);
+  protected readonly modo = lembrado<'cod' | 'dec'>('base64.modo', 'cod');
+  protected readonly charset = lembrado<Charset>('base64.charset', 'utf-8');
 
   protected readonly resultado = computed(() => {
     const t = this.texto();

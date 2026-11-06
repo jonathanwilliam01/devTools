@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { identificar, limpar, mascarar, valido } from '../lib/docs';
@@ -54,7 +55,7 @@ import { identificar, limpar, mascarar, valido } from '../lib/docs';
 })
 export class Validador {
   protected readonly ui = inject(Ui);
-  protected readonly texto = signal('');
+  protected readonly texto = lembrado('validador.texto', '');
 
   protected readonly linhas = computed(() =>
     this.texto()

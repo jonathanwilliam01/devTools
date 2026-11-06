@@ -1,12 +1,14 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import qrcode from 'qrcode-generator';
-import { CampoPix, gerarPix, lerPix } from '../lib/pix';
+import { CampoPix, gerarPix, lerPix, tipoChave } from '../lib/pix';
+import { Imagem } from './imagem';
 
 @Component({
   selector: 'ft-pix',
-  imports: [FormsModule],
+  imports: [FormsModule, Imagem],
   template: `
     <div class="ft">
       <div class="ft-seg">
@@ -16,8 +18,11 @@ import { CampoPix, gerarPix, lerPix } from '../lib/pix';
 
       @if (modo() === 'ler') {
         <div class="ft-painel">
-          <h4 class="ft-titulo">Pix copia e cola</h4>
-          <textarea class="ft-texto" [(ngModel)]="codigo" rows="4" spellcheck="false" placeholder="00020126..." style="min-height: 0"></textarea>
+          <h4 class="ft-titulo">
+            Pix copia e cola
+            <span class="fim"><ft-imagem #img [aceita]="ehPix" (lido)="codigo.set($event)" /></span>
+          </h4>
+          <textarea class="ft-texto" [(ngModel)]="codigo" (paste)="img.colar($event)" rows="4" spellcheck="false" placeholder="00020126..." style="min-height: 0"></textarea>
         </div>
         @if (leitura(); as l) {
           @if (l.erro) {
@@ -32,6 +37,15 @@ import { CampoPix, gerarPix, lerPix } from '../lib/pix';
                   <span class="fim ft-selo erro">✕ CRC {{ l.crc || 'ausente' }}, esperado {{ l.esperado }}</span>
                 }
               </h4>
+              @if (l.avisos.length) {
+                <p class="ft-aviso">
+                  @for (a of l.avisos; track a) {
+                    {{ a }}<br />
+                  }
+                </p>
+              } @else {
+                <p class="ft-aviso ok">✓ Estrutura conforme o manual do BR Code{{ l.chave ? ' · chave ' + l.chave : '' }}</p>
+              }
               <dl class="ft-kv">
                 @for (c of l.lista; track $index) {
                   <dt [style.padding-left.px]="c.filho ? 28 : 12">{{ c.id }} · {{ c.nome }}</dt>
@@ -85,14 +99,16 @@ import { CampoPix, gerarPix, lerPix } from '../lib/pix';
 })
 export class Pix {
   protected readonly ui = inject(Ui);
-  protected readonly modo = signal<'ler' | 'gerar'>('ler');
-  protected readonly codigo = signal('');
-  protected readonly chave = signal('');
-  protected readonly nome = signal('');
-  protected readonly cidade = signal('');
-  protected readonly valor = signal('');
-  protected readonly txid = signal('');
-  protected readonly descricao = signal('');
+  protected readonly modo = lembrado<'ler' | 'gerar'>('pix.modo', 'ler');
+  protected readonly codigo = lembrado('pix.codigo', '');
+  protected readonly chave = lembrado('pix.chave', '');
+  protected readonly nome = lembrado('pix.nome', '');
+  protected readonly cidade = lembrado('pix.cidade', '');
+  protected readonly valor = lembrado('pix.valor', '');
+  protected readonly txid = lembrado('pix.txid', '');
+  protected readonly descricao = lembrado('pix.descricao', '');
+
+  protected readonly ehPix = (t: string) => t.startsWith('000201');
 
   protected readonly leitura = computed(() => {
     const c = this.codigo().trim();
@@ -102,9 +118,10 @@ export class Pix {
       const lista = l.campos.flatMap((x: CampoPix) =>
         x.filhos ? [{ ...x, filho: false }, ...x.filhos.map((f) => ({ ...f, filho: true }))] : [{ ...x, filho: false }],
       );
-      return { ...l, lista, erro: '' };
+      const chave = l.campos.flatMap((x) => x.filhos ?? []).find((x) => x.id === '01')?.valor;
+      return { ...l, lista, erro: '', chave: chave ? tipoChave(chave) : '' };
     } catch (e) {
-      return { erro: (e as Error).message, lista: [], crc: '', esperado: '', crcOk: false };
+      return { erro: (e as Error).message, lista: [], crc: '', esperado: '', crcOk: false, avisos: [] as string[], chave: '' };
     }
   });
 

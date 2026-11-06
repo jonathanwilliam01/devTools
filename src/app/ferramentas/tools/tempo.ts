@@ -1,4 +1,5 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 
@@ -77,7 +78,7 @@ function relativo(ms: number) {
 })
 export class Tempo {
   protected readonly ui = inject(Ui);
-  protected readonly entrada = signal('');
+  protected readonly entrada = lembrado('tempo.entrada', '');
   private readonly agora = signal(Date.now());
   protected readonly agoraS = computed(() => Math.floor(this.agora() / 1000));
 

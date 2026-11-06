@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { lerJwt } from '../lib/texto';
@@ -73,7 +74,7 @@ const NOMES: Record<string, string> = { exp: 'Expira em', iat: 'Emitido em', nbf
 })
 export class JwtTool {
   protected readonly ui = inject(Ui);
-  protected readonly token = signal('');
+  protected readonly token = lembrado('jwt.token', '');
 
   private readonly resultado = computed(() => {
     if (!this.token().trim()) return null;

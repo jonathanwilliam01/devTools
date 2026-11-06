@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { formatarXml } from '../lib/texto';
@@ -43,8 +44,8 @@ import { formatarXml } from '../lib/texto';
 })
 export class Formatador {
   protected readonly ui = inject(Ui);
-  protected readonly texto = signal('');
-  protected readonly minificar = signal(false);
+  protected readonly texto = lembrado('formatador.texto', '');
+  protected readonly minificar = lembrado('formatador.minificar', false);
 
   protected readonly resultado = computed(() => {
     const t = this.texto().trim();

@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { compactarSql, formatarSql, OpcoesSqlFmt } from '../lib/sqlfmt';
@@ -50,10 +51,10 @@ import { compactarSql, formatarSql, OpcoesSqlFmt } from '../lib/sqlfmt';
 })
 export class SqlFmt {
   protected readonly ui = inject(Ui);
-  protected readonly texto = signal('');
-  protected readonly compacto = signal(false);
-  protected readonly caixa = signal<OpcoesSqlFmt['caixa']>('maiuscula');
-  protected readonly indent = signal(2);
+  protected readonly texto = lembrado('sqlfmt.texto', '');
+  protected readonly compacto = lembrado('sqlfmt.compacto', false);
+  protected readonly caixa = lembrado<OpcoesSqlFmt['caixa']>('sqlfmt.caixa', 'maiuscula');
+  protected readonly indent = lembrado('sqlfmt.indent', 2);
 
   protected readonly saida = computed(() => {
     const t = this.texto();

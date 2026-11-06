@@ -12,10 +12,16 @@
         <div class="ferr-grupo">
           <h3>{{ g.nome }}</h3>
           @for (f of g.itens; track f.id) {
-            <a [routerLink]="['/ferramentas', f.id]" [class.ativo]="f.id === atual().id" (click)="lembrar(f.id)">
-              <span class="ico">{{ f.icone }}</span>
-              {{ f.nome }}
-            </a>
+            <div class="ferr-item" [class.fav]="favoritas().includes(f.id)">
+              <a [routerLink]="['/ferramentas', f.id]" [class.ativo]="f.id === atual().id" (click)="lembrar(f.id)">
+                <span class="ico">{{ f.icone }}</span>
+                {{ f.nome }}
+              </a>
+              <button type="button" class="ferr-estrela" (click)="favoritar(f.id)"
+                [title]="favoritas().includes(f.id) ? 'Remover dos favoritos' : 'Favoritar'">
+                {{ favoritas().includes(f.id) ? '★' : '☆' }}
+              </button>
+            </div>
           }
         </div>
       } @empty {
@@ -27,10 +33,18 @@
   <section class="ferr-corpo">
     <header class="ferr-cabeca">
       <span class="ferr-trilha">{{ atual().grupo }}</span>
-      <h2>{{ atual().nome }}</h2>
+      <h2>
+        {{ atual().nome }}
+        <button type="button" class="ferr-estrela" [class.on]="favoritas().includes(atual().id)" (click)="favoritar(atual().id)"
+          [title]="favoritas().includes(atual().id) ? 'Remover dos favoritos' : 'Favoritar'">
+          {{ favoritas().includes(atual().id) ? '★' : '☆' }}
+        </button>
+        <button type="button" class="btn mini ghost ferr-reset" (click)="resetar()" title="Limpa o que foi digitado nesta ferramenta">↺ Limpar</button>
+      </h2>
       <p>{{ atual().desc }}</p>
     </header>
 
+    @for (v of [versao()]; track v) {
     @switch (atual().id) {
       @case ('gerador') { <ft-gerador /> }
       @case ('validador') { <ft-validador /> }
@@ -57,5 +71,7 @@
       @case ('contador') { <ft-contador /> }
       @case ('senha') { <ft-senha /> }
     }
+    }
+    <p class="ft-dica ferr-colar">Dica: cole (Ctrl+V) fora dos campos um boleto, Pix, JWT, CEP, documento, JSON, SQL ou imagem com QR/código de barras para abrir na ferramenta certa.</p>
   </section>
 </div>

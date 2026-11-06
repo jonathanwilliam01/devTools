@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Ui } from '../../ui';
@@ -65,9 +66,9 @@ function aleatorio(max: number) {
 })
 export class Senha {
   protected readonly ui = inject(Ui);
-  protected readonly tamanho = signal(16);
+  protected readonly tamanho = lembrado('senha.tamanho', 16);
   protected readonly usar: Record<Grupo, boolean> = { mai: true, min: true, num: true, sim: true };
-  protected readonly semAmbiguos = signal(false);
+  protected readonly semAmbiguos = lembrado('senha.semAmbiguos', false);
   protected readonly senhas = signal<string[]>([]);
   protected readonly novoUuid = () => crypto.randomUUID();
   protected readonly uuid = signal(this.novoUuid());

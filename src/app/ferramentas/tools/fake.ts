@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Ui } from '../../ui';
@@ -57,12 +58,12 @@ type Registro = Record<string, string>;
 })
 export class Fake {
   protected readonly ui = inject(Ui);
-  protected readonly tipo = signal<Tipo>('pessoa');
-  protected readonly comMascara = signal(true);
+  protected readonly tipo = lembrado<Tipo>('fake.tipo', 'pessoa');
+  protected readonly comMascara = lembrado('fake.comMascara', true);
   protected readonly atual = signal<Registro>({});
-  protected readonly qtd = signal(10);
-  protected readonly formato = signal<'json' | 'csv' | 'insert'>('json');
-  protected readonly tabela = signal('');
+  protected readonly qtd = lembrado('fake.qtd', 10);
+  protected readonly formato = lembrado<'json' | 'csv' | 'insert'>('fake.formato', 'json');
+  protected readonly tabela = lembrado('fake.tabela', '');
   protected readonly lote = signal('');
 
   constructor() {

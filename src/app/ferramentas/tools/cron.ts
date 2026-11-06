@@ -1,4 +1,5 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { CAMPOS_CRON, lerCron, proximas } from '../lib/cron';
 
@@ -52,7 +53,7 @@ const EXEMPLOS = ['*/5 * * * *', '0 9 * * 1-5', '30 2 * * *', '0 0 1 * *', '0 8-
 export class CronTool {
   protected readonly EXEMPLOS = EXEMPLOS;
   protected readonly CAMPOS = CAMPOS_CRON;
-  protected readonly expr = signal('0 9 * * 1-5');
+  protected readonly expr = lembrado('cron.expr', '0 9 * * 1-5');
 
   data(d: Date) {
     return d.toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });

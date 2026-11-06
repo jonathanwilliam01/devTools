@@ -1,4 +1,5 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -53,8 +54,8 @@ import { FormsModule } from '@angular/forms';
   `,
 })
 export class Contador {
-  protected readonly texto = signal('');
-  protected readonly limite = signal<number | null>(null);
+  protected readonly texto = lembrado('contador.texto', '');
+  protected readonly limite = lembrado<number | null>('contador.limite', null);
 
   private readonly linhas = computed(() => this.texto().split(/\r?\n/));
 

@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { FormatoGrade, gerarTabela, lerGrade } from '../lib/grade';
@@ -44,9 +45,9 @@ export class Grade {
     ['alinhado', 'Texto alinhado'],
     ['html', 'HTML'],
   ];
-  protected readonly texto = signal('');
-  protected readonly formato = signal<FormatoGrade>('markdown');
-  protected readonly cabecalho = signal(true);
+  protected readonly texto = lembrado('grade.texto', '');
+  protected readonly formato = lembrado<FormatoGrade>('grade.formato', 'markdown');
+  protected readonly cabecalho = lembrado('grade.cabecalho', true);
 
   protected readonly linhas = computed(() => lerGrade(this.texto()));
   protected readonly colunas = computed(() => Math.max(0, ...this.linhas().map((l) => l.length)));

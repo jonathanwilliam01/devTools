@@ -1,8 +1,13 @@
-import { Component, computed, inject, signal, ViewEncapsulation } from '@angular/core';
+import { Component, computed, HostListener, inject, signal, ViewEncapsulation } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
+import { Store } from '../store';
+import { Ui } from '../ui';
+import { limpar, preencher } from './lib/estado';
+import { detectar } from './lib/detectar';
+import { imagemDe, lerImagem } from './lib/leitor';
 import { Gerador } from './tools/gerador';
 import { Validador } from './tools/validador';
 import { Mascara } from './tools/mascara';
@@ -64,6 +69,8 @@ const FERRAMENTAS: Ferramenta[] = [
 ];
 
 const CHAVE = 'devtools:ferramenta';
+// favoritas iam só no localStorage antes de entrar no backup
+const CHAVE_FAV_ANTIGA = 'devtools:favoritas';
 
 @Component({
   selector: 'app-ferramentas',
@@ -75,20 +82,36 @@ const CHAVE = 'devtools:ferramenta';
 export class Ferramentas {
   private readonly router = inject(Router);
   protected readonly busca = signal('');
+  private readonly store = inject(Store);
+  private readonly ui = inject(Ui);
+  // muda para recriar a ferramenta (limpar ou receber colagem)
+  protected readonly versao = signal(0);
+  protected readonly favoritas = computed(() => (this.store.config().favoritas ?? []).filter((id) => FERRAMENTAS.some((f) => f.id === id)));
   private readonly id = toSignal(inject(ActivatedRoute).paramMap.pipe(map((p) => p.get('id'))));
 
   protected readonly atual = computed(() => FERRAMENTAS.find((f) => f.id === this.id()) ?? FERRAMENTAS[0]);
 
   protected readonly grupos = computed(() => {
     const t = this.busca().toLowerCase().trim();
+    const fav = this.favoritas();
+    const achou = (f: Ferramenta) => !t || (f.nome + f.grupo + f.desc).toLowerCase().includes(t);
     const grupos = new Map<string, Ferramenta[]>();
-    FERRAMENTAS.filter((f) => !t || (f.nome + f.grupo + f.desc).toLowerCase().includes(t)).forEach((f) =>
+    const favs = fav.map((id) => FERRAMENTAS.find((f) => f.id === id)!).filter(achou);
+    if (favs.length) grupos.set('Favoritos', favs);
+    FERRAMENTAS.filter((f) => achou(f) && !fav.includes(f.id)).forEach((f) =>
       grupos.set(f.grupo, [...(grupos.get(f.grupo) ?? []), f]),
     );
     return [...grupos].map(([nome, itens]) => ({ nome, itens }));
   });
 
   constructor() {
+    try {
+      const antiga = localStorage.getItem(CHAVE_FAV_ANTIGA);
+      if (antiga) {
+        if (!this.store.config().favoritas) this.store.config.update((c) => ({ ...c, favoritas: JSON.parse(antiga) }));
+        localStorage.removeItem(CHAVE_FAV_ANTIGA);
+      }
+    } catch {}
     const id = this.id();
     if (!FERRAMENTAS.some((f) => f.id === id)) {
       let ultima: string | null = null;
@@ -107,6 +130,70 @@ export class Ferramentas {
     try {
       localStorage.setItem(CHAVE, id);
     } catch {}
+  }
+
+  favoritar(id: string) {
+    const l = this.favoritas();
+    this.store.config.update((c) => ({ ...c, favoritas: l.includes(id) ? l.filter((x) => x !== id) : [...l, id] }));
+  }
+
+  resetar() {
+    limpar(this.atual().id);
+    this.versao.update((v) => v + 1);
+  }
+
+  private abrir(texto: string) {
+    const d = detectar(texto);
+    if (!d) return this.ui.avisar('Conteúdo não reconhecido');
+    const f = FERRAMENTAS.find((x) => x.id === d.id)!;
+    limpar(f.id);
+    preencher(f.id, d.campos);
+    this.lembrar(f.id);
+    this.versao.update((v) => v + 1);
+    if (f.id !== this.atual().id) this.router.navigate(['/ferramentas', f.id]);
+    this.ui.avisar(`Aberto em ${f.nome}`);
+  }
+
+  private async abrirImagem(img: Blob) {
+    this.ui.avisar('Lendo imagem...');
+    try {
+      const [texto] = await lerImagem(img);
+      if (texto) this.abrir(texto);
+      else this.ui.avisar('Nenhum código encontrado na imagem');
+    } catch {
+      this.ui.avisar('Falha ao ler a imagem');
+    }
+  }
+
+  private emCampo(e: Event) {
+    const el = e.target as HTMLElement;
+    return el.closest('input, textarea, select, [contenteditable]') || el.closest('[data-imagem]');
+  }
+
+  // colar fora dos campos: reconhece o conteúdo (texto ou imagem com QR/código de barras) e abre a ferramenta certa
+  @HostListener('document:paste', ['$event'])
+  colar(e: ClipboardEvent) {
+    if (this.emCampo(e)) return;
+    const img = imagemDe(e.clipboardData);
+    const texto = e.clipboardData?.getData('text') ?? '';
+    if (!img && !texto.trim()) return;
+    e.preventDefault();
+    if (img) this.abrirImagem(img);
+    else this.abrir(texto);
+  }
+
+  @HostListener('dragover', ['$event'])
+  arrastando(e: DragEvent) {
+    if (!this.emCampo(e) && e.dataTransfer?.types.includes('Files')) e.preventDefault();
+  }
+
+  @HostListener('drop', ['$event'])
+  soltar(e: DragEvent) {
+    if (this.emCampo(e)) return;
+    const img = imagemDe(e.dataTransfer);
+    if (!img) return;
+    e.preventDefault();
+    this.abrirImagem(img);
   }
 
   abrirPrimeira() {

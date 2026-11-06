@@ -151,3 +151,34 @@ export function barrasItf(codigo: string) {
   });
   return { barras, largura: x };
 }
+
+const aleatorio = (n: number) => Array.from({ length: n }, () => Math.floor(Math.random() * 10)).join('');
+
+export function centavos(valor: string) {
+  let v = valor.replace(/[^\d,.]/g, '');
+  if (v.includes(',')) v = v.replace(/\./g, '').replace(',', '.');
+  const n = Math.round(parseFloat(v || '0') * 100);
+  return isNaN(n) ? 0 : n;
+}
+
+// livre: semente aleatória, usada só no que sobra do código
+export function gerarBancario(banco: string, valor: number, venc: number | null, livre = aleatorio(25)) {
+  const fator = venc === null ? 0 : fatorDaData(venc);
+  if (fator < 0 || fator > 9999) throw new Error('Vencimento fora da faixa do fator (0000 a 9999).');
+  if (valor > 9_999_999_999) throw new Error('Valor acima de 10 dígitos.');
+  const sem = banco.padStart(3, '0').slice(0, 3) + '9' + String(fator).padStart(4, '0') + String(valor).padStart(10, '0') + livre.slice(0, 25).padEnd(25, '0');
+  return sem.slice(0, 4) + mod11Banco(sem) + sem.slice(4);
+}
+
+export function gerarArrecadacao(segmento: string, ref: string, valor: number, empresa: string, livre = aleatorio(25)) {
+  if (valor > 99_999_999_999) throw new Error('Valor acima de 11 dígitos.');
+  const tamEmpresa = segmento === '6' ? 8 : 4;
+  const sem = '8' + segmento + ref + String(valor).padStart(11, '0') + empresa.replace(/\D/g, '').padStart(tamEmpresa, '0').slice(-tamEmpresa) + livre;
+  const base = sem.slice(0, 43);
+  const dv = (ref === '6' || ref === '7' ? mod10 : mod11Arrec)(base);
+  return base.slice(0, 3) + dv + base.slice(3);
+}
+
+export function novaSemente() {
+  return aleatorio(25);
+}

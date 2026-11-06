@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
 import { Sep, csvParaObjetos, detectarSep, jsonParaObjetos, objetosParaCsv, objetosParaInsert } from '../lib/csv';
@@ -61,10 +62,10 @@ export class Conversor {
     ['csv', 'CSV'],
     ['insert', 'INSERT'],
   ];
-  protected readonly texto = signal('');
-  protected readonly saida = signal<Saida>('json');
-  protected readonly sep = signal<Sep | 'auto'>('auto');
-  protected readonly tabela = signal('');
+  protected readonly texto = lembrado('conversor.texto', '');
+  protected readonly saida = lembrado<Saida>('conversor.saida', 'json');
+  protected readonly sep = lembrado<Sep | 'auto'>('conversor.sep', 'auto');
+  protected readonly tabela = lembrado('conversor.tabela', '');
 
   protected readonly resultado = computed(() => {
     const t = this.texto().trim();
