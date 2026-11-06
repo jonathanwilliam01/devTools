@@ -32,6 +32,7 @@ import { Encoding } from './tools/encoding';
 import { Contador } from './tools/contador';
 import { Senha } from './tools/senha';
 import { Lote } from './tools/lote';
+import { Ocr } from './tools/ocr';
 import { FERRAMENTAS, Ferramenta, prepararColado } from './lista';
 
 const CHAVE = 'devtools:ferramenta';
@@ -40,7 +41,7 @@ const CHAVE_FAV_ANTIGA = 'devtools:favoritas';
 
 @Component({
   selector: 'app-ferramentas',
-  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote],
+  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote, Ocr],
   templateUrl: './ferramentas.html',
   styleUrl: './ferramentas.css',
   encapsulation: ViewEncapsulation.None,
@@ -129,6 +130,8 @@ export class Ferramentas {
   }
 
   private emCampo(e: Event) {
+    // na ferramenta de OCR a imagem colada/solta é dela
+    if (this.atual().id === 'ocr') return true;
     const el = e.target as HTMLElement;
     return el.closest('input, textarea, select, [contenteditable]') || el.closest('[data-imagem]');
   }

@@ -29,6 +29,7 @@ export const FERRAMENTAS: Ferramenta[] = [
   { id: 'formatador', grupo: 'Texto', nome: 'Formatador', icone: '{}', desc: 'Formata, compacta e valida JSON e XML.' },
   { id: 'lote', grupo: 'Texto', nome: 'Lote de texto', icone: '¶', desc: 'Insere texto ou numeração em cada linha e localiza/substitui vários termos de uma vez, sem regex.' },
   { id: 'caixa', grupo: 'Texto', nome: 'Caixa e nomes', icone: 'Aa', desc: 'camelCase, snake_case, CONSTANTE, kebab-case, Título, sem acentos e outros.' },
+  { id: 'ocr', grupo: 'Texto', nome: 'Texto de imagem', icone: 'T▣', desc: 'Extrai o texto de um print ou imagem (OCR) para copiar. Cole com Ctrl+V, arraste ou escolha o arquivo.' },
   { id: 'contador', grupo: 'Texto', nome: 'Contador', icone: '123', desc: 'Caracteres, bytes, palavras e linhas; aponta linhas que passam do limite do campo.' },
   { id: 'encoding', grupo: 'Codificação', nome: 'Encoding', icone: 'Ã', desc: 'Corrige acentuação quebrada entre UTF-8 e Latin1 (Ã§ → ç) e mostra os bytes de cada caractere.' },
   { id: 'base64', grupo: 'Codificação', nome: 'Base64', icone: '64', desc: 'Base64 simples ou 5x invertido (encode5t / decode5t).' },
