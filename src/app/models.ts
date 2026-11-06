@@ -59,6 +59,8 @@ export interface Config {
   labels?: Record<string, CampoCard | 'ignorar'>;
   // issues atribuídas já levadas ao kanban, para não recriar tarefa removida
   issuesVistas?: number[];
+  // ids de MENUS escondidos na barra do topo
+  menusOcultos?: string[];
 }
 
 export interface Dados {
@@ -70,6 +72,13 @@ export interface Dados {
   vars: Record<string, string>;
   config: Config;
 }
+
+export const MENUS = [
+  { id: 'cards', nome: 'Cards', tecla: '1' },
+  { id: 'notas', nome: 'Notas', tecla: '2' },
+  { id: 'kanban', nome: 'Kanban', tecla: '3' },
+  { id: 'ferramentas', nome: 'Ferramentas', tecla: '4' },
+];
 
 export const ISSUE_URL = 'https://github.com/geosiap/tiflux/issues/';
 

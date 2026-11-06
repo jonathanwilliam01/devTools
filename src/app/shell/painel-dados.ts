@@ -4,7 +4,8 @@ import { Store } from '../store';
 import { Ui } from '../ui';
 import { Backup } from '../backup';
 import { Github } from '../github';
-import { ISSUE_URL, hoje } from '../models';
+import { ISSUE_URL, MENUS, hoje } from '../models';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-painel-dados',
@@ -13,6 +14,24 @@ import { ISSUE_URL, hoje } from '../models';
     <div class="overlay" (click)="fechar.emit()">
       <div class="dialogo" (click)="$event.stopPropagation()">
         <h2>Dados e backup</h2>
+
+        <section>
+          <h3>Menus</h3>
+          <div class="linha">
+            @for (m of MENUS; track m.id) {
+              <label class="chk">
+                <input
+                  type="checkbox"
+                  [checked]="!ocultos().includes(m.id)"
+                  [disabled]="!ocultos().includes(m.id) && store.menusVisiveis().length === 1"
+                  (change)="alternarMenu(m.id)"
+                />
+                {{ m.nome }}
+              </label>
+            }
+          </div>
+          <p class="sub">Escondido some da barra e do atalho, mas os dados continuam guardados. Vai junto no backup JSON.</p>
+        </section>
 
         <section>
           <h3>Backup automático</h3>
@@ -156,6 +175,19 @@ import { ISSUE_URL, hoje } from '../models';
       flex-wrap: wrap;
       gap: 8px;
     }
+    .chk {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .linha .chk input {
+      flex: none;
+      min-width: 0;
+      width: auto;
+      accent-color: var(--acento);
+    }
     .linha input {
       flex: 1;
       min-width: 200px;
@@ -182,10 +214,19 @@ export class PainelDados {
   protected readonly repo = ISSUE_URL.split('/')[4];
   readonly fechar = output();
   protected readonly persistente = signal(false);
+  protected readonly MENUS = MENUS;
+  protected readonly ocultos = computed(() => this.store.config().menusOcultos ?? []);
+  private readonly router = inject(Router);
   protected readonly kbLocal = computed(() => (JSON.stringify(this.store.snapshot()).length / 1024).toFixed(1));
 
   constructor() {
     navigator.storage?.persisted?.().then((p) => this.persistente.set(p));
+  }
+
+  // escondeu a tela atual: o guard da rota leva para o primeiro menu visível
+  alternarMenu(id: string) {
+    this.store.alternarMenu(id);
+    if (this.ocultos().includes(id) && this.router.url.startsWith('/' + id)) this.router.navigateByUrl('/' + this.store.menusVisiveis()[0].id);
   }
 
   async pedirPersistente() {

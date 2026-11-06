@@ -6,11 +6,27 @@
   align-items: start;
 }
 
+/* menu preso abaixo do topo: busca fixa, lista com scroll próprio */
 .ferr-menu {
   position: sticky;
-  top: 16px;
+  top: 76px;
+  height: calc(100dvh - 96px);
+  padding-right: 14px;
+  border-right: 1px solid var(--borda);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ferr-lista {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: grid;
+  align-content: start;
   gap: 14px;
+  padding-right: 4px;
+  scrollbar-width: thin;
 }
 .ferr-grupo {
   display: grid;
@@ -400,7 +416,11 @@
   }
   .ferr-menu {
     position: static;
+    height: auto;
+    padding-right: 0;
+    border-right: 0;
     display: flex;
+    flex-direction: row;
     flex-wrap: nowrap;
     overflow-x: auto;
     gap: 6px;
@@ -408,6 +428,9 @@
   }
   .ferr-menu input {
     display: none;
+  }
+  .ferr-lista {
+    display: contents;
   }
   .ferr-grupo {
     display: contents;

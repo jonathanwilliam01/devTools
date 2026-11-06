@@ -1,5 +1,5 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
-import { Card, Config, Dados, Nota, Sistema, Tarefa, chaveNome, hoje, novoId, partes } from './models';
+import { Card, Config, Dados, MENUS, Nota, Sistema, Tarefa, chaveNome, hoje, novoId, partes } from './models';
 import { StatusCookie, lerCookies, salvarCookies } from './persist';
 import { Issue } from './github';
 import { Destino, LABELS_PADRAO, LINGUAGEM_PADRAO, SIGLAS_AREA, destinoLabel, semPrefixo } from './labels';
@@ -32,6 +32,7 @@ export class Store {
   readonly areas = computed(() => unicos(this.cards().flatMap((c) => partes(c.area))).sort());
   readonly times = computed(() => unicos(this.cards().map((c) => c.time)).filter(Boolean).sort());
   readonly linguagens = computed(() => unicos(this.cards().flatMap((c) => partes(c.linguagem))).sort());
+  readonly menusVisiveis = computed(() => MENUS.filter((m) => !this.config().menusOcultos?.includes(m.id)));
   readonly mapaLabels = computed(() => ({ ...LABELS_PADRAO, ...this.config().labels }));
 
   private timerCookie?: ReturnType<typeof setTimeout>;
@@ -98,7 +99,7 @@ export class Store {
     this.tarefas.update((a) => mesclar(a, d.tarefas));
     this.vars.update((v) => ({ ...d.vars, ...v }));
     this.sincronizarSistemas();
-    this.config.update((c) => ({ ...c, labels: { ...d.config?.labels, ...c.labels } }));
+    this.config.update((c) => ({ ...c, labels: { ...d.config?.labels, ...c.labels }, menusOcultos: c.menusOcultos ?? d.config?.menusOcultos }));
     const senhaArq = d.config?.senha;
     if (!senhaArq) return '';
     if (!this.config().senha) {
@@ -108,6 +109,14 @@ export class Store {
     return senhaArq.salt !== this.config().senha!.salt
       ? 'Atenção: o arquivo usa outra senha mestra; blocos secretos dele não poderão ser lidos.'
       : '';
+  }
+
+  // sempre fica ao menos um menu visível
+  alternarMenu(id: string) {
+    const ocultos = this.config().menusOcultos ?? [];
+    const novo = ocultos.includes(id) ? ocultos.filter((x) => x !== id) : [...ocultos, id];
+    if (novo.length >= MENUS.length) return;
+    this.config.update((c) => ({ ...c, menusOcultos: novo }));
   }
 
   salvarCard(c: Card) {

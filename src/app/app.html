@@ -4,15 +4,23 @@
     v{{ versao.numero }}{{ versao.commit ? ' · ' + versao.commit : '' }}
   </span>
   <nav>
-    <a routerLink="/cards" routerLinkActive="ativo">Cards <small>{{ store.cards().length }}</small></a>
-    <a routerLink="/notas" routerLinkActive="ativo">Notas <small>{{ store.notas().length }}</small></a>
-    <a routerLink="/kanban" routerLinkActive="ativo">
-      Kanban <small>{{ store.tarefas().length }}</small>
-      @if (atrasadas()) {
-        <span class="alerta-nav" title="Tarefas com prazo vencido">{{ atrasadas() }}</span>
-      }
-    </a>
-    <a routerLink="/ferramentas" routerLinkActive="ativo">Ferramentas</a>
+    @if (visivel('cards')) {
+      <a routerLink="/cards" routerLinkActive="ativo">Cards <small>{{ store.cards().length }}</small></a>
+    }
+    @if (visivel('notas')) {
+      <a routerLink="/notas" routerLinkActive="ativo">Notas <small>{{ store.notas().length }}</small></a>
+    }
+    @if (visivel('kanban')) {
+      <a routerLink="/kanban" routerLinkActive="ativo">
+        Kanban <small>{{ store.tarefas().length }}</small>
+        @if (atrasadas()) {
+          <span class="alerta-nav" title="Tarefas com prazo vencido">{{ atrasadas() }}</span>
+        }
+      </a>
+    }
+    @if (visivel('ferramentas')) {
+      <a routerLink="/ferramentas" routerLinkActive="ativo">Ferramentas</a>
+    }
   </nav>
   <div class="acoes">
     <a class="btn ghost" [href]="urlBug()" target="_blank" rel="noopener" title="Reportar bug ou sugerir melhoria no devTools">Reportar bug</a>

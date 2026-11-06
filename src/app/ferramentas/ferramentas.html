@@ -7,19 +7,21 @@
       [(ngModel)]="busca"
       (keydown.enter)="abrirPrimeira()"
     />
-    @for (g of grupos(); track g.nome) {
-      <div class="ferr-grupo">
-        <h3>{{ g.nome }}</h3>
-        @for (f of g.itens; track f.id) {
-          <a [routerLink]="['/ferramentas', f.id]" [class.ativo]="f.id === atual().id" (click)="lembrar(f.id)">
-            <span class="ico">{{ f.icone }}</span>
-            {{ f.nome }}
-          </a>
-        }
-      </div>
-    } @empty {
-      <p class="ferr-nada">Nada encontrado.</p>
-    }
+    <div class="ferr-lista">
+      @for (g of grupos(); track g.nome) {
+        <div class="ferr-grupo">
+          <h3>{{ g.nome }}</h3>
+          @for (f of g.itens; track f.id) {
+            <a [routerLink]="['/ferramentas', f.id]" [class.ativo]="f.id === atual().id" (click)="lembrar(f.id)">
+              <span class="ico">{{ f.icone }}</span>
+              {{ f.nome }}
+            </a>
+          }
+        </div>
+      } @empty {
+        <p class="ferr-nada">Nada encontrado.</p>
+      }
+    </div>
   </aside>
 
   <section class="ferr-corpo">
@@ -45,6 +47,15 @@
       @case ('conversor') { <ft-conversor /> }
       @case ('regex') { <ft-regex /> }
       @case ('cron') { <ft-cron /> }
+      @case ('pix') { <ft-pix /> }
+      @case ('cep') { <ft-cep /> }
+      @case ('fake') { <ft-fake /> }
+      @case ('sqlfmt') { <ft-sqlfmt /> }
+      @case ('grade') { <ft-grade /> }
+      @case ('caixa') { <ft-caixa /> }
+      @case ('encoding') { <ft-encoding /> }
+      @case ('contador') { <ft-contador /> }
+      @case ('senha') { <ft-senha /> }
     }
   </section>
 </div>

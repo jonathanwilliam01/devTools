@@ -35,6 +35,10 @@ export class App {
     () => this.store.tarefas().filter((t) => t.status !== 'done' && t.prazo && t.prazo < hoje()).length,
   );
 
+  protected visivel(id: string) {
+    return this.store.menusVisiveis().some((m) => m.id === id);
+  }
+
   constructor() {
     this.aplicarTema();
     navigator.storage?.persist?.();
@@ -136,10 +140,10 @@ export class App {
     }
     const alvo = e.target as HTMLElement;
     if (e.ctrlKey || e.metaKey || e.altKey || this.ui.painel() || alvo.closest('input, textarea, select, [contenteditable]')) return;
-    const rotas: Record<string, string> = { '1': '/cards', '2': '/notas', '3': '/kanban', '4': '/ferramentas' };
+    const menu = this.store.menusVisiveis().find((m) => m.tecla === e.key);
     if (e.key === '/') document.querySelector<HTMLInputElement>('[data-busca]')?.focus();    else if (e.key === 'n') this.ui.atalhos.next('novo');
     else if (e.key === '?') this.ui.painel.set('atalhos');
-    else if (rotas[e.key]) this.router.navigateByUrl(rotas[e.key]);
+    else if (menu) this.router.navigateByUrl('/' + menu.id);
     else return;
     e.preventDefault();
   }
