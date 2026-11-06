@@ -21,62 +21,89 @@
       <strong>{{ n.ano }}</strong>
       <span class="meses">
         @for (q of n.porMes; track $index) {
-          <span class="mes" [class.atual]="$index === n.mesAtual" [style.height.%]="(q / n.maxMes) * 100" [title]="MESES[$index] + ': ' + q"></span>
+          <span
+            class="mes"
+            [class.atual]="$index === n.mesAtual"
+            [style.height.%]="(q / n.maxMes) * 100"
+            [title]="MESES[$index] + ': ' + q"
+          ></span>
         }
       </span>
     </a>
   </section>
 
-  <section class="faixa">
-    @if (incompletos(); as qtd) {
-      <a class="aviso" routerLink="/cards" [queryParams]="{ incompletos: 1 }">
-        ⚠ {{ qtd }} {{ qtd === 1 ? 'card incompleto' : 'cards incompletos' }} (falta linguagem ou o que foi feito) →
-      </a>
-    }
-    @let d = daily();
-    <button class="btn fim" (click)="copiarDaily()" [title]="d.texto">
-      ⧉ Copiar resumo da daily
-      <small>{{ d.itens.length }} desde {{ diaBr(d.de) }}</small>
-    </button>
-  </section>
+  @if (incompletos(); as qtd) {
+    <a class="aviso" routerLink="/cards" [queryParams]="{ incompletos: 1 }">
+      ⚠ {{ qtd }} {{ qtd === 1 ? 'card incompleto' : 'cards incompletos' }} (falta linguagem ou o
+      que foi feito) →
+    </a>
+  }
 }
 
 <div class="grade">
-  @if (visivel('kanban')) {
-    <section class="painel">
-      <header>
-        <h2>Kanban</h2>
-        <a routerLink="/kanban">Abrir →</a>
-      </header>
-      <div class="contagem">
-        @for (c of colunas(); track c.status) {
-          <span class="tag status" [attr.data-status]="c.status">{{ c.titulo }} <b>{{ c.qtd }}</b></span>
-        }
-      </div>
-      <ul class="tarefas">
-        @for (t of abertas().slice(0, 8); track t.id) {
-          <li [attr.data-prioridade]="t.prioridade">
-            <span class="status" [attr.data-status]="t.status">{{ nomeStatus(t.status) }}</span>
-            <a routerLink="/kanban">
-              @if (t.numeroCard) {
-                <span class="num">#{{ t.numeroCard }}</span>
+  <div class="coluna">
+    @if (visivel('kanban')) {
+      <section class="painel">
+        <header>
+          <h2>Kanban</h2>
+          <a routerLink="/kanban">Abrir →</a>
+        </header>
+        <div class="contagem">
+          @for (c of colunas(); track c.status) {
+            <span class="tag status" [attr.data-status]="c.status"
+              >{{ c.titulo }} <b>{{ c.qtd }}</b></span
+            >
+          }
+        </div>
+        <ul class="tarefas">
+          @for (t of abertas().slice(0, 8); track t.id) {
+            <li [attr.data-prioridade]="t.prioridade">
+              <span class="status" [attr.data-status]="t.status">{{ nomeStatus(t.status) }}</span>
+              <a routerLink="/kanban">
+                @if (t.numeroCard) {
+                  <span class="num">#{{ t.numeroCard }}</span>
+                }
+                <span class="titulo">{{ t.titulo }}</span>
+              </a>
+              <span class="prio">{{ label(t.prioridade) }}</span>
+              @if (prazo(t); as p) {
+                <span class="prazo" [attr.data-nivel]="p.nivel" [title]="'Prazo: ' + t.prazo"
+                  >⏱ {{ p.texto }}</span
+                >
               }
-              <span class="titulo">{{ t.titulo }}</span>
-            </a>
-            <span class="prio">{{ label(t.prioridade) }}</span>
-            @if (prazo(t); as p) {
-              <span class="prazo" [attr.data-nivel]="p.nivel" [title]="'Prazo: ' + t.prazo">⏱ {{ p.texto }}</span>
-            }
-          </li>
-        } @empty {
-          <li class="vazio-mini">Nenhuma tarefa aberta.</li>
+            </li>
+          } @empty {
+            <li class="vazio-mini">Nenhuma tarefa aberta.</li>
+          }
+        </ul>
+        @if (abertas().length > 8) {
+          <a class="mais" routerLink="/kanban">+ {{ abertas().length - 8 }} tarefas</a>
         }
-      </ul>
-      @if (abertas().length > 8) {
-        <a class="mais" routerLink="/kanban">+ {{ abertas().length - 8 }} tarefas</a>
-      }
-    </section>
-  }
+      </section>
+    }
+
+    @if (visivel('cards')) {
+      @let d = daily();
+      <section class="painel">
+        <header>
+          <h2>
+            Daily <small>desde {{ diaBr(d.de) }}</small>
+          </h2>
+          <button class="btn mini" (click)="copiarDaily()">⧉ Copiar</button>
+        </header>
+        @for (g of diasDaily(); track g.dia) {
+          <h3 class="dia">{{ diaBr(g.dia) }}</h3>
+          <ul class="daily">
+            @for (i of g.itens; track $index) {
+              <li [title]="i.obs">{{ i.titulo }}</li>
+            }
+          </ul>
+        } @empty {
+          <p class="vazio-mini">Nenhum concluído desde a última daily.</p>
+        }
+      </section>
+    }
+  </div>
 
   <div class="lateral">
     @if (visivel('ferramentas')) {
@@ -112,36 +139,62 @@
           <h2>Notas fixadas</h2>
           <a routerLink="/notas">Todas →</a>
         </header>
-        @for (nt of notas(); track nt.id) {
-          @let aberta = abertasNotas().has(nt.id);
-          <div class="nota" [attr.data-cor]="nt.cor">
-            <div class="nota-topo">
-              <button type="button" class="nota-titulo" (click)="alternarNota(nt)">
-                {{ aberta ? '▾' : '▸' }} {{ nt.titulo || 'Sem título' }}
+        @if (notas().length) {
+          <div class="atalhos">
+            @for (nt of notas(); track nt.id) {
+              <button
+                type="button"
+                class="atalho nota"
+                [attr.data-cor]="nt.cor"
+                (click)="notaAberta.set(nt)"
+              >
+                {{ nt.titulo || 'Sem título' }}
               </button>
-              <a routerLink="/notas" [queryParams]="{ nota: nt.id }" title="Abrir na tela de notas">↗</a>
-            </div>
-            @if (aberta) {
-              @for (b of nt.blocos; track b.id) {
-                @if (b.conteudo) {
-                  <button type="button" class="bloco" (click)="copiarBloco(b)" title="Clique para copiar">
-                    @if (b.label) {
-                      <span class="label">{{ b.label }}</span>
-                    }
-                    <span class="conteudo">{{ previa(b) }}</span>
-                    <span class="copiar">⧉</span>
-                  </button>
-                }
-              }
             }
           </div>
-        } @empty {
+        } @else {
           <p class="vazio-mini">Fixe uma nota com 📌 para ela aparecer aqui.</p>
         }
       </section>
     }
   </div>
 </div>
+
+@if (notaAberta(); as nt) {
+  <div class="overlay" (click)="notaAberta.set(null)">
+    <article
+      class="dialogo nota-dialogo"
+      [attr.data-cor]="nt.cor"
+      (click)="$event.stopPropagation()"
+    >
+      <header>
+        <h2>{{ nt.titulo || 'Sem título' }}</h2>
+        <a class="btn mini ghost" routerLink="/notas" [queryParams]="{ nota: nt.id }"
+          >Abrir em Notas ↗</a
+        >
+        <button class="btn mini ghost" (click)="notaAberta.set(null)" title="Fechar (Esc)">
+          ✕
+        </button>
+      </header>
+      @for (b of nt.blocos; track b.id) {
+        <div>
+          @if (b.label) {
+            <span class="label">{{ b.label }}</span>
+          }
+          @if (b.conteudo) {
+            <div class="copiavel" (click)="copiarBloco(b)" title="Clique para copiar">
+              <pre>{{ b.secreto ? '•'.repeat(12) : b.conteudo }}</pre>
+              <span class="copiar">⧉</span>
+            </div>
+          }
+        </div>
+      }
+      <footer>
+        <button class="btn mini" (click)="copiarTudo(nt)">Copiar tudo</button>
+      </footer>
+    </article>
+  </div>
+}
 
 @if (preencher(); as p) {
   <app-preencher [texto]="p" (fechar)="preencher.set(null)" />

@@ -8,7 +8,7 @@ import { Bloco, COLUNAS, MESES, Nota, PRIORIDADES, Tarefa, hoje, prazoTarefa } f
 import { FERRAMENTAS, prepararColado } from '../ferramentas/lista';
 import { imagemDe, lerImagem } from '../ferramentas/lib/leitor';
 import { Preencher, copiarOuPreencher } from '../notas/preencher';
-import { diaBr, resumoDaily } from '../resumo';
+import { ItemResumo, diaBr, resumoDaily } from '../resumo';
 
 const ORDEM_PRIO = PRIORIDADES.map((p) => p.valor);
 
@@ -69,6 +69,11 @@ export class Inicio {
   protected readonly incompletos = computed(() => this.store.cards().filter((c) => c.incompleto).length);
 
   protected readonly daily = computed(() => resumoDaily(this.store.cards(), this.store.tarefas()));
+  protected readonly diasDaily = computed(() => {
+    const m = new Map<string, ItemResumo[]>();
+    this.daily().itens.forEach((i) => m.set(i.data, [...(m.get(i.data) ?? []), i]));
+    return [...m].map(([dia, itens]) => ({ dia, itens }));
+  });
 
   protected readonly colunas = computed(() =>
     COLUNAS.filter((c) => c.status !== 'done').map((c) => ({
@@ -100,11 +105,11 @@ export class Inicio {
       .filter((n) => n.fixada)
       .sort((a, b) => b.atualizado.localeCompare(a.atualizado)),
   );
-  protected readonly abertasNotas = signal(new Set<string>());
+  protected readonly notaAberta = signal<Nota | null>(null);
   protected readonly preencher = signal<string | null>(null);
 
   constructor() {
-    this.ui.atalhos.pipe(takeUntilDestroyed()).subscribe((a) => a === 'esc' && this.preencher.set(null));
+    this.ui.atalhos.pipe(takeUntilDestroyed()).subscribe((a) => a === 'esc' && (this.preencher() ? this.preencher.set(null) : this.notaAberta.set(null)));
   }
 
   protected nomeStatus(s: string) {
@@ -160,25 +165,24 @@ export class Inicio {
     }
   }
 
-  alternarNota(n: Nota) {
-    this.abertasNotas.update((s) => {
-      const novo = new Set(s);
-      novo.has(n.id) ? novo.delete(n.id) : novo.add(n.id);
-      return novo;
-    });
-  }
-
-  previa(b: Bloco) {
-    return b.secreto ? '•'.repeat(8) : b.conteudo.split('\n')[0];
-  }
-
   copiarBloco(b: Bloco) {
     const txt = this.cofre.ler(b);
-    if (txt === null) {
-      this.ui.avisar('Desbloqueie o cofre');
-      this.ui.painel.set('cofre');
-      return;
-    }
+    if (txt === null) return this.pedirCofre();
+    this.copiarTexto(txt);
+  }
+
+  copiarTudo(n: Nota) {
+    const partes = n.blocos.map((b) => this.cofre.ler(b));
+    if (partes.includes(null)) return this.pedirCofre();
+    this.copiarTexto(n.blocos.map((b, i) => (b.label ? `${b.label}\n${partes[i]}` : partes[i])).join('\n\n'));
+  }
+
+  private copiarTexto(txt: string) {
     if (copiarOuPreencher(this.ui, txt)) this.preencher.set(txt);
+  }
+
+  private pedirCofre() {
+    this.ui.avisar('Desbloqueie o cofre');
+    this.ui.painel.set('cofre');
   }
 }

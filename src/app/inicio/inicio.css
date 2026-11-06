@@ -42,8 +42,10 @@
   gap: 18px;
   align-items: start;
 }
+.coluna,
 .lateral {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
 }
 .painel {
@@ -203,15 +205,6 @@ li[data-prioridade='baixa'] {
   min-width: 18px;
   text-align: center;
 }
-.nota {
-  border: 1px solid var(--borda);
-  border-radius: 8px;
-  margin-top: 8px;
-  background: var(--bg);
-}
-.nota:first-of-type {
-  margin-top: 0;
-}
 .nota[data-cor='amarelo'] {
   background: var(--nota-amarelo);
 }
@@ -227,63 +220,82 @@ li[data-prioridade='baixa'] {
 .nota[data-cor='vermelho'] {
   background: var(--nota-vermelho);
 }
-.nota-topo {
-  display: flex;
-  align-items: center;
-  padding-right: 10px;
-}
-.nota-topo a {
-  text-decoration: none;
-}
-.nota-titulo {
-  flex: 1;
-  text-align: left;
-  border: 0;
-  background: none;
-  color: var(--texto);
+button.atalho {
   font: inherit;
   font-weight: 500;
-  padding: 7px 12px;
   cursor: pointer;
 }
-.bloco {
+
+.nota-dialogo header {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  width: calc(100% - 16px);
-  margin: 0 8px 6px;
-  padding: 5px 8px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: rgb(127 127 127 / 0.1);
-  color: var(--texto);
-  font: inherit;
-  text-align: left;
-  cursor: copy;
+  align-items: center;
+  gap: 6px;
 }
-.bloco:hover {
-  border-color: var(--acento);
+.nota-dialogo h2 {
+  flex: 1;
 }
-.bloco .label {
+.nota-dialogo .label {
+  display: block;
   font-size: 12px;
   font-weight: 600;
   color: var(--texto-2);
-  white-space: nowrap;
+  margin-bottom: 2px;
 }
-.bloco .conteudo {
-  flex: 1;
-  min-width: 0;
+.copiavel {
+  position: relative;
+  border-radius: 6px;
+  background: rgb(127 127 127 / 0.1);
+  border: 1px solid transparent;
+  cursor: copy;
+}
+.copiavel:hover {
+  border-color: var(--acento);
+}
+.copiavel pre {
+  margin: 0;
+  padding: 6px 34px 6px 8px;
   font-family: var(--mono);
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
-.bloco .copiar {
+.copiavel .copiar {
+  position: absolute;
+  top: 5px;
+  right: 8px;
   color: var(--texto-2);
 }
-.bloco:hover .copiar {
+.copiavel:hover .copiar {
   color: var(--acento);
+}
+.nota-dialogo footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.painel h2 small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--texto-2);
+  margin-left: 4px;
+}
+.dia {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.dia:first-of-type {
+  margin-top: 0;
+}
+.daily {
+  margin: 0;
+  padding-left: 18px;
+}
+.daily li {
+  padding: 2px 0;
 }
 
 .colar {
@@ -307,21 +319,9 @@ li[data-prioridade='baixa'] {
   background: var(--acento);
 }
 
-.faixa {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin: -6px 0 18px;
-}
-.faixa .fim {
-  margin-left: auto;
-}
-.faixa .btn small {
-  color: var(--texto-2);
-  font-weight: 400;
-}
 .aviso {
+  display: inline-block;
+  margin: -6px 0 18px;
   padding: 6px 12px;
   border-radius: 8px;
   background: var(--nota-amarelo);
