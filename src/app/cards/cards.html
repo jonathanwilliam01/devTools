@@ -77,6 +77,9 @@
   @if (mes()) {
     <button class="btn mini" (click)="mes.set(0)">{{ MESES[mes() - 1] }} ✕</button>
   }
+  @if (soIncompletos()) {
+    <button class="btn mini" (click)="soIncompletos.set(false)">Só incompletos ✕</button>
+  }
   <div class="fim grupo-botoes">
     <button class="btn ghost" (click)="alternarGraficos()">{{ graficos() ? 'Ocultar' : 'Mostrar' }} gráficos</button>
     <button class="btn ghost" (click)="painelSistemas.set(true)">

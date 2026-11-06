@@ -5,8 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { Store } from '../store';
 import { Ui } from '../ui';
-import { limpar, preencher } from './lib/estado';
-import { detectar } from './lib/detectar';
+import { limpar } from './lib/estado';
 import { imagemDe, lerImagem } from './lib/leitor';
 import { Gerador } from './tools/gerador';
 import { Validador } from './tools/validador';
@@ -32,7 +31,7 @@ import { Caixa } from './tools/caixa';
 import { Encoding } from './tools/encoding';
 import { Contador } from './tools/contador';
 import { Senha } from './tools/senha';
-import { FERRAMENTAS, Ferramenta } from './lista';
+import { FERRAMENTAS, Ferramenta, prepararColado } from './lista';
 
 const CHAVE = 'devtools:ferramenta';
 // favoritas iam só no localStorage antes de entrar no backup
@@ -109,11 +108,8 @@ export class Ferramentas {
   }
 
   private abrir(texto: string) {
-    const d = detectar(texto);
-    if (!d) return this.ui.avisar('Conteúdo não reconhecido');
-    const f = FERRAMENTAS.find((x) => x.id === d.id)!;
-    limpar(f.id);
-    preencher(f.id, d.campos);
+    const f = prepararColado(texto);
+    if (!f) return this.ui.avisar('Conteúdo não reconhecido');
     this.lembrar(f.id);
     this.versao.update((v) => v + 1);
     if (f.id !== this.atual().id) this.router.navigate(['/ferramentas', f.id]);

@@ -104,20 +104,5 @@
 }
 
 @if (preencher(); as p) {
-  <div class="overlay" (click)="preencher.set(null)">
-    <form class="dialogo vars" (click)="$event.stopPropagation()" (ngSubmit)="confirmarPreencher()">
-      <h2>Preencher e copiar</h2>
-      @for (c of p.campos; track c.nome; let primeiro = $first) {
-        <label class="campo">
-          {{ c.nome }}
-          <input [name]="c.nome" [(ngModel)]="c.valor" [attr.autofocus]="primeiro ? '' : null" />
-        </label>
-      }
-      <pre class="previa">@for (x of partes(p.texto); track $index) {@if (x.v) {<mark>{{ valorDe(p, x.t) }}</mark>} @else {<ng-container>{{ x.t }}</ng-container>}}</pre>
-      <div class="rodape">
-        <button type="button" class="btn" (click)="preencher.set(null)">Cancelar</button>
-        <button type="submit" class="btn primario">Copiar</button>
-      </div>
-    </form>
-  </div>
+  <app-preencher [texto]="p" (fechar)="preencher.set(null)" />
 }

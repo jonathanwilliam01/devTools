@@ -7,17 +7,11 @@ import { Store } from '../store';
 import { Ui } from '../ui';
 import { Cofre } from '../cofre';
 import { Bloco, CORES, Nota, novoId } from '../models';
-
-const VAR = /\{\{\s*([\w.-]+)\s*\}\}/g;
-
-interface Preencher {
-  texto: string;
-  campos: { nome: string; valor: string }[];
-}
+import { Preencher, copiarOuPreencher, partesVars } from './preencher';
 
 @Component({
   selector: 'app-notas',
-  imports: [FormsModule, NgTemplateOutlet],
+  imports: [FormsModule, NgTemplateOutlet, Preencher],
   templateUrl: './notas.html',
   styleUrl: './notas.css',
 })
@@ -31,7 +25,7 @@ export class Notas {
   protected readonly busca = signal('');
   protected readonly visiveis = signal(new Set<string>());
   protected readonly form = signal<Nota | null>(null);
-  protected readonly preencher = signal<Preencher | null>(null);
+  protected readonly preencher = signal<string | null>(null);
   // nota aberta pelo início
   protected readonly destaque = signal(inject(ActivatedRoute).snapshot.queryParamMap.get('nota'));
 
@@ -118,32 +112,10 @@ export class Notas {
 
   // texto com {{variavel}} abre o formulário para preencher antes de copiar
   private copiarComVars(texto: string) {
-    const nomes = [...new Set([...texto.matchAll(VAR)].map((m) => m[1]))];
-    if (!nomes.length) {
-      this.ui.copiar(texto);
-      return;
-    }
-    const vars = this.store.vars();
-    this.preencher.set({ texto, campos: nomes.map((nome) => ({ nome, valor: vars[nome] ?? '' })) });
+    if (copiarOuPreencher(this.ui, texto)) this.preencher.set(texto);
   }
 
-  confirmarPreencher() {
-    const p = this.preencher();
-    if (!p) return;
-    const valores = Object.fromEntries(p.campos.map((c) => [c.nome, c.valor]));
-    this.store.vars.update((v) => ({ ...v, ...valores }));
-    this.ui.copiar(p.texto.replace(VAR, (_, nome) => valores[nome] ?? ''));
-    this.preencher.set(null);
-  }
-
-  partes(texto: string) {
-    return texto.split(/(\{\{\s*[\w.-]+\s*\}\})/).map((t) => ({ t, v: /^\{\{/.test(t) }));
-  }
-
-  valorDe(p: Preencher, token: string) {
-    const nome = token.replace(/[{}\s]/g, '');
-    return p.campos.find((c) => c.nome === nome)?.valor || token;
-  }
+  protected readonly partes = partesVars;
 
   exibir(b: Bloco) {
     if (!b.secreto) return b.conteudo;

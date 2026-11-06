@@ -1,12 +1,14 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Store } from '../store';
 import { Ui } from '../ui';
 import { Card, CampoCard, ISSUE_URL, MESES, Sistema, chaveNome, dataBr, hoje, novoId, partes } from '../models';
 import { Multi } from '../multi';
 import { Github } from '../github';
 import { Destino, chavesLabel, destinoLabel } from '../labels';
+import { SEMANA, diaBr, itensResumo, lerDiasDaily, lerObsDaily, outraDaily, textoResumo } from '../resumo';
 
 interface Semana {
   n: number;
@@ -29,14 +31,6 @@ interface Barra {
   qtd: number;
   pct: number;
 }
-
-interface ItemResumo {
-  data: string;
-  titulo: string;
-  obs: string;
-}
-
-const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
 
 const COLUNAS_PLANILHA = ['Número do Card', 'Descrição', 'Sistema', 'Área Tecnica', 'Time', 'Linguagem', 'Data conclusão', 'O que foi feito'];
 
@@ -66,6 +60,7 @@ export class Cards {
     return [...s].sort((a, b) => b - a);
   });
   protected readonly ano = signal(new Date().getFullYear());
+  protected readonly soIncompletos = signal(inject(ActivatedRoute).snapshot.queryParamMap.has('incompletos'));
 
   protected readonly doAno = computed(() => this.store.cards().filter((c) => +c.data.slice(0, 4) === this.ano()));
   protected readonly porMes = computed(() => {
@@ -106,6 +101,7 @@ export class Cards {
       (c) =>
         (!this.mes() || mesDe(c) === this.mes()) &&
         (!this.sistema() || partes(c.sistema).includes(this.sistema())) &&
+        (!this.soIncompletos() || c.incompleto) &&
         (!termo || normalizar(`${c.numero} ${c.descricao} ${c.sistema} ${c.linguagem} ${c.obs}`).includes(termo)),
     );
   });
@@ -163,52 +159,29 @@ export class Cards {
   protected readonly resumoAte = signal('');
   protected readonly resumoDatas = signal<string[]>([]);
   protected readonly resumoTarefas = signal(true);
-  protected readonly resumoObs = signal(lerPref('devtools:daily-obs', '1') === '1');
-  protected readonly diasDaily = signal(lerPref('devtools:daily', '1,3').split(',').filter(Boolean).map(Number));
+  protected readonly resumoObs = signal(lerObsDaily());
+  protected readonly diasDaily = signal(lerDiasDaily());
 
-  protected readonly itensResumo = computed<ItemResumo[]>(() => {
+  protected readonly itensResumo = computed(() => {
     const datas = this.resumoDatas();
     const [de, ate] = [this.resumoDe(), this.resumoAte()];
     const dentro = this.modoResumo() === 'datas' ? (d: string) => datas.includes(d) : (d: string) => d >= de && d <= ate;
-    const cards = this.store
-      .cards()
-      .filter((c) => dentro(c.data))
-      .sort((a, b) => a.numero - b.numero)
-      .map((c) => ({ data: c.data, titulo: `#${c.numero} - ${c.descricao}${c.sistema ? ` [${c.sistema}]` : ''}`, obs: c.obs }));
-    const tarefas = !this.resumoTarefas()
-      ? []
-      : this.store
-          .tarefas()
-          .filter((t) => t.status === 'done' && t.concluido && dentro(t.concluido) && !(t.numeroCard && this.registrados().has(t.numeroCard)))
-          .map((t) => ({
-            data: t.concluido!,
-            titulo: t.numeroCard ? `#${t.numeroCard} - ${t.titulo}` : `${t.tipo === 'verificacao' ? 'Verificação' : 'Ajuda'}: ${t.titulo}`,
-            obs: '',
-          }));
-    return [...cards, ...tarefas].sort((a, b) => a.data.localeCompare(b.data));
+    return itensResumo(this.store.cards(), this.store.tarefas(), dentro, this.resumoTarefas());
   });
 
   protected readonly textoResumo = computed(() => {
-    const itens = this.itensResumo();
     const titulo =
       this.modoResumo() === 'datas'
         ? `Concluídos em ${this.resumoDatas().map(diaBr).join(', ') || '—'}`
         : `Concluídos de ${diaBr(this.resumoDe())} a ${diaBr(this.resumoAte())}`;
-    if (!itens.length) return `${titulo}\n\nNenhum concluído.`;
-    const linhas = [`${titulo} (${itens.length})`];
-    let dia = '';
-    for (const i of itens) {
-      if (i.data !== dia) linhas.push('', diaBr((dia = i.data)));
-      else linhas.push('');
-      linhas.push(`- ${i.titulo}`);
-      if (this.resumoObs()) linhas.push(...i.obs.split('\n').filter((l) => l.trim()).map((l) => `  ${l.trim()}`));
-    }
-    return linhas.join('\n');
+    return textoResumo(this.itensResumo(), titulo, this.resumoObs());
   });
 
   private readonly registrados = computed(() => new Set(this.store.cards().map((c) => c.numero)));
 
   constructor() {
+    const inc = this.store.cards().filter((c) => c.incompleto).map((c) => +c.data.slice(0, 4));
+    if (this.soIncompletos() && inc.length) this.ano.set(Math.max(...inc));
     const r = this.store.rascunhoCard();
     if (r) {
       this.store.rascunhoCard.set(null);
@@ -496,23 +469,6 @@ function semanas(ano: number, mes: number, visiveis: Card[], doMes: Card[]): Sem
     mapa.get(n)!.cards.push(c);
   });
   return [...mapa.values()].sort((a, b) => b.n - a.n);
-}
-
-const somaDias = (d: string, n: number) => {
-  const x = new Date(d + 'T00:00');
-  x.setDate(x.getDate() + n);
-  return x.toLocaleDateString('sv-SE');
-};
-const diaSemana = (d: string) => new Date(d + 'T00:00').getDay();
-const diaBr = (d: string) => (d ? `${SEMANA[diaSemana(d)]} ${dataBr(d).slice(0, 5)}` : '—');
-
-// dia de daily mais próximo antes (-1) ou depois (1) de d; sem dias marcados anda uma semana
-function outraDaily(d: string, dias: number[], passo: 1 | -1) {
-  for (let i = 1; i <= 7; i++) {
-    const x = somaDias(d, i * passo);
-    if (dias.includes(diaSemana(x))) return x;
-  }
-  return somaDias(d, 7 * passo);
 }
 
 function lerPref(chave: string, padrao: string) {

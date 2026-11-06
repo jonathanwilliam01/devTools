@@ -1,6 +1,6 @@
 @if (visivel('cards')) {
+  @let n = numeros();
   <section class="numeros">
-    @let n = numeros();
     <a class="tile" routerLink="/cards">
       <span>Hoje</span>
       <strong>{{ n.hoje }}</strong>
@@ -12,12 +12,32 @@
     <a class="tile destaque" routerLink="/cards">
       <span>{{ n.nomeMes }}</span>
       <strong>{{ n.mes }}</strong>
-      <small>{{ n.nomeMesAnterior }}: {{ n.mesAnterior }}</small>
+      <small [title]="n.nomeMesAnterior + ' completo: ' + n.mesAnterior">
+        {{ n.nomeMesAnterior }} até dia {{ n.dia }}: {{ n.mesAnteriorAteHoje }}
+      </small>
     </a>
     <a class="tile" routerLink="/cards">
       <span>Total {{ n.anoNum }}</span>
       <strong>{{ n.ano }}</strong>
+      <span class="meses">
+        @for (q of n.porMes; track $index) {
+          <span class="mes" [class.atual]="$index === n.mesAtual" [style.height.%]="(q / n.maxMes) * 100" [title]="MESES[$index] + ': ' + q"></span>
+        }
+      </span>
     </a>
+  </section>
+
+  <section class="faixa">
+    @if (incompletos(); as qtd) {
+      <a class="aviso" routerLink="/cards" [queryParams]="{ incompletos: 1 }">
+        ⚠ {{ qtd }} {{ qtd === 1 ? 'card incompleto' : 'cards incompletos' }} (falta linguagem ou o que foi feito) →
+      </a>
+    }
+    @let d = daily();
+    <button class="btn fim" (click)="copiarDaily()" [title]="d.texto">
+      ⧉ Copiar resumo da daily
+      <small>{{ d.itens.length }} desde {{ diaBr(d.de) }}</small>
+    </button>
   </section>
 }
 
@@ -30,12 +50,13 @@
       </header>
       <div class="contagem">
         @for (c of colunas(); track c.status) {
-          <span class="tag" [attr.data-status]="c.status">{{ c.titulo }} <b>{{ c.qtd }}</b></span>
+          <span class="tag status" [attr.data-status]="c.status">{{ c.titulo }} <b>{{ c.qtd }}</b></span>
         }
       </div>
       <ul class="tarefas">
         @for (t of abertas().slice(0, 8); track t.id) {
           <li [attr.data-prioridade]="t.prioridade">
+            <span class="status" [attr.data-status]="t.status">{{ nomeStatus(t.status) }}</span>
             <a routerLink="/kanban">
               @if (t.numeroCard) {
                 <span class="num">#{{ t.numeroCard }}</span>
@@ -61,9 +82,15 @@
     @if (visivel('ferramentas')) {
       <section class="painel">
         <header>
-          <h2>Ferramentas favoritas</h2>
+          <h2>Ferramentas</h2>
           <a routerLink="/ferramentas">Todas →</a>
         </header>
+        <input
+          class="colar"
+          placeholder="Cole aqui boleto, Pix, JWT, CEP, CPF/CNPJ, JSON, SQL ou imagem com código"
+          (paste)="colarCampo($event)"
+          (keydown.enter)="colar($any($event.target).value)"
+        />
         @if (favoritas().length) {
           <div class="atalhos">
             @for (f of favoritas(); track f.id) {
@@ -85,18 +112,37 @@
           <h2>Notas fixadas</h2>
           <a routerLink="/notas">Todas →</a>
         </header>
-        @if (notas().length) {
-          <div class="atalhos">
-            @for (nt of notas(); track nt.id) {
-              <a class="atalho nota" [attr.data-cor]="nt.cor" routerLink="/notas" [queryParams]="{ nota: nt.id }">
-                {{ nt.titulo || 'Sem título' }}
-              </a>
+        @for (nt of notas(); track nt.id) {
+          @let aberta = abertasNotas().has(nt.id);
+          <div class="nota" [attr.data-cor]="nt.cor">
+            <div class="nota-topo">
+              <button type="button" class="nota-titulo" (click)="alternarNota(nt)">
+                {{ aberta ? '▾' : '▸' }} {{ nt.titulo || 'Sem título' }}
+              </button>
+              <a routerLink="/notas" [queryParams]="{ nota: nt.id }" title="Abrir na tela de notas">↗</a>
+            </div>
+            @if (aberta) {
+              @for (b of nt.blocos; track b.id) {
+                @if (b.conteudo) {
+                  <button type="button" class="bloco" (click)="copiarBloco(b)" title="Clique para copiar">
+                    @if (b.label) {
+                      <span class="label">{{ b.label }}</span>
+                    }
+                    <span class="conteudo">{{ previa(b) }}</span>
+                    <span class="copiar">⧉</span>
+                  </button>
+                }
+              }
             }
           </div>
-        } @else {
+        } @empty {
           <p class="vazio-mini">Fixe uma nota com 📌 para ela aparecer aqui.</p>
         }
       </section>
     }
   </div>
 </div>
+
+@if (preencher(); as p) {
+  <app-preencher [texto]="p" (fechar)="preencher.set(null)" />
+}

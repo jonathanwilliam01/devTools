@@ -1,20 +1,32 @@
-import { Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router, RouterLink } from '@angular/router';
 import { Store } from '../store';
-import { COLUNAS, MESES, PRIORIDADES, Tarefa, hoje, prazoTarefa } from '../models';
-import { FERRAMENTAS } from '../ferramentas/lista';
+import { Ui } from '../ui';
+import { Cofre } from '../cofre';
+import { Bloco, COLUNAS, MESES, Nota, PRIORIDADES, Tarefa, hoje, prazoTarefa } from '../models';
+import { FERRAMENTAS, prepararColado } from '../ferramentas/lista';
+import { imagemDe, lerImagem } from '../ferramentas/lib/leitor';
+import { Preencher, copiarOuPreencher } from '../notas/preencher';
+import { diaBr, resumoDaily } from '../resumo';
 
 const ORDEM_PRIO = PRIORIDADES.map((p) => p.valor);
 
 @Component({
   selector: 'app-inicio',
-  imports: [RouterLink],
+  imports: [RouterLink, Preencher],
   templateUrl: './inicio.html',
   styleUrl: './inicio.css',
+  host: { '(document:paste)': 'colarFora($event)' },
 })
 export class Inicio {
   protected readonly store = inject(Store);
+  private readonly ui = inject(Ui);
+  private readonly cofre = inject(Cofre);
+  private readonly router = inject(Router);
   protected readonly prazo = prazoTarefa;
+  protected readonly diaBr = diaBr;
+  protected readonly MESES = MESES;
 
   protected visivel(id: string) {
     return this.store.menusVisiveis().some((m) => m.id === id);
@@ -34,17 +46,29 @@ export class Inicio {
     ];
     const datas = this.store.cards().map((c) => c.data);
     const qtd = (f: (x: string) => boolean) => datas.filter(f).length;
+    const porMes = Array(12).fill(0) as number[];
+    datas.filter((x) => x.startsWith(ano)).forEach((x) => porMes[+x.slice(5, 7) - 1]++);
     return {
       hoje: qtd((x) => x === h),
       semana: qtd((x) => x >= semana && x <= h),
       mes: qtd((x) => x.startsWith(mes)),
+      // mês anterior até o mesmo dia, para comparar com o mês em curso
+      mesAnteriorAteHoje: qtd((x) => x.startsWith(mesAnt) && +x.slice(8) <= d.getDate()),
       mesAnterior: qtd((x) => x.startsWith(mesAnt)),
       nomeMes: MESES[d.getMonth()],
       nomeMesAnterior: MESES[anterior.getMonth()],
-      ano: qtd((x) => x.startsWith(ano)),
+      dia: d.getDate(),
+      ano: porMes.reduce((a, b) => a + b, 0),
       anoNum: ano,
+      porMes,
+      maxMes: Math.max(1, ...porMes),
+      mesAtual: d.getMonth(),
     };
   });
+
+  protected readonly incompletos = computed(() => this.store.cards().filter((c) => c.incompleto).length);
+
+  protected readonly daily = computed(() => resumoDaily(this.store.cards(), this.store.tarefas()));
 
   protected readonly colunas = computed(() =>
     COLUNAS.filter((c) => c.status !== 'done').map((c) => ({
@@ -76,8 +100,85 @@ export class Inicio {
       .filter((n) => n.fixada)
       .sort((a, b) => b.atualizado.localeCompare(a.atualizado)),
   );
+  protected readonly abertasNotas = signal(new Set<string>());
+  protected readonly preencher = signal<string | null>(null);
+
+  constructor() {
+    this.ui.atalhos.pipe(takeUntilDestroyed()).subscribe((a) => a === 'esc' && this.preencher.set(null));
+  }
+
+  protected nomeStatus(s: string) {
+    return COLUNAS.find((c) => c.status === s)?.titulo ?? s;
+  }
 
   protected label(valor: string) {
     return PRIORIDADES.find((p) => p.valor === valor)?.label ?? valor;
+  }
+
+  copiarDaily() {
+    const d = this.daily();
+    this.ui.copiar(d.texto, `Resumo copiado (${d.itens.length} itens)`);
+  }
+
+  // cole boleto, Pix, JWT, documento, JSON, SQL ou imagem com código e abre a ferramenta certa
+  colar(texto: string) {
+    const f = prepararColado(texto);
+    if (!f) return this.ui.avisar('Conteúdo não reconhecido');
+    this.router.navigate(['/ferramentas', f.id]);
+    this.ui.avisar(`Aberto em ${f.nome}`);
+  }
+
+  colarCampo(e: ClipboardEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.tratarColagem(e.clipboardData);
+  }
+
+  colarFora(e: ClipboardEvent) {
+    if (!this.visivel('ferramentas') || this.preencher()) return;
+    if ((e.target as HTMLElement).closest('input, textarea, select, [contenteditable]')) return;
+    if (this.tratarColagem(e.clipboardData)) e.preventDefault();
+  }
+
+  private tratarColagem(dt: DataTransfer | null) {
+    const img = imagemDe(dt);
+    const texto = dt?.getData('text') ?? '';
+    if (img) this.lerImagem(img);
+    else if (texto.trim()) this.colar(texto);
+    else return false;
+    return true;
+  }
+
+  private async lerImagem(img: Blob) {
+    this.ui.avisar('Lendo imagem...');
+    try {
+      const [texto] = await lerImagem(img);
+      if (texto) this.colar(texto);
+      else this.ui.avisar('Nenhum código encontrado na imagem');
+    } catch {
+      this.ui.avisar('Falha ao ler a imagem');
+    }
+  }
+
+  alternarNota(n: Nota) {
+    this.abertasNotas.update((s) => {
+      const novo = new Set(s);
+      novo.has(n.id) ? novo.delete(n.id) : novo.add(n.id);
+      return novo;
+    });
+  }
+
+  previa(b: Bloco) {
+    return b.secreto ? '•'.repeat(8) : b.conteudo.split('\n')[0];
+  }
+
+  copiarBloco(b: Bloco) {
+    const txt = this.cofre.ler(b);
+    if (txt === null) {
+      this.ui.avisar('Desbloqueie o cofre');
+      this.ui.painel.set('cofre');
+      return;
+    }
+    if (copiarOuPreencher(this.ui, txt)) this.preencher.set(txt);
   }
 }

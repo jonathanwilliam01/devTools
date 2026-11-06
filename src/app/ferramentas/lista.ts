@@ -1,3 +1,6 @@
+import { detectar } from './lib/detectar';
+import { limpar, preencher } from './lib/estado';
+
 export interface Ferramenta {
   id: string;
   grupo: string;
@@ -32,3 +35,13 @@ export const FERRAMENTAS: Ferramenta[] = [
   { id: 'hash', grupo: 'Codificação', nome: 'Hash', icone: '#', desc: 'MD5, SHA-1, SHA-256 e SHA-512 do texto.' },
   { id: 'senha', grupo: 'Codificação', nome: 'Senha', icone: '***', desc: 'Senhas fortes com tamanho e caracteres configuráveis, e UUID v4.' },
 ];
+
+// reconhece o colado, deixa os campos da ferramenta preenchidos e diz qual abrir
+export function prepararColado(texto: string) {
+  const d = detectar(texto);
+  const f = d && FERRAMENTAS.find((x) => x.id === d.id);
+  if (!f) return null;
+  limpar(f.id);
+  preencher(f.id, d.campos);
+  return f;
+}
