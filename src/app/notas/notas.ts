@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -31,6 +32,8 @@ export class Notas {
   protected readonly visiveis = signal(new Set<string>());
   protected readonly form = signal<Nota | null>(null);
   protected readonly preencher = signal<Preencher | null>(null);
+  // nota aberta pelo início
+  protected readonly destaque = signal(inject(ActivatedRoute).snapshot.queryParamMap.get('nota'));
 
   private readonly filtradas = computed(() => {
     const t = this.busca().toLowerCase().trim();
@@ -48,6 +51,12 @@ export class Notas {
   protected readonly outras = computed(() => this.filtradas().filter((n) => !n.fixada));
 
   constructor() {
+    afterNextRender(() => {
+      const id = this.destaque();
+      if (!id) return;
+      document.getElementById('nota-' + id)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      setTimeout(() => this.destaque.set(null), 2000);
+    });
     this.ui.atalhos.pipe(takeUntilDestroyed()).subscribe((a) => {
       if (a === 'esc') {
         this.form.set(null);

@@ -1,0 +1,102 @@
+@if (visivel('cards')) {
+  <section class="numeros">
+    @let n = numeros();
+    <a class="tile" routerLink="/cards">
+      <span>Hoje</span>
+      <strong>{{ n.hoje }}</strong>
+    </a>
+    <a class="tile" routerLink="/cards">
+      <span>Esta semana</span>
+      <strong>{{ n.semana }}</strong>
+    </a>
+    <a class="tile destaque" routerLink="/cards">
+      <span>{{ n.nomeMes }}</span>
+      <strong>{{ n.mes }}</strong>
+      <small>{{ n.nomeMesAnterior }}: {{ n.mesAnterior }}</small>
+    </a>
+    <a class="tile" routerLink="/cards">
+      <span>Total {{ n.anoNum }}</span>
+      <strong>{{ n.ano }}</strong>
+    </a>
+  </section>
+}
+
+<div class="grade">
+  @if (visivel('kanban')) {
+    <section class="painel">
+      <header>
+        <h2>Kanban</h2>
+        <a routerLink="/kanban">Abrir →</a>
+      </header>
+      <div class="contagem">
+        @for (c of colunas(); track c.status) {
+          <span class="tag" [attr.data-status]="c.status">{{ c.titulo }} <b>{{ c.qtd }}</b></span>
+        }
+      </div>
+      <ul class="tarefas">
+        @for (t of abertas().slice(0, 8); track t.id) {
+          <li [attr.data-prioridade]="t.prioridade">
+            <a routerLink="/kanban">
+              @if (t.numeroCard) {
+                <span class="num">#{{ t.numeroCard }}</span>
+              }
+              <span class="titulo">{{ t.titulo }}</span>
+            </a>
+            <span class="prio">{{ label(t.prioridade) }}</span>
+            @if (prazo(t); as p) {
+              <span class="prazo" [attr.data-nivel]="p.nivel" [title]="'Prazo: ' + t.prazo">⏱ {{ p.texto }}</span>
+            }
+          </li>
+        } @empty {
+          <li class="vazio-mini">Nenhuma tarefa aberta.</li>
+        }
+      </ul>
+      @if (abertas().length > 8) {
+        <a class="mais" routerLink="/kanban">+ {{ abertas().length - 8 }} tarefas</a>
+      }
+    </section>
+  }
+
+  <div class="lateral">
+    @if (visivel('ferramentas')) {
+      <section class="painel">
+        <header>
+          <h2>Ferramentas favoritas</h2>
+          <a routerLink="/ferramentas">Todas →</a>
+        </header>
+        @if (favoritas().length) {
+          <div class="atalhos">
+            @for (f of favoritas(); track f.id) {
+              <a class="atalho" [routerLink]="['/ferramentas', f.id]" [title]="f.desc">
+                <span class="ico">{{ f.icone }}</span>
+                {{ f.nome }}
+              </a>
+            }
+          </div>
+        } @else {
+          <p class="vazio-mini">Marque ☆ numa ferramenta para ela aparecer aqui.</p>
+        }
+      </section>
+    }
+
+    @if (visivel('notas')) {
+      <section class="painel">
+        <header>
+          <h2>Notas fixadas</h2>
+          <a routerLink="/notas">Todas →</a>
+        </header>
+        @if (notas().length) {
+          <div class="atalhos">
+            @for (nt of notas(); track nt.id) {
+              <a class="atalho nota" [attr.data-cor]="nt.cor" routerLink="/notas" [queryParams]="{ nota: nt.id }">
+                {{ nt.titulo || 'Sem título' }}
+              </a>
+            }
+          </div>
+        } @else {
+          <p class="vazio-mini">Fixe uma nota com 📌 para ela aparecer aqui.</p>
+        }
+      </section>
+    }
+  </div>
+</div>

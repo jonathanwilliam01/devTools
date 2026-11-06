@@ -143,6 +143,7 @@ export class App {
     const menu = this.store.menusVisiveis().find((m) => m.tecla === e.key);
     if (e.key === '/') document.querySelector<HTMLInputElement>('[data-busca]')?.focus();    else if (e.key === 'n') this.ui.atalhos.next('novo');
     else if (e.key === '?') this.ui.painel.set('atalhos');
+    else if (e.key === '0') this.router.navigateByUrl('/inicio');
     else if (menu) this.router.navigateByUrl('/' + menu.id);
     else return;
     e.preventDefault();

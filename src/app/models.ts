@@ -76,7 +76,7 @@ export interface Dados {
 }
 
 export const MENUS = [
-  { id: 'cards', nome: 'Cards', tecla: '1' },
+  { id: 'cards', nome: 'Histórico', tecla: '1' },
   { id: 'notas', nome: 'Notas', tecla: '2' },
   { id: 'kanban', nome: 'Kanban', tecla: '3' },
   { id: 'ferramentas', nome: 'Ferramentas', tecla: '4' },
@@ -122,3 +122,14 @@ export const chaveNome = (s: string) =>
 // diferença em dias entre duas datas yyyy-mm-dd (b - a)
 export const diasEntre = (a: string, b: string) =>
   Math.round((Date.parse(b + 'T00:00') - Date.parse(a + 'T00:00')) / 86400000);
+
+// selo de prazo da tarefa (kanban e início)
+export function prazoTarefa(t: Tarefa): { texto: string; nivel: string } | null {
+  if (!t.prazo) return null;
+  if (t.status === 'done') return { texto: dataBr(t.prazo).slice(0, 5), nivel: 'ok' };
+  const d = diasEntre(hoje(), t.prazo);
+  if (d < 0) return { texto: `atrasada ${-d}d`, nivel: 'atrasada' };
+  if (d === 0) return { texto: 'vence hoje', nivel: 'hoje' };
+  if (d <= 2) return { texto: d === 1 ? 'amanhã' : `em ${d}d`, nivel: 'proxima' };
+  return { texto: dataBr(t.prazo).slice(0, 5), nivel: 'ok' };
+}

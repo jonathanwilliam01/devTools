@@ -1,11 +1,12 @@
 <header class="topo">
-  <a class="marca" routerLink="/">dev<b>Tools</b></a>
+  <a class="marca" routerLink="/inicio">dev<b>Tools</b></a>
   <span class="versao" [title]="'Build ' + versaoData">
     v{{ versao.numero }}{{ versao.commit ? ' · ' + versao.commit : '' }}
   </span>
   <nav>
+    <a routerLink="/inicio" routerLinkActive="ativo">Início</a>
     @if (visivel('cards')) {
-      <a routerLink="/cards" routerLinkActive="ativo">Cards <small>{{ store.cards().length }}</small></a>
+      <a routerLink="/cards" routerLinkActive="ativo">Histórico <small>{{ store.cards().length }}</small></a>
     }
     @if (visivel('notas')) {
       <a routerLink="/notas" routerLinkActive="ativo">Notas <small>{{ store.notas().length }}</small></a>
@@ -93,7 +94,8 @@
         <h2>Atalhos</h2>
         <dl>
           <dt><kbd>/</kbd></dt><dd>Buscar</dd>          <dt><kbd>n</kbd></dt><dd>Novo (card, nota ou tarefa) / gerar de novo</dd>
-          <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Cards, Notas, Kanban, Ferramentas</dd>
+          <dt><kbd>0</kbd></dt><dd>Início</dd>
+          <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Histórico, Notas, Kanban, Ferramentas</dd>
           <dt><kbd>Esc</kbd></dt><dd>Fechar janela</dd>
           <dt><kbd>Ctrl</kbd> + <kbd>Enter</kbd></dt><dd>Salvar formulário</dd>
           <dt><kbd>?</kbd></dt><dd>Esta ajuda</dd>

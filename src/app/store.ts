@@ -111,11 +111,9 @@ export class Store {
       : '';
   }
 
-  // sempre fica ao menos um menu visível
   alternarMenu(id: string) {
     const ocultos = this.config().menusOcultos ?? [];
     const novo = ocultos.includes(id) ? ocultos.filter((x) => x !== id) : [...ocultos, id];
-    if (novo.length >= MENUS.length) return;
     this.config.update((c) => ({ ...c, menusOcultos: novo }));
   }
 

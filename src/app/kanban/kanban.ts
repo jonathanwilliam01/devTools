@@ -6,7 +6,7 @@ import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup, moveItemInArray, t
 import { Store } from '../store';
 import { Ui } from '../ui';
 import { Github } from '../github';
-import { COLUNAS, ISSUE_URL, PRIORIDADES, Prioridade, Status, TIPOS, Tarefa, Tipo, dataBr, diasEntre, hoje, novoId } from '../models';
+import { COLUNAS, ISSUE_URL, PRIORIDADES, Prioridade, Status, TIPOS, Tarefa, Tipo, hoje, novoId, prazoTarefa } from '../models';
 
 @Component({
   selector: 'app-kanban',
@@ -60,15 +60,7 @@ export class Kanban {
     });
   }
 
-  prazo(t: Tarefa): { texto: string; nivel: string } | null {
-    if (!t.prazo) return null;
-    if (t.status === 'done') return { texto: dataBr(t.prazo).slice(0, 5), nivel: 'ok' };
-    const d = diasEntre(hoje(), t.prazo);
-    if (d < 0) return { texto: `atrasada ${-d}d`, nivel: 'atrasada' };
-    if (d === 0) return { texto: 'vence hoje', nivel: 'hoje' };
-    if (d <= 2) return { texto: d === 1 ? 'amanhã' : `em ${d}d`, nivel: 'proxima' };
-    return { texto: dataBr(t.prazo).slice(0, 5), nivel: 'ok' };
-  }
+  protected readonly prazo = prazoTarefa;
 
   soltar(ev: CdkDragDrop<Tarefa[]>, destino: Status) {
     const cols = Object.fromEntries(COLUNAS.map((c) => [c.status, [...this.colunas()[c.status]]])) as Record<Status, Tarefa[]>;

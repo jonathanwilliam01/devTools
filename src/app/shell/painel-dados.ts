@@ -23,14 +23,13 @@ import { Router } from '@angular/router';
                 <input
                   type="checkbox"
                   [checked]="!ocultos().includes(m.id)"
-                  [disabled]="!ocultos().includes(m.id) && store.menusVisiveis().length === 1"
                   (change)="alternarMenu(m.id)"
                 />
                 {{ m.nome }}
               </label>
             }
           </div>
-          <p class="sub">Escondido some da barra e do atalho, mas os dados continuam guardados. Vai junto no backup JSON.</p>
+          <p class="sub">Escondido some da barra, do atalho e do início, mas os dados continuam guardados. O início não pode ser escondido. Vai junto no backup JSON.</p>
         </section>
 
         <section>
@@ -223,10 +222,10 @@ export class PainelDados {
     navigator.storage?.persisted?.().then((p) => this.persistente.set(p));
   }
 
-  // escondeu a tela atual: o guard da rota leva para o primeiro menu visível
+  // escondeu a tela atual: volta para o início
   alternarMenu(id: string) {
     this.store.alternarMenu(id);
-    if (this.ocultos().includes(id) && this.router.url.startsWith('/' + id)) this.router.navigateByUrl('/' + this.store.menusVisiveis()[0].id);
+    if (this.ocultos().includes(id) && this.router.url.startsWith('/' + id)) this.router.navigateByUrl('/inicio');
   }
 
   async pedirPersistente() {

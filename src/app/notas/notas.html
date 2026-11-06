@@ -29,7 +29,7 @@
 }
 
 <ng-template #tplNota let-n>
-  <article class="nota" [attr.data-cor]="n.cor">
+  <article class="nota" [attr.data-cor]="n.cor" [id]="'nota-' + n.id" [class.destaque]="destaque() === n.id">
     <header>
       <h4 (dblclick)="editar(n)">{{ n.titulo }}</h4>
       <button class="btn mini ghost pino" [class.on]="n.fixada" (click)="fixar(n)" [title]="n.fixada ? 'Desafixar' : 'Fixar'">📌</button>
