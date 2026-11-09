@@ -23,6 +23,7 @@ export interface Bloco {
   label: string;
   conteudo: string; // secreto com senha mestra: "enc:<iv>:<dados>"
   secreto?: boolean;
+  tabela?: boolean; // conteudo em TSV
 }
 
 export interface Nota {

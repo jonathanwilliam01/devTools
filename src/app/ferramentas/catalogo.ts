@@ -40,6 +40,7 @@ export const FERRAMENTAS: Ferramenta[] = [
   { id: 'ocr', grupo: 'Texto', nome: 'Texto de imagem', icone: 'T▣', desc: 'Extrai o texto de um print ou imagem (OCR) para copiar e filtra as linhas por palavra. Cole com Ctrl+V, arraste ou escolha o arquivo.' },
   { id: 'contador', grupo: 'Texto', nome: 'Contador', icone: '123', desc: 'Caracteres, bytes, palavras e linhas; aponta linhas que passam do limite do campo.' },
   { id: 'encoding', grupo: 'Codificação', nome: 'Encoding', icone: 'Ã', desc: 'Corrige acentuação quebrada entre UTF-8 e Latin1 (Ã§ → ç) e mostra os bytes de cada caractere.' },
+  { id: 'entidades', grupo: 'Codificação', nome: 'Entidades HTML', icone: '&;', desc: 'Converte acentos e símbolos do texto em entidades HTML (ã → &atilde;) e volta para texto.', desde: '1.0.22' },
   { id: 'base64', grupo: 'Codificação', nome: 'Base64', icone: '64', desc: 'Base64 simples ou 5x invertido (encode5t / decode5t).' },
   { id: 'jwt', grupo: 'Codificação', nome: 'JWT', icone: 'jw', desc: 'Lê header e payload de um token. Não verifica a assinatura.' },
   { id: 'hash', grupo: 'Codificação', nome: 'Hash', icone: '#', desc: 'MD5, SHA-1, SHA-256 e SHA-512 do texto.' },

@@ -40,7 +40,25 @@
         @if (b.label) {
           <span class="label">{{ b.label }}</span>
         }
-        @if (b.conteudo) {
+        @if (b.conteudo && celulas(b); as g) {
+          <div class="tabela-box">
+            <table class="tabela">
+              @for (linha of g; track $index) {
+                <tr>
+                  @for (cel of linha; track $index) {
+                    <td (click)="copiarCelula(cel)" [title]="cel ? 'Clique para copiar' : ''">@for (p of partes(cel); track $index) {@if (p.v) {<mark>{{ p.t }}</mark>} @else {<ng-container>{{ p.t }}</ng-container>}}</td>
+                  }
+                </tr>
+              }
+            </table>
+            <span class="acoes-tabela">
+              @if (b.secreto) {
+                <button class="btn mini ghost" (click)="alternarVisivel(b)" title="Ocultar">◡</button>
+              }
+              <button class="btn mini ghost" (click)="copiarBloco(b)" title="Copiar tabela (cola no Excel)">⧉ tabela</button>
+            </span>
+          </div>
+        } @else if (b.conteudo) {
           <div class="copiavel" (click)="copiarBloco(b)" title="Clique para copiar">
             @if (b.secreto) {
               <pre>{{ exibir(b) }}</pre>
@@ -83,10 +101,54 @@
             <button type="button" class="btn mini ghost" (click)="moverBloco(f, i, 1)" title="Descer">↓</button>
             <button type="button" class="btn mini ghost perigo" (click)="f.blocos.splice(i, 1)" title="Remover bloco">✕</button>
           </div>
-          <textarea [name]="'c' + b.id" [(ngModel)]="b.conteudo" rows="3" [placeholder]="'Conteúdo copiável (aceita ' + EXEMPLO + ')'"></textarea>
+          @if (b.tabela) {
+            @let g = grades.get(b.id)!;
+            <div class="grade-wrap">
+              <table class="grade-edit">
+                <tr>
+                  <th></th>
+                  @for (_ of g[0]; track $index; let j = $index) {
+                    <th>
+                      {{ letra(j) }}
+                      <button type="button" class="btn mini ghost perigo rm" (click)="removerColuna(g, j)" title="Remover coluna">✕</button>
+                    </th>
+                  }
+                </tr>
+                @for (linha of g; track $index; let i = $index) {
+                  <tr>
+                    <th>
+                      {{ i + 1 }}
+                      <button type="button" class="btn mini ghost perigo rm" (click)="removerLinha(g, i)" title="Remover linha">✕</button>
+                    </th>
+                    @for (_ of linha; track $index; let j = $index) {
+                      <td>
+                        <input
+                          [attr.data-cel]="b.id + '-' + i + '-' + j"
+                          [(ngModel)]="linha[j]"
+                          [ngModelOptions]="{ standalone: true }"
+                          (keydown.enter)="descer($event, b.id, g, i, j)"
+                          (paste)="colar($event, g, i, j)"
+                        />
+                      </td>
+                    }
+                  </tr>
+                }
+              </table>
+            </div>
+            <div class="linha">
+              <button type="button" class="btn mini" (click)="addLinha(g)">+ Linha</button>
+              <button type="button" class="btn mini" (click)="addColuna(g)">+ Coluna</button>
+              <span class="dica">Enter desce; colar do Excel preenche várias células.</span>
+            </div>
+          } @else {
+            <textarea [name]="'c' + b.id" [(ngModel)]="b.conteudo" rows="3" [placeholder]="'Conteúdo copiável (aceita ' + EXEMPLO + ')'"></textarea>
+          }
         </div>
       }
-      <button type="button" class="btn" (click)="addBloco(f)">+ Bloco</button>
+      <div class="add-blocos">
+        <button type="button" class="btn" (click)="addBloco(f)">+ Bloco</button>
+        <button type="button" class="btn" (click)="addTabela(f)">+ Tabela</button>
+      </div>
 
       <div class="cores">
         @for (c of CORES; track c) {

@@ -16,6 +16,7 @@ import { Tempo } from './tools/tempo';
 import { Sql } from './tools/sql';
 import { Formatador } from './tools/formatador';
 import { Base64 } from './tools/base64';
+import { Entidades } from './tools/entidades';
 import { JwtTool } from './tools/jwt';
 import { Hash } from './tools/hash';
 import { Diff } from './tools/diff';
@@ -47,7 +48,7 @@ const CHAVE_FAV_ANTIGA = 'devtools:favoritas';
 
 @Component({
   selector: 'app-ferramentas',
-  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote, Ocr, PgBusca, ArrayJson, Builder, SqlStr, Explain, Extenso],
+  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote, Ocr, PgBusca, ArrayJson, Builder, SqlStr, Explain, Extenso, Entidades],
   templateUrl: './ferramentas.html',
   styleUrl: './ferramentas.css',
   encapsulation: ViewEncapsulation.None,

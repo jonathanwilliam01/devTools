@@ -8,6 +8,7 @@ import { Ui } from '../ui';
 import { Cofre } from '../cofre';
 import { Bloco, CORES, Nota, novoId } from '../models';
 import { Preencher, copiarOuPreencher, partesVars } from './preencher';
+import { gradeVazia, letraColuna, lerTsv, paraTsv } from './tabela';
 
 @Component({
   selector: 'app-notas',
@@ -26,6 +27,9 @@ export class Notas {
   protected readonly visiveis = signal(new Set<string>());
   protected readonly form = signal<Nota | null>(null);
   protected readonly preencher = signal<string | null>(null);
+  // células das tabelas em edição, por id do bloco
+  protected readonly grades = new Map<string, string[][]>();
+  protected readonly letra = letraColuna;
   // nota aberta pelo início
   protected readonly destaque = signal(inject(ActivatedRoute).snapshot.queryParamMap.get('nota'));
 
@@ -60,19 +64,25 @@ export class Notas {
   }
 
   nova() {
+    this.grades.clear();
     this.form.set({ id: novoId(), titulo: '', blocos: [bloco()], fixada: false, cor: '', atualizado: '' });
   }
 
   editar(n: Nota) {
     if (this.cofre.bloqueado() && n.blocos.some((b) => b.secreto)) return this.pedirCofre();
-    this.form.set(this.cofre.abrirNota(n));
+    const f = this.cofre.abrirNota(n);
+    this.grades.clear();
+    f.blocos.filter((b) => b.tabela).forEach((b) => this.grades.set(b.id, lerTsv(b.conteudo)));
+    this.form.set(f);
   }
 
   async salvar() {
     const f = this.form();
     if (!f) return;
     if (this.cofre.bloqueado() && f.blocos.some((b) => b.secreto)) return this.pedirCofre();
-    const blocos = f.blocos.filter((b) => b.label.trim() || b.conteudo.trim());
+    const blocos = f.blocos
+      .map((b) => (b.tabela ? { ...b, conteudo: paraTsv(this.grades.get(b.id) ?? []) } : b))
+      .filter((b) => b.label.trim() || b.conteudo.trim());
     this.form.set(null);
     if (!f.titulo.trim() && !blocos.length) return;
     this.store.salvarNota(await this.cofre.selar({ ...f, blocos, atualizado: new Date().toISOString() }));
@@ -117,6 +127,17 @@ export class Notas {
 
   protected readonly partes = partesVars;
 
+  // null quando a tabela está oculta ou bloqueada (mostra os pontos)
+  celulas(b: Bloco) {
+    if (!b.tabela || (b.secreto && !this.visiveis().has(b.id))) return null;
+    const t = this.cofre.ler(b);
+    return t === null ? null : lerTsv(t);
+  }
+
+  copiarCelula(txt: string) {
+    if (txt) this.copiarComVars(txt);
+  }
+
   exibir(b: Bloco) {
     if (!b.secreto) return b.conteudo;
     if (!this.visiveis().has(b.id)) return '•'.repeat(12);
@@ -130,6 +151,49 @@ export class Notas {
 
   addBloco(f: Nota) {
     f.blocos.push(bloco());
+  }
+
+  addTabela(f: Nota) {
+    const b = { ...bloco(), tabela: true };
+    this.grades.set(b.id, gradeVazia());
+    f.blocos.push(b);
+  }
+
+  addLinha(g: string[][], i = g.length) {
+    g.splice(i, 0, Array(g[0]?.length || 1).fill(''));
+  }
+
+  addColuna(g: string[][]) {
+    g.forEach((l) => l.push(''));
+  }
+
+  removerLinha(g: string[][], i: number) {
+    if (g.length > 1) g.splice(i, 1);
+  }
+
+  removerColuna(g: string[][], j: number) {
+    if (g[0].length > 1) g.forEach((l) => l.splice(j, 1));
+  }
+
+  // Enter desce para a célula de baixo, criando linha no fim
+  descer(e: Event, id: string, g: string[][], i: number, j: number) {
+    e.preventDefault();
+    if (i === g.length - 1) this.addLinha(g);
+    setTimeout(() => document.querySelector<HTMLInputElement>(`[data-cel="${id}-${i + 1}-${j}"]`)?.focus());
+  }
+
+  // colar várias células (do Excel) espalha a partir da célula atual
+  colar(e: ClipboardEvent, g: string[][], i: number, j: number) {
+    const txt = e.clipboardData?.getData('text/plain').replace(/\r?\n$/, '') ?? '';
+    if (!/[\t\n]/.test(txt)) return;
+    e.preventDefault();
+    lerTsv(txt).forEach((linha, di) => {
+      while (g.length <= i + di) this.addLinha(g);
+      linha.forEach((v, dj) => {
+        while (g[0].length <= j + dj) this.addColuna(g);
+        g[i + di][j + dj] = v;
+      });
+    });
   }
 
   moverBloco(f: Nota, i: number, d: number) {

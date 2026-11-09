@@ -119,6 +119,7 @@ kbd {
   background: var(--bg-2);
 }
 .versao {
+  cursor: pointer;
   margin-left: -16px;
   font-family: var(--mono);
   font-size: 11px;

@@ -200,3 +200,92 @@ mark {
     padding: 4px 8px;
   }
 }
+
+.add-blocos {
+  display: flex;
+  gap: 8px;
+}
+.tabela-box {
+  position: relative;
+  overflow-x: auto;
+}
+.tabela {
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+.tabela td {
+  border: 1px solid var(--borda);
+  padding: 3px 8px;
+  white-space: pre-wrap;
+  vertical-align: top;
+  cursor: copy;
+}
+.tabela td:hover {
+  outline: 1px solid var(--acento);
+  outline-offset: -1px;
+  background: var(--acento-bg);
+}
+.acoes-tabela {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+  opacity: 0.5;
+}
+.tabela-box:hover .acoes-tabela {
+  opacity: 1;
+}
+
+.grade-wrap {
+  overflow-x: auto;
+}
+.grade-edit {
+  border-collapse: collapse;
+}
+.grade-edit th {
+  position: relative;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-2);
+  background: var(--bg-2);
+  border: 1px solid var(--borda);
+  padding: 2px 18px 2px 6px;
+  white-space: nowrap;
+}
+.grade-edit tr:first-child th:first-child {
+  padding: 0;
+}
+.grade-edit .rm {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  padding: 0 4px;
+  font-size: 10px;
+  opacity: 0;
+}
+.grade-edit th:hover .rm {
+  opacity: 1;
+}
+.grade-edit td {
+  border: 1px solid var(--borda);
+  padding: 0;
+}
+.grade-edit input {
+  min-width: 110px;
+  border: 0;
+  border-radius: 0;
+  padding: 4px 6px;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.grade-edit input:focus {
+  outline: 2px solid var(--acento);
+  outline-offset: -2px;
+}
+@media (hover: none) {
+  .grade-edit .rm,
+  .acoes-tabela {
+    opacity: 1;
+  }
+}

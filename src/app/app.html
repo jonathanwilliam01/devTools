@@ -1,6 +1,6 @@
 <header class="topo">
   <a class="marca" routerLink="/inicio">dev<b>Tools</b></a>
-  <span class="versao" [title]="'Build ' + versaoData">
+  <span class="versao" [title]="'Build ' + versaoData + ' · clique para ver as novidades'" (click)="abrirNovidades()">
     v{{ versao.numero }}{{ versao.commit ? ' · ' + versao.commit : '' }}
   </span>
   <nav>
@@ -108,6 +108,10 @@
       </div>
     </div>
   }
+}
+
+@if (novidades().length) {
+  <app-painel-novidades [versoes]="novidades()" (fechar)="fecharNovidades()" />
 }
 
 @if (ui.toast()) {

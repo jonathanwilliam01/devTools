@@ -10,10 +10,12 @@ import { VERSAO } from './versao';
 import { ehNova, FERRAMENTAS } from './ferramentas/catalogo';
 import { PainelDados } from './shell/painel-dados';
 import { PainelCofre } from './shell/painel-cofre';
+import { PainelNovidades } from './shell/painel-novidades';
+import { NOVIDADES, marcarVisto, pendentes } from './novidades';
 import { iniciarPonte } from './ponte';
 
 @Component({
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, PainelDados, PainelCofre],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, PainelDados, PainelCofre, PainelNovidades],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -33,6 +35,8 @@ export class App {
   protected readonly tema = signal(lerTema());
   protected readonly cor = signal(lerPref('devtools:cor') ?? 'azul');
   protected readonly menuTema = signal(false);
+  // abre sozinho na primeira carga de uma versão nova, em qualquer tela
+  protected readonly novidades = signal(pendentes(VERSAO.numero));
   protected readonly atrasadas = computed(
     () => this.store.tarefas().filter((t) => t.status !== 'done' && t.prazo && t.prazo < hoje()).length,
   );
@@ -125,6 +129,15 @@ export class App {
     return `${REPO_DEVTOOLS}/issues/new?body=${encodeURIComponent(corpo)}`;
   }
 
+  abrirNovidades() {
+    this.novidades.set(NOVIDADES);
+  }
+
+  fecharNovidades() {
+    marcarVisto(VERSAO.numero);
+    this.novidades.set([]);
+  }
+
   escolherTema(tema: Modo, cor: string) {
     this.tema.set(tema);
     this.cor.set(cor);
@@ -143,13 +156,14 @@ export class App {
 
   tecla(e: KeyboardEvent) {
     if (e.key === 'Escape') {
+      if (this.novidades().length) return this.fecharNovidades();
       this.ui.painel.set(null);
       this.menuTema.set(false);
       this.ui.atalhos.next('esc');
       return;
     }
     const alvo = e.target as HTMLElement;
-    if (e.ctrlKey || e.metaKey || e.altKey || this.ui.painel() || alvo.closest('input, textarea, select, [contenteditable]')) return;
+    if (e.ctrlKey || e.metaKey || e.altKey || this.ui.painel() || this.novidades().length || alvo.closest('input, textarea, select, [contenteditable]')) return;
     const menu = this.store.menusVisiveis().find((m) => m.tecla === e.key);
     if (e.key === '/') document.querySelector<HTMLInputElement>('[data-busca]')?.focus();    else if (e.key === 'n') this.ui.atalhos.next('novo');
     else if (e.key === '?') this.ui.painel.set('atalhos');
