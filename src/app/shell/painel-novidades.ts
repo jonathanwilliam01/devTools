@@ -6,24 +6,34 @@ import { TipoNovidade, Versao } from '../novidades';
   selector: 'app-painel-novidades',
   template: `
     <div class="overlay" (click)="fechar.emit()">
-      <div class="dialogo novidades" role="dialog" aria-modal="true" aria-labelledby="tit-novidades" (click)="$event.stopPropagation()">
+      <div
+        class="dialogo novidades"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tit-novidades"
+        (click)="$event.stopPropagation()"
+      >
         <header>
           <h2 id="tit-novidades">Novidades</h2>
           <button class="btn mini ghost" (click)="fechar.emit()" title="Fechar (Esc)">✕</button>
         </header>
-        @for (v of versoes(); track v.versao) {
-          <section>
-            <h3>v{{ v.versao }} <small>{{ dataBr(v.data) }}</small></h3>
-            <ul>
-              @for (i of v.itens; track $index) {
-                <li>
-                  <span class="flag" [attr.data-tipo]="i.tipo">{{ ROTULO[i.tipo] }}</span>
-                  <span>{{ i.texto }}</span>
-                </li>
-              }
-            </ul>
-          </section>
-        }
+        <div class="lista">
+          @for (v of versoes(); track v.versao) {
+            <section>
+              <h3>
+                v{{ v.versao }} <small>{{ dataBr(v.data) }}</small>
+              </h3>
+              <ul>
+                @for (i of v.itens; track $index) {
+                  <li>
+                    <span class="flag" [attr.data-tipo]="i.tipo">{{ ROTULO[i.tipo] }}</span>
+                    <span>{{ i.texto }}</span>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        </div>
         <div class="rodape">
           <button class="btn primario" (click)="fechar.emit()" autofocus>Entendi</button>
         </div>
@@ -36,6 +46,19 @@ import { TipoNovidade, Versao } from '../novidades';
     }
     .novidades {
       width: min(560px, 100%);
+      max-height: min(80vh, 640px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .lista {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      display: grid;
+      align-content: start;
+      gap: 16px;
+      padding-right: 4px;
     }
     header {
       display: flex;
@@ -92,5 +115,9 @@ export class PainelNovidades {
   readonly versoes = input.required<Versao[]>();
   readonly fechar = output<void>();
   protected readonly dataBr = dataBr;
-  protected readonly ROTULO: Record<TipoNovidade, string> = { novidade: 'Novidade', melhoria: 'Melhoria', correcao: 'Correção' };
+  protected readonly ROTULO: Record<TipoNovidade, string> = {
+    novidade: 'Novidade',
+    melhoria: 'Melhoria',
+    correcao: 'Correção',
+  };
 }
