@@ -35,5 +35,7 @@ export function detectar(bruto: string): Destino | null {
   }
   if (/^<[?!\w]/.test(t)) return { id: 'formatador', campos: { texto: t } };
   if (SQL.test(t)) return { id: 'sqlfmt', campos: { texto: t } };
+  if (/->\s*select\s*\(|\.project\s*\(|Arel::/.test(t)) return { id: 'builder', campos: { texto: t } };
+  if (/^(Array\s*\(|array\s*\(|array\(\d+\) \{|\[\s*['"\w]+\s*=>|\{\s*:?\w+\s*=>)/.test(t)) return { id: 'arrayjson', campos: { texto: t } };
   return null;
 }

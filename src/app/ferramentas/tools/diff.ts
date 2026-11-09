@@ -24,11 +24,11 @@ import { diffJson, diffLinhas } from '../lib/diff';
       </div>
       <div class="ft-duas">
         <div class="ft-painel">
-          <h4 class="ft-titulo">Antes</h4>
+          <h4 class="ft-titulo"><span class="dl-cor rem"></span>Antes</h4>
           <textarea class="ft-texto" [(ngModel)]="antes" rows="10" spellcheck="false"></textarea>
         </div>
         <div class="ft-painel">
-          <h4 class="ft-titulo">Depois</h4>
+          <h4 class="ft-titulo"><span class="dl-cor inc"></span>Depois</h4>
           <textarea class="ft-texto" [(ngModel)]="depois" rows="10" spellcheck="false"></textarea>
         </div>
       </div>
@@ -44,6 +44,11 @@ import { diffJson, diffLinhas } from '../lib/diff';
                   <span class="ft-selo erro">−{{ r.rem }}</span>
                   <span class="ft-selo ok">+{{ r.inc }}</span>
                   <span class="ft-selo">~{{ r.alt }}</span>
+                  <span class="dl fim">
+                    <span><b class="ft-dj rem">−</b> só no Antes</span>
+                    <span><b class="ft-dj inc">+</b> só no Depois</span>
+                    <span><b class="ft-dj alt">~</b> alterado</span>
+                  </span>
                 } @else {
                   <span class="ft-selo ok">✓ JSON equivalentes</span>
                 }
@@ -76,6 +81,10 @@ import { diffJson, diffLinhas } from '../lib/diff';
               @if (r.removidas || r.incluidas) {
                 <span class="ft-selo erro">−{{ r.removidas }}</span>
                 <span class="ft-selo ok">+{{ r.incluidas }}</span>
+                <span class="dl fim">
+                  <span><span class="dl-cor rem"></span>− Antes (removido)</span>
+                  <span><span class="dl-cor inc"></span>+ Depois (incluído)</span>
+                </span>
               } @else {
                 <span class="ft-selo ok">✓ Textos iguais</span>
               }
@@ -92,6 +101,31 @@ import { diffJson, diffLinhas } from '../lib/diff';
     </div>
   `,
   styles: `
+    .dl {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .dl > span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .dl-cor {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+    .dl-cor.rem {
+      background: color-mix(in srgb, var(--perigo) 45%, transparent);
+    }
+    .dl-cor.inc {
+      background: color-mix(in srgb, var(--p-baixa) 50%, transparent);
+    }
     .ft-dj {
       width: 1%;
       font-family: var(--mono);
