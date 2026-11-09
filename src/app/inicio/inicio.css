@@ -347,3 +347,18 @@ button.atalho {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 700px) {
+  .numeros {
+    gap: 8px;
+  }
+  .tile {
+    padding: 10px 12px;
+  }
+  .tile strong {
+    font-size: 24px;
+  }
+  .painel {
+    padding: 12px;
+  }
+}

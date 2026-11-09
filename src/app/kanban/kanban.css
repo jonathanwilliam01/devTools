@@ -206,3 +206,28 @@
 .desc-vis img {
   max-width: 100%;
 }
+
+@media (max-width: 700px) {
+  .barra .busca,
+  .barra .filtro {
+    max-width: none;
+    flex: 1 1 100%;
+  }
+  .barra select {
+    flex: 1;
+  }
+  .barra .fim {
+    margin-left: auto;
+  }
+  .quadro {
+    grid-template-columns: repeat(4, 85%);
+    gap: 10px;
+    margin: 0 -12px;
+    padding: 0 12px 8px;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 0 12px;
+  }
+  .coluna {
+    scroll-snap-align: start;
+  }
+}

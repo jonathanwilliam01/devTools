@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Store } from './store';
 import { Ui } from './ui';
 import { Backup } from './backup';
@@ -47,6 +47,11 @@ export class App {
     this.aplicarTema();
     iniciarPonte();
     navigator.storage?.persist?.();
+    // no celular nav e lista de ferramentas rolam na horizontal: mantém o item ativo à vista
+    this.router.events.subscribe((e) => {
+      if (e instanceof NavigationEnd)
+        setTimeout(() => document.querySelectorAll('nav a.ativo, .ferr-lista a.ativo').forEach((a) => a.scrollIntoView({ block: 'nearest', inline: 'nearest' })));
+    });
     // espera a restauração dos cookies antes da primeira checagem
     setTimeout(() => this.sincronizarIssues(), 3000);
     setInterval(() => this.sincronizarIssues(), 5 * 60_000);

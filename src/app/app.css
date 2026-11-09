@@ -63,19 +63,6 @@ main {
   font-weight: 500;
   z-index: 100;
 }
-@media (max-width: 700px) {
-  .topo {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px 12px;
-  }
-  .acoes {
-    margin-left: 0;
-  }
-  main {
-    padding: 16px 12px 60px;
-  }
-}
 .alerta-nav {
   display: inline-block;
   min-width: 18px;
@@ -168,4 +155,68 @@ kbd {
 .menu-tema .cor.ativa {
   outline: 2px solid var(--texto);
   outline-offset: 2px;
+}
+.ico-bug {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .topo {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      'marca acoes'
+      'versao acoes'
+      'nav nav';
+    gap: 0 8px;
+    padding: 8px 12px 0;
+  }
+  .marca {
+    grid-area: marca;
+  }
+  .versao {
+    grid-area: versao;
+    margin: 0;
+    font-size: 10px;
+  }
+  .acoes {
+    grid-area: acoes;
+    align-self: center;
+    justify-content: flex-end;
+    gap: 2px;
+  }
+  .acoes .btn {
+    padding: 6px 8px;
+  }
+  .txt-bug,
+  .atalhos-btn {
+    display: none;
+  }
+  .ico-bug {
+    display: inline;
+  }
+  nav {
+    grid-area: nav;
+    margin: 6px -12px 0;
+    padding: 0 12px 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  nav a {
+    flex: none;
+    white-space: nowrap;
+    padding: 6px 12px;
+  }
+  main {
+    padding: 14px 12px 60px;
+  }
+  .banner {
+    flex-wrap: wrap;
+    text-align: center;
+  }
+  .toast {
+    bottom: 16px;
+    max-width: calc(100% - 32px);
+    text-align: center;
+  }
 }

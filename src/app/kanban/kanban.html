@@ -45,7 +45,7 @@
         (cdkDropListDropped)="soltar($event, col.status)"
       >
         @for (t of colunas()[col.status]; track t.id) {
-          <article class="tarefa" cdkDrag [cdkDragData]="t" [attr.data-prioridade]="t.prioridade" (click)="editar(t)">
+          <article class="tarefa" cdkDrag [cdkDragStartDelay]="{ touch: 300, mouse: 0 }" [cdkDragData]="t" [attr.data-prioridade]="t.prioridade" (click)="editar(t)">
             <div class="tags">
               <span class="tag tipo" [attr.data-tipo]="t.tipo">{{ label(TIPOS, t.tipo) }}</span>
               <span class="tag prio">{{ label(PRIORIDADES, t.prioridade) }}</span>

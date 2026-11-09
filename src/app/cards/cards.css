@@ -407,3 +407,131 @@ tbody tr.sep-semana:hover {
   background: var(--bg-2);
   border-radius: 8px;
 }
+
+.graficos {
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+}
+
+@media (hover: none) {
+  .acoes-linha .btn {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 700px) {
+  .resumo {
+    gap: 8px;
+  }
+  .tile {
+    padding: 10px 12px;
+  }
+  .tile strong {
+    font-size: 24px;
+  }
+  .meses {
+    padding: 8px 6px 4px;
+    gap: 2px;
+  }
+  .mes .nome,
+  .mes .qtd {
+    font-size: 9px;
+  }
+  .linha-barra {
+    grid-template-columns: 96px 1fr 30px;
+  }
+  .barra select {
+    flex: 1;
+  }
+  .barra .fim {
+    margin-left: 0;
+    width: 100%;
+  }
+  .barra .fim .primario {
+    margin-left: auto;
+  }
+
+  /* tabela vira lista de cartões */
+  .tabela table,
+  .tabela tbody,
+  .tabela td {
+    display: block;
+  }
+  .tabela thead {
+    display: none;
+  }
+  .tabela tbody tr:not(.sep-semana) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 6px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--borda);
+  }
+  .tabela tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .tabela td {
+    padding: 0;
+    border: 0;
+  }
+  .tabela td:empty {
+    display: none;
+  }
+  .tabela td.num {
+    order: 1;
+  }
+  .tabela td.data {
+    order: 2;
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--texto-2);
+  }
+  .tabela td.acoes-linha {
+    order: 3;
+  }
+  .tabela td.desc {
+    order: 4;
+    width: 100%;
+    min-width: 0;
+  }
+  .tabela td:nth-child(n + 3):nth-child(-n + 6) {
+    order: 5;
+    font-size: 12px;
+    color: var(--texto-2);
+  }
+  .tabela td.obs {
+    order: 6;
+    width: 100%;
+    max-width: none;
+    font-size: 12px;
+  }
+  .tabela tbody tr.sep-semana {
+    display: block;
+  }
+  .tabela .sep-semana td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    padding: 5px 12px;
+  }
+  .qtd-semana {
+    margin-left: auto;
+  }
+  .acoes-linha .btn {
+    opacity: 1;
+  }
+
+  .sis {
+    flex-wrap: wrap;
+  }
+  .nome-sis {
+    width: 100%;
+  }
+  .mesclar {
+    width: auto;
+    flex: 1;
+  }
+  .adicionar {
+    flex-wrap: wrap;
+  }
+}

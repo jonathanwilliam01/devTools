@@ -29,7 +29,7 @@
     }
   </nav>
   <div class="acoes">
-    <a class="btn ghost" [href]="urlBug()" target="_blank" rel="noopener" title="Reportar bug ou sugerir melhoria no devTools">Reportar bug</a>
+    <a class="btn ghost" [href]="urlBug()" target="_blank" rel="noopener" title="Reportar bug ou sugerir melhoria no devTools"><span class="txt-bug">Reportar bug</span><span class="ico-bug">🐞</span></a>
     <button class="btn ghost" (click)="ui.painel.set('dados')" title="Backup, importar e exportar">
       Dados
       @if (backup.lembrete() || backup.estado() === 'reativar') {
@@ -39,7 +39,7 @@
     <button class="btn ghost icone" (click)="ui.painel.set('cofre')" [title]="cofre.ativo() ? (cofre.bloqueado() ? 'Cofre bloqueado' : 'Cofre aberto') : 'Senha mestra'">
       {{ cofre.ativo() && !cofre.bloqueado() ? '🔓' : '🔒' }}
     </button>
-    <button class="btn ghost icone" (click)="ui.painel.set('atalhos')" title="Atalhos (?)">⌨</button>
+    <button class="btn ghost icone atalhos-btn" (click)="ui.painel.set('atalhos')" title="Atalhos (?)">⌨</button>
     <span class="tema">
       <button class="btn ghost icone" (click)="menuTema.set(!menuTema()); $event.stopPropagation()" title="Tema">◐</button>
       @if (menuTema()) {

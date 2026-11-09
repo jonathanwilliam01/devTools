@@ -188,3 +188,15 @@ mark {
   outline: 2px solid var(--acento);
   outline-offset: 2px;
 }
+
+@media (max-width: 700px) {
+  .mural {
+    columns: 1;
+  }
+  .barra .fim {
+    margin-left: auto;
+  }
+  .acoes-bloco .btn {
+    padding: 4px 8px;
+  }
+}
