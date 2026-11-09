@@ -7,6 +7,7 @@ import { Cofre } from './cofre';
 import { chaveNome, hoje, novoId } from './models';
 import { Github } from './github';
 import { VERSAO } from './versao';
+import { ehNova, FERRAMENTAS } from './ferramentas/catalogo';
 import { PainelDados } from './shell/painel-dados';
 import { PainelCofre } from './shell/painel-cofre';
 import { iniciarPonte } from './ponte';
@@ -35,6 +36,8 @@ export class App {
   protected readonly atrasadas = computed(
     () => this.store.tarefas().filter((t) => t.status !== 'done' && t.prazo && t.prazo < hoje()).length,
   );
+
+  protected readonly temNova = computed(() => FERRAMENTAS.some((f) => ehNova(f, this.store.config().vistas)));
 
   protected visivel(id: string) {
     return this.store.menusVisiveis().some((m) => m.id === id);

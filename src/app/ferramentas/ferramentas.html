@@ -9,13 +9,27 @@
     />
     <div class="ferr-lista">
       @for (g of grupos(); track g.nome) {
-        <div class="ferr-grupo">
-          <h3>{{ g.nome }}</h3>
+        <div class="ferr-grupo" [class.fechado]="g.fechado">
+          <h3>
+            <button type="button" (click)="alternarGrupo(g.nome)" [attr.aria-expanded]="!g.fechado">
+              <span class="seta">▾</span>
+              {{ g.nome }}
+              @if (g.fechado) {
+                <small>{{ g.itens.length }}</small>
+                @if (g.novas) {
+                  <span class="ferr-novo" title="Tem ferramenta nova">novo</span>
+                }
+              }
+            </button>
+          </h3>
           @for (f of g.itens; track f.id) {
             <div class="ferr-item" [class.fav]="favoritas().includes(f.id)">
               <a [routerLink]="['/ferramentas', f.id]" [class.ativo]="f.id === atual().id" (click)="lembrar(f.id)">
                 <span class="ico">{{ f.icone }}</span>
                 {{ f.nome }}
+                @if (nova(f)) {
+                  <span class="ferr-novo">novo</span>
+                }
               </a>
               <button type="button" class="ferr-estrela" (click)="favoritar(f.id)"
                 [title]="favoritas().includes(f.id) ? 'Remover dos favoritos' : 'Favoritar'">
@@ -75,8 +89,11 @@
       @case ('pgbusca') { <ft-pgbusca /> }
       @case ('arrayjson') { <ft-arrayjson /> }
       @case ('builder') { <ft-builder /> }
+      @case ('sqlstr') { <ft-sqlstr /> }
+      @case ('explain') { <ft-explain /> }
+      @case ('extenso') { <ft-extenso /> }
     }
     }
-    <p class="ft-dica ferr-colar">Dica: cole (Ctrl+V) fora dos campos um boleto, Pix, JWT, CEP, documento, JSON, SQL, array PHP, Zend/Arel ou imagem com QR/código de barras para abrir na ferramenta certa.</p>
+    <p class="ft-dica ferr-colar">Dica: cole (Ctrl+V) fora dos campos um boleto, Pix, JWT, CEP, documento, JSON, SQL, array PHP, Zend/Arel, SQL.Add do Delphi, EXPLAIN ou imagem com QR/código de barras para abrir na ferramenta certa.</p>
   </section>
 </div>

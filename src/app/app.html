@@ -20,7 +20,12 @@
       </a>
     }
     @if (visivel('ferramentas')) {
-      <a routerLink="/ferramentas" routerLinkActive="ativo">Ferramentas</a>
+      <a routerLink="/ferramentas" routerLinkActive="ativo">
+        Ferramentas
+        @if (temNova()) {
+          <span class="ponto ponto-nav" title="Ferramentas novas"></span>
+        }
+      </a>
     }
   </nav>
   <div class="acoes">

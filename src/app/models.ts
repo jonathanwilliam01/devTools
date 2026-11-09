@@ -63,6 +63,8 @@ export interface Config {
   menusOcultos?: string[];
   // ids das ferramentas favoritas, na ordem em que foram marcadas
   favoritas?: string[];
+  // ferramentas novas já abertas, para tirar o selo "novo"
+  vistas?: string[];
 }
 
 export interface Dados {

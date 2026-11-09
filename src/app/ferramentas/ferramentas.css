@@ -33,12 +33,55 @@
   gap: 2px;
 }
 .ferr-menu h3 {
-  margin: 0 0 4px 10px;
+  margin: 0 0 4px;
+}
+.ferr-menu h3 button {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px 2px 4px;
+  border-radius: 6px;
+  cursor: pointer;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--texto-2);
+}
+.ferr-menu h3 button:hover,
+.ferr-menu h3 button:focus-visible {
+  color: var(--texto);
+  background: var(--hover);
+}
+.ferr-menu h3 small {
+  font-weight: 500;
+  opacity: 0.7;
+}
+.ferr-menu h3 .seta {
+  width: 12px;
+  font-size: 10px;
+  transition: transform 0.15s;
+}
+.ferr-grupo.fechado .seta {
+  transform: rotate(-90deg);
+}
+.ferr-grupo.fechado .ferr-item {
+  display: none;
+}
+.ferr-novo {
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--p-alta);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
 }
 .ferr-menu a {
   display: flex;
@@ -479,7 +522,8 @@
     display: contents;
   }
   .ferr-grupo,
-  .ferr-item {
+  .ferr-item,
+  .ferr-grupo.fechado .ferr-item {
     display: contents;
   }
   .ferr-item .ferr-estrela {

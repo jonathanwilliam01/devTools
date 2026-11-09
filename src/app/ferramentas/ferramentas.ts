@@ -1,11 +1,11 @@
-import { Component, computed, HostListener, inject, signal, ViewEncapsulation } from '@angular/core';
+import { Component, computed, effect, HostListener, inject, signal, untracked, ViewEncapsulation } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { Store } from '../store';
 import { Ui } from '../ui';
-import { limpar } from './lib/estado';
+import { lembrado, limpar } from './lib/estado';
 import { imagemDe, lerImagem } from './lib/leitor';
 import { Gerador } from './tools/gerador';
 import { Validador } from './tools/validador';
@@ -36,7 +36,10 @@ import { Ocr } from './tools/ocr';
 import { PgBusca } from './tools/pgbusca';
 import { ArrayJson } from './tools/arrayjson';
 import { Builder } from './tools/builder';
-import { FERRAMENTAS, Ferramenta, prepararColado } from './lista';
+import { SqlStr } from './tools/sqlstr';
+import { Explain } from './tools/explain';
+import { Extenso } from './tools/extenso';
+import { ehNova, FERRAMENTAS, Ferramenta, prepararColado } from './lista';
 
 const CHAVE = 'devtools:ferramenta';
 // favoritas iam só no localStorage antes de entrar no backup
@@ -44,7 +47,7 @@ const CHAVE_FAV_ANTIGA = 'devtools:favoritas';
 
 @Component({
   selector: 'app-ferramentas',
-  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote, Ocr, PgBusca, ArrayJson, Builder],
+  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote, Ocr, PgBusca, ArrayJson, Builder, SqlStr, Explain, Extenso],
   templateUrl: './ferramentas.html',
   styleUrl: './ferramentas.css',
   encapsulation: ViewEncapsulation.None,
@@ -60,6 +63,8 @@ export class Ferramentas {
   private readonly id = toSignal(inject(ActivatedRoute).paramMap.pipe(map((p) => p.get('id'))));
 
   protected readonly atual = computed(() => FERRAMENTAS.find((f) => f.id === this.id()) ?? FERRAMENTAS[0]);
+  private readonly vistas = computed(() => this.store.config().vistas ?? []);
+  protected readonly fechados = lembrado<string[]>('menu.fechados', []);
 
   protected readonly grupos = computed(() => {
     const t = this.busca().toLowerCase().trim();
@@ -71,10 +76,21 @@ export class Ferramentas {
     FERRAMENTAS.filter((f) => achou(f) && !fav.includes(f.id)).forEach((f) =>
       grupos.set(f.grupo, [...(grupos.get(f.grupo) ?? []), f]),
     );
-    return [...grupos].map(([nome, itens]) => ({ nome, itens }));
+    return [...grupos].map(([nome, itens]) => ({
+      nome,
+      itens,
+      // na busca tudo aparece aberto
+      fechado: !t && this.fechados().includes(nome),
+      novas: itens.filter((f) => this.nova(f)).length,
+    }));
   });
 
   constructor() {
+    // abrir tira o selo "novo"
+    effect(() => {
+      const f = this.atual();
+      if (untracked(() => this.nova(f))) this.store.config.update((c) => ({ ...c, vistas: [...(c.vistas ?? []), f.id] }));
+    });
     try {
       const antiga = localStorage.getItem(CHAVE_FAV_ANTIGA);
       if (antiga) {
@@ -94,6 +110,14 @@ export class Ferramentas {
         localStorage.setItem(CHAVE, id!);
       } catch {}
     }
+  }
+
+  protected nova(f: Ferramenta) {
+    return ehNova(f, this.vistas());
+  }
+
+  alternarGrupo(nome: string) {
+    this.fechados.update((l) => (l.includes(nome) ? l.filter((x) => x !== nome) : [...l, nome]));
   }
 
   lembrar(id: string) {

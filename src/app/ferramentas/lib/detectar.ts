@@ -27,6 +27,9 @@ export function detectar(bruto: string): Destino | null {
   if (linhas.every(doc)) return { id: 'validador', campos: { texto: t } };
 
   if (/^(\S+\s+){4}\S+$/.test(t) && /^[\d*/,\-?LW#A-Z\s]+$/i.test(t) && /[*\d]/.test(t[0])) return { id: 'cron', campos: { expr: t } };
+  if (/\(cost=\d[\d.]*\.\.\d|\(actual (time|rows)=|"Node Type"\s*:/.test(t)) return { id: 'explain', campos: { texto: t } };
+  if (/SQL\s*\.\s*Add\s*\(|^\s*\$?\w+\s*[.:]?=\s*(<<<|<<~)?\s*['"]?\s*(select|insert|update|delete|with)\b/i.test(t))
+    return { id: 'sqlstr', campos: { modo: 'extrair', codigo: t } };
   if (/^[[{]/.test(t)) {
     try {
       JSON.parse(t);

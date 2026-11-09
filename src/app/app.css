@@ -88,6 +88,11 @@ main {
   font-weight: 700;
   text-align: center;
 }
+.ponto-nav {
+  display: inline-block;
+  margin-left: 4px;
+  vertical-align: 2px;
+}
 .ponto {
   width: 7px;
   height: 7px;
