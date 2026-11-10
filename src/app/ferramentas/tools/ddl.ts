@@ -11,7 +11,7 @@ import { lerGrade } from '../lib/grade';
   template: `
     <div class="ft">
       <div class="ft-linha">
-        <input style="width: 240px" [(ngModel)]="tabela" placeholder="Nome da tabela" spellcheck="false" />
+        <label class="ft-rotulo">Tabela <input style="width: 240px" [(ngModel)]="tabela" [placeholder]="temp() ? 'tmp_importacao' : 'importacao'" spellcheck="false" /></label>
         <label class="ft-chk"><input type="checkbox" [(ngModel)]="temp" /> Temporária</label>
         <label class="ft-chk"><input type="checkbox" [(ngModel)]="usarText" /> text no lugar de varchar</label>
         <label class="ft-chk"><input type="checkbox" [(ngModel)]="notNull" /> NOT NULL onde não tem vazio</label>
@@ -21,7 +21,7 @@ import { lerGrade } from '../lib/grade';
         <div class="ft-painel">
           <h4 class="ft-titulo">Dados <small>1ª linha é o cabeçalho</small></h4>
           <textarea class="ft-texto" [(ngModel)]="texto" rows="12" spellcheck="false"
-            placeholder="Cole do Excel, CSV (; ou ,) ou grid do banco"></textarea>
+            placeholder="Cole do Excel, CSV (; ou ,) ou grid do banco. Exemplo:&#10;codigo;nome;cpf;valor;vencimento&#10;1;João;01234567890;1.234,56;10/11/2026&#10;2;Maria;'12345678901';10,50;15/12/2026"></textarea>
         </div>
         <div class="ft-painel">
           <h4 class="ft-titulo">
@@ -33,10 +33,10 @@ import { lerGrade } from '../lib/grade';
       </div>
       @if (colunas().length) {
         <div class="ft-painel">
-          <h4 class="ft-titulo">Colunas <span class="ft-selo">{{ linhas().length - 1 }} linha(s)</span></h4>
+          <h4 class="ft-titulo">Tipos detectados <span class="ft-selo">{{ linhas().length - 1 }} linha(s) de dados</span></h4>
           <table class="ft-tabela">
             <thead>
-              <tr><th>Cabeçalho</th><th>Coluna</th><th>Tipo</th><th>Vazios</th></tr>
+              <tr><th>Cabeçalho</th><th>Coluna no banco</th><th>Tipo</th><th>Exemplo</th><th>Vazios</th></tr>
             </thead>
             <tbody>
               @for (c of colunas(); track $index) {
@@ -44,6 +44,7 @@ import { lerGrade } from '../lib/grade';
                   <td>{{ c.original }}</td>
                   <td class="ft-mono">{{ c.nome }}</td>
                   <td class="ft-mono">{{ c.ddl }}</td>
+                  <td class="ft-mono">{{ c.exemplo }}</td>
                   <td>{{ c.nulos }}</td>
                 </tr>
               }
@@ -52,7 +53,7 @@ import { lerGrade } from '../lib/grade';
         </div>
       }
       <p class="ft-dica">
-        PostgreSQL. Tipo pelo conteúdo: zero à esquerda fica texto (CPF, CEP), 1.234,56 vira numeric, dd/mm/aaaa vira date. Vazio e NULL viram null. INSERT em lotes de 1000 linhas.
+        PostgreSQL. O tipo sai do conteúdo: zero à esquerda ou valor entre aspas fica texto (CPF, CEP), 1.234,56 vira numeric, dd/mm/aaaa vira date, vazio e NULL viram null. Não precisa pôr aspas nos textos.
       </p>
     </div>
   `,

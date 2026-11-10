@@ -10,6 +10,7 @@ export interface Coluna {
   nulos: number;
   // números com vírgula decimal (1.234,56)
   br: boolean;
+  exemplo: string;
 }
 
 export interface OpcoesDdl {
@@ -24,6 +25,13 @@ const RESERVADAS = new Set(
   'all and any array as asc case cast check collate column constraint create current_date current_time current_timestamp current_user default desc distinct do else end except false fetch for foreign from grant group having in initially intersect into leading limit not null offset on only or order placing primary references returning select session_user some symmetric table then to trailing true union unique user using variadic when where window with'.split(' '),
 );
 
+// valor entre aspas ('123' ou "123") é texto mesmo sendo número
+const RE_ASPAS = /^'([\s\S]*)'$|^"([\s\S]*)"$/;
+const entreAspas = (v: string) => RE_ASPAS.test(v.trim());
+const semAspas = (v: string) => {
+  const m = RE_ASPAS.exec(v.trim());
+  return m ? (m[1] !== undefined ? m[1].replace(/''/g, "'") : m[2].replace(/""/g, '"')) : v.trim();
+};
 const vazio = (v: string) => !v.trim() || v.trim().toUpperCase() === 'NULL';
 const RE_BOOL = /^(true|false|t|f)$/i;
 const RE_INT = /^-?(0|[1-9]\d*)$/;
@@ -49,13 +57,14 @@ function dataIso(v: string) {
   return m ? (m[1] ? `${m[3]}-${m[2]}-${m[1]}` : v.slice(0, 10)) : v;
 }
 
-function inferir(valores: string[], usarText: boolean): Pick<Coluna, 'tipo' | 'ddl' | 'br'> {
-  const v = valores.filter((x) => !vazio(x)).map((x) => x.trim());
+function inferir(brutos: string[], usarText: boolean): Pick<Coluna, 'tipo' | 'ddl' | 'br'> {
+  const valores = brutos.map(semAspas);
+  const v = valores.filter((x) => !vazio(x));
   const txt = (): Pick<Coluna, 'tipo' | 'ddl' | 'br'> => {
     const max = Math.max(1, ...valores.map((x) => [...x].length));
     return usarText || !v.length ? { tipo: 'text', ddl: 'text', br: false } : { tipo: 'varchar', ddl: `varchar(${max})`, br: false };
   };
-  if (!v.length) return txt();
+  if (!v.length || brutos.some(entreAspas)) return txt();
   if (v.every((x) => RE_BOOL.test(x))) return { tipo: 'boolean', ddl: 'boolean', br: false };
   if (v.every((x) => RE_INT.test(x))) {
     const big = v.some((x) => Math.abs(Number(x)) > 2147483647);
@@ -86,13 +95,14 @@ export function analisarColunas(linhas: string[][], usarText: boolean): Coluna[]
     usados.set(nome, n);
     if (n > 1) nome += `_${n}`;
     const valores = dados.map((l) => l[i] ?? '');
-    return { original, nome, nulos: valores.filter(vazio).length, ...inferir(valores, usarText) };
+    const exemplo = semAspas(valores.find((x) => !vazio(x)) ?? '');
+    return { original, nome, nulos: valores.filter(vazio).length, exemplo, ...inferir(valores, usarText) };
   });
 }
 
 function valorSql(v: string, c: Coluna) {
   if (vazio(v)) return 'null';
-  const s = v.trim();
+  const s = semAspas(v);
   switch (c.tipo) {
     case 'boolean':
       return /^t/i.test(s) ? 'true' : 'false';
@@ -108,7 +118,7 @@ function valorSql(v: string, c: Coluna) {
       return `'${m ? dataIso(m[1]) + ' ' + m[2] + (m[5] ?? '') : dataIso(s)}'`;
     }
     default:
-      return `'${v.replace(/'/g, "''")}'`;
+      return `'${s.replace(/'/g, "''")}'`;
   }
 }
 
