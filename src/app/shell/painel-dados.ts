@@ -4,6 +4,7 @@ import { Store } from '../store';
 import { Ui } from '../ui';
 import { Backup } from '../backup';
 import { Github } from '../github';
+import { Notificar } from '../notificar';
 import { ISSUE_URL, MENUS, hoje } from '../models';
 import { Router } from '@angular/router';
 
@@ -114,6 +115,27 @@ import { Router } from '@angular/router';
         </section>
 
         <section>
+          <h3>Notificações</h3>
+          <label class="chk">
+            <input type="checkbox" [checked]="notificar.ativo()" (change)="notificar.ativar($any($event.target).checked)" />
+            Avisar no navegador quando uma issue entra no kanban ou um card é registrado no histórico
+          </label>
+          <p class="sub">
+            @if (notificar.pai()) {
+              Exibidas pelo git-calm.
+            } @else if (notificar.permissao() === 'indisponivel') {
+              Este navegador não tem notificações.
+            } @else if (notificar.permissao() === 'denied') {
+              Bloqueadas no navegador: libere em Configurações do site (cadeado da barra de endereço).
+            } @else if (notificar.ativo() && notificar.permissao() === 'granted') {
+              Ativas. Funcionam com a aba aberta, mesmo em segundo plano.
+            } @else {
+              Funcionam com a aba aberta, mesmo em segundo plano.
+            }
+          </p>
+        </section>
+
+        <section>
           <h3>Onde os dados ficam</h3>
           <ul>
             <li><b>localStorage</b>: tudo ({{ kbLocal() }} KB).</li>
@@ -217,6 +239,7 @@ export class PainelDados {
   protected readonly ui = inject(Ui);
   protected readonly backup = inject(Backup);
   protected readonly github = inject(Github);
+  protected readonly notificar = inject(Notificar);
   protected token = this.github.proprio();
   protected readonly dono = ISSUE_URL.split('/')[3];
   protected readonly repo = ISSUE_URL.split('/')[4];

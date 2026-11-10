@@ -13,6 +13,7 @@ import { PainelCofre } from './shell/painel-cofre';
 import { PainelNovidades } from './shell/painel-novidades';
 import { NOVIDADES, marcarVisto, pendentes } from './novidades';
 import { iniciarPonte } from './ponte';
+import { Notificar } from './notificar';
 
 @Component({
   imports: [RouterOutlet, RouterLink, RouterLinkActive, PainelDados, PainelCofre, PainelNovidades],
@@ -28,6 +29,7 @@ export class App {
   protected readonly cofre = inject(Cofre);
   private readonly router = inject(Router);
   private readonly github = inject(Github);
+  private readonly notificar = inject(Notificar);
   protected readonly versao = VERSAO;
   protected readonly versaoData = new Date(VERSAO.data).toLocaleString('pt-BR');
   protected readonly MODOS = MODOS;
@@ -92,6 +94,7 @@ export class App {
       });
       const falta = [!campos.linguagem && 'linguagem', !obs && 'o que foi feito'].filter(Boolean).join(' e ');
       this.ui.avisar(`Card #${t.numeroCard} registrado` + (falta ? ` (incompleto: falta ${falta})` : ''));
+      this.notificar.enviar(`Card #${t.numeroCard} registrado no histórico`, t.titulo + (falta ? `\nIncompleto: falta ${falta}` : ''), '/cards');
     }
   }
 
@@ -120,7 +123,9 @@ export class App {
       })),
       ...this.store.tarefas(),
     ]);
-    this.ui.avisar(novas.length === 1 ? `Issue #${novas[0].numero} adicionada ao kanban` : `${novas.length} issues adicionadas ao kanban`);
+    const msg = novas.length === 1 ? `Issue #${novas[0].numero} adicionada ao kanban` : `${novas.length} issues adicionadas ao kanban`;
+    this.ui.avisar(msg);
+    this.notificar.enviar(msg, novas.map((i) => `#${i.numero} ${i.titulo}`).join('\n'), '/kanban');
   }
 
   // issue nova no repo do devTools, já com versão e tela atual

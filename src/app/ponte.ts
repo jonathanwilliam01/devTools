@@ -2,12 +2,15 @@ import { effect, inject } from '@angular/core';
 import { Nota } from './models';
 import { Store } from './store';
 import { Github } from './github';
+import { Notificar } from './notificar';
 import { VERSAO } from './versao';
 
 // Ponte com o sistema que embute o devTools em iframe (gitcalm), via postMessage:
 // - envia as notas ao carregar e a cada mudança (devtools:notas)
 // - executa funções das ferramentas sem abrir tela (devtools:chamar → devtools:resposta)
 // - recebe o token do GitHub (devtools:ready → gitcalm:token, reenviado quando muda)
+// - notificação do navegador: com gitcalm:notificacoes o pai passa a exibir (devtools:notificar {titulo, corpo, rota});
+//   clique na notificação volta como gitcalm:abrir {rota}
 const ORIGENS = [/^https:\/\/gitcalm\.vercel\.app$/, /^http:\/\/localhost(:\d+)?$/];
 const permitida = (o: string) => ORIGENS.some((r) => r.test(o));
 
@@ -32,6 +35,7 @@ export function iniciarPonte() {
   if (window.parent === window) return;
   const store = inject(Store);
   const github = inject(Github);
+  const notificar = inject(Notificar);
   const origens = new Set<string>();
   const api = import('./ferramentas/lib/api').then((m) => m.API as Record<string, (...a: unknown[]) => unknown>);
   const enviar = (msg: object, o: string) => window.parent.postMessage(msg, o);
@@ -43,6 +47,10 @@ export function iniciarPonte() {
     const d = e.data;
     if (d?.type === 'gitcalm:token' && typeof d.token === 'string') {
       github.definirGitcalm(d.token);
+    } else if (d?.type === 'gitcalm:notificacoes') {
+      notificar.pai.set(d.ativo === false ? '' : e.origin);
+    } else if (d?.type === 'gitcalm:abrir' && typeof d.rota === 'string') {
+      notificar.abrir(d.rota);
     } else if (d?.tipo === 'devtools:assinar') {
       origens.add(e.origin);
       pronto(e.origin);

@@ -166,9 +166,9 @@ export class Ocr implements OnDestroy {
 
   async ler(img: Blob) {
     if (this.lendo()) return;
-    URL.revokeObjectURL(this.previa());
-    this.previa.set(URL.createObjectURL(img));
     this.lendo.set(true);
+    URL.revokeObjectURL(this.previa());
+    this.previa.set(URL.createObjectURL(await reduzida(img)));
     this.etapa.set('Carregando...');
     try {
       const t = await lerTexto(img, (p) => this.etapa.set(`Lendo ${Math.round(p * 100)}%`));
@@ -184,5 +184,21 @@ export class Ocr implements OnDestroy {
 
   ngOnDestroy() {
     URL.revokeObjectURL(this.previa());
+  }
+}
+
+// foto de celular (12 MP+) às vezes não aparece por falta de memória: prévia com no máx. 1200 px
+async function reduzida(img: Blob): Promise<Blob> {
+  try {
+    const bmp = await createImageBitmap(img, { imageOrientation: 'from-image' });
+    const f = Math.min(1, 1200 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * f);
+    c.height = Math.round(bmp.height * f);
+    c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
+    bmp.close();
+    return (await new Promise<Blob | null>((r) => c.toBlob(r, 'image/jpeg', 0.85))) ?? img;
+  } catch {
+    return img;
   }
 }
