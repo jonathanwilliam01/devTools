@@ -85,11 +85,20 @@ import { Router } from '@angular/router';
           <p>Com o token, informar o nº do card preenche os dados da issue: título, descrição, labels e campos do quadro (Cards e Kanban).</p>
           <p>Issues atribuídas a você entram no kanban sozinhas, e quando a issue vai para <b>Validar</b> no quadro o card é registrado com a linguagem e o "o que foi feito" do comentário de entrega. Isso exige a permissão de <b>Projects</b> abaixo; sem ela nada é registrado.</p>
           <div class="linha">
-            <input type="password" name="token" [(ngModel)]="token" placeholder="github_pat_..." autocomplete="off" />
+            <input type="password" name="token" [(ngModel)]="token" [placeholder]="github.gitcalm() ? 'Token gerenciado pelo git-calm' : 'github_pat_...'" autocomplete="off" />
             <button class="btn primario" (click)="salvarToken()">Salvar</button>
             <button class="btn" (click)="testarToken()" [disabled]="!github.token()">Testar</button>
           </div>
-          <p class="sub">{{ github.token() ? 'Token configurado neste navegador.' : 'Nenhum token configurado.' }} Fica só aqui: não vai para backup nem cookies.</p>
+          <p class="sub">
+            @if (github.proprio()) {
+              Token configurado neste navegador{{ github.gitcalm() ? ' (tem prioridade sobre o do git-calm; remova para usar o dele)' : '' }}.
+            } @else if (github.gitcalm()) {
+              Usando o token gerenciado pelo git-calm. Salvar um token aqui substitui o dele.
+            } @else {
+              Nenhum token configurado.
+            }
+            Fica só aqui: não vai para backup nem cookies.
+          </p>
           <details>
             <summary>Como gerar o token</summary>
             <ol>
@@ -208,7 +217,7 @@ export class PainelDados {
   protected readonly ui = inject(Ui);
   protected readonly backup = inject(Backup);
   protected readonly github = inject(Github);
-  protected token = this.github.token();
+  protected token = this.github.proprio();
   protected readonly dono = ISSUE_URL.split('/')[3];
   protected readonly repo = ISSUE_URL.split('/')[4];
   readonly fechar = output();

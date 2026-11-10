@@ -40,6 +40,14 @@ import { Builder } from './tools/builder';
 import { SqlStr } from './tools/sqlstr';
 import { Explain } from './tools/explain';
 import { Extenso } from './tools/extenso';
+import { Limpeza } from './tools/limpeza';
+import { Extrair } from './tools/extrair';
+import { Anonimizar } from './tools/anonimizar';
+import { Log } from './tools/log';
+import { Acrescimos } from './tools/acrescimos';
+import { SelectUpd } from './tools/selectupd';
+import { Ddl } from './tools/ddl';
+import { PgDiag } from './tools/pgdiag';
 import { ehNova, FERRAMENTAS, Ferramenta, prepararColado } from './lista';
 
 const CHAVE = 'devtools:ferramenta';
@@ -48,7 +56,7 @@ const CHAVE_FAV_ANTIGA = 'devtools:favoritas';
 
 @Component({
   selector: 'app-ferramentas',
-  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote, Ocr, PgBusca, ArrayJson, Builder, SqlStr, Explain, Extenso, Entidades],
+  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote, Ocr, PgBusca, ArrayJson, Builder, SqlStr, Explain, Extenso, Entidades, Limpeza, Extrair, Anonimizar, Log, Acrescimos, SelectUpd, Ddl, PgDiag],
   templateUrl: './ferramentas.html',
   styleUrl: './ferramentas.css',
   encapsulation: ViewEncapsulation.None,

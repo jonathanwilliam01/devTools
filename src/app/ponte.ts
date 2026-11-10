@@ -1,11 +1,13 @@
 import { effect, inject } from '@angular/core';
 import { Nota } from './models';
 import { Store } from './store';
+import { Github } from './github';
 import { VERSAO } from './versao';
 
 // Ponte com o sistema que embute o devTools em iframe (gitcalm), via postMessage:
 // - envia as notas ao carregar e a cada mudança (devtools:notas)
 // - executa funções das ferramentas sem abrir tela (devtools:chamar → devtools:resposta)
+// - recebe o token do GitHub (devtools:ready → gitcalm:token, reenviado quando muda)
 const ORIGENS = [/^https:\/\/gitcalm\.vercel\.app$/, /^http:\/\/localhost(:\d+)?$/];
 const permitida = (o: string) => ORIGENS.some((r) => r.test(o));
 
@@ -29,22 +31,19 @@ function origemPai() {
 export function iniciarPonte() {
   if (window.parent === window) return;
   const store = inject(Store);
+  const github = inject(Github);
   const origens = new Set<string>();
   const api = import('./ferramentas/lib/api').then((m) => m.API as Record<string, (...a: unknown[]) => unknown>);
   const enviar = (msg: object, o: string) => window.parent.postMessage(msg, o);
   const notas = (o: string) => enviar({ tipo: 'devtools:notas', notas: store.notas().map(item) }, o);
   const pronto = async (o: string) => enviar({ tipo: 'devtools:pronto', versao: VERSAO.numero, funcoes: Object.keys(await api) }, o);
 
-  const pai = origemPai();
-  if (permitida(pai)) {
-    origens.add(pai);
-    pronto(pai);
-  }
-
   addEventListener('message', async (e) => {
     if (e.source !== window.parent || !permitida(e.origin)) return;
     const d = e.data;
-    if (d?.tipo === 'devtools:assinar') {
+    if (d?.type === 'gitcalm:token' && typeof d.token === 'string') {
+      github.definirGitcalm(d.token);
+    } else if (d?.tipo === 'devtools:assinar') {
       origens.add(e.origin);
       pronto(e.origin);
       notas(e.origin);
@@ -59,6 +58,14 @@ export function iniciarPonte() {
       }
     }
   });
+
+  // depois do listener, senão a resposta pode chegar antes; sem dados, então '*'
+  window.parent.postMessage({ type: 'devtools:ready' }, '*');
+  const pai = origemPai();
+  if (permitida(pai)) {
+    origens.add(pai);
+    pronto(pai);
+  }
 
   effect(() => {
     store.notas();

@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { ISSUE_URL, chaveNome } from './models';
 import { Ui } from './ui';
 
@@ -29,11 +29,14 @@ const STATUS_PROJETO = (nums: number[]) => `query($o: String!, $r: String!) { re
 // títulos que abrem o "o que foi feito" no comentário de entrega
 const SECOES = ['DESCRICAO DA ALTERACAO', 'TRABALHO EXECUTADO'];
 
-// token fica só neste navegador: fora do backup e dos cookies
+// token próprio fica só neste navegador (fora do backup e dos cookies); o do git-calm só em memória.
+// Próprio tem prioridade; sem ele usa o do git-calm.
 @Injectable({ providedIn: 'root' })
 export class Github {
   private readonly ui = inject(Ui);
-  readonly token = signal(ler());
+  readonly proprio = signal(ler());
+  readonly gitcalm = signal('');
+  readonly token = computed(() => this.proprio() || this.gitcalm());
   private login = '';
 
   async issue(n: number): Promise<Issue | null> {
@@ -120,8 +123,13 @@ export class Github {
     return r?.ok ? 'Token OK: acesso ao repositório confirmado' : this.erro(r, 'Sem acesso ao repositório');
   }
 
+  definirGitcalm(t: string) {
+    if (!this.proprio() && t.trim() !== this.gitcalm()) this.login = '';
+    this.gitcalm.set(t.trim());
+  }
+
   salvar(t: string) {
-    this.token.set(t.trim());
+    this.proprio.set(t.trim());
     this.login = '';
     try {
       if (t.trim()) localStorage.setItem(CHAVE, t.trim());
