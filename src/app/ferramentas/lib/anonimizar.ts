@@ -52,6 +52,12 @@ const parcialFim = (v: string, manter: number) => {
   return [...v].reverse().map((c) => (/\d/.test(c) && n++ >= manter ? '*' : c)).reverse().join('');
 };
 
+const SEGREDO = /senha|pass|pwd|token|secret|chave|key/i;
+
+// jonathan → j*******; e-mail mantém o domínio
+const parcialValor = (v: string) =>
+  /^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(v) ? parcialEmail(v) : v.replace(/\S+/g, (p) => p[0] + '*'.repeat(p.length - 1));
+
 export function anonimizar(texto: string, o: OpcoesAnonimo) {
   const qtd: Partial<Record<TipoAnonimo, number>> = {};
   // mesmo original → mesmo falso, para não quebrar relação entre linhas
@@ -76,9 +82,11 @@ export function anonimizar(texto: string, o: OpcoesAnonimo) {
       const v = dupla ?? simples ?? solto ?? '';
       if (!v.trim() || v.trim() === '***') return _m;
       conta('campos');
-      if (dupla !== undefined) return `${pre}"***"`;
-      if (simples !== undefined) return `${pre}'***'`;
-      return pre + '***' + (solto!.match(/\s*$/)?.[0] ?? '');
+      // segredo nunca fica parcial
+      const novo = o.modo === 'parcial' && !SEGREDO.test(pre) ? parcialValor(v.trim()) : '***';
+      if (dupla !== undefined) return `${pre}"${novo}"`;
+      if (simples !== undefined) return `${pre}'${novo}'`;
+      return pre + novo + (solto!.match(/\s*$/)?.[0] ?? '');
     });
   }
 
