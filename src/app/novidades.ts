@@ -9,6 +9,15 @@ export interface Versao {
 
 export const NOVIDADES: Versao[] = [
   {
+    versao: '1.0.24',
+    data: '2026-11-10',
+    itens: [
+      { tipo: 'novidade', texto: 'Notificação do navegador quando uma issue entra no kanban ou um card é registrado no histórico; clique abre a tela. Liga/desliga em Dados.' },
+      { tipo: 'melhoria', texto: 'Dentro do git-calm as notificações são exibidas por ele.' },
+      { tipo: 'correcao', texto: 'Texto de imagem: prévia da foto agora aparece no celular.' },
+    ],
+  },
+  {
     versao: '1.0.23',
     data: '2026-11-10',
     itens: [
