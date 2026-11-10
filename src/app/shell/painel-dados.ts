@@ -116,10 +116,12 @@ import { Router } from '@angular/router';
 
         <section>
           <h3>Notificações</h3>
-          <label class="chk">
-            <input type="checkbox" [checked]="notificar.ativo()" (change)="notificar.ativar($any($event.target).checked)" />
-            Avisar no navegador quando uma issue entra no kanban ou um card é registrado no histórico
-          </label>
+          <div class="linha">
+            <label class="chk">
+              <input type="checkbox" [checked]="notificar.ativo()" (change)="notificar.ativar($any($event.target).checked)" />
+              Avisar quando uma issue entra no kanban ou um card é registrado no histórico
+            </label>
+          </div>
           <p class="sub">
             @if (notificar.pai()) {
               Exibidas pelo git-calm.
