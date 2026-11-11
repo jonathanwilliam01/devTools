@@ -74,7 +74,7 @@
       <option [value]="s.nome">{{ s.nome }}</option>
     }
   </select>
-  @if (mes()) {
+  @if (mes() && vista() === 'tabela') {
     <button class="btn mini" (click)="mes.set(0)">{{ MESES[mes() - 1] }} ✕</button>
   }
   @if (soIncompletos()) {
@@ -90,10 +90,12 @@
     </button>
     <button class="btn ghost" (click)="abrirResumo()" title="Resumo dos concluídos por período ou datas, para a daily">Resumo daily</button>
     <button class="btn ghost" data-abre-menu (click)="abrirMenuExportar($event)" title="Exportar os cards filtrados">Exportar ▾</button>
+    <app-vistas [opcoes]="VISTAS" [(vista)]="vista" [comTexto]="false" />
     <button class="btn primario" (click)="novo()" title="Novo card (n)">+ Novo card</button>
   </div>
 </div>
 
+@if (vista() === 'tabela') {
 @for (g of grupos(); track g.mes) {
   <section class="grupo">
     <header>
@@ -159,6 +161,87 @@
   </section>
 } @empty {
   <p class="vazio">Nenhum card encontrado. Cadastre um novo ou importe o JSON.</p>
+}
+} @else {
+  <div class="lp" [class.lado]="vista() === 'lado'">
+    <div class="lp-col">
+      <div class="nav-mes">
+        <button class="btn ghost" (click)="irMes(anterior())" [disabled]="!anterior()" [title]="anterior() ? anterior()!.nome + ' (←)' : 'Nenhum mês anterior'">
+          ‹<span class="nav-nome">{{ anterior()?.nome }}</span>
+        </button>
+        <div class="nav-atual">
+          <strong>{{ mes() ? MESES[mes() - 1] : '—' }} <small>{{ ano() }}</small></strong>
+          <span>{{ filtrados().length }} {{ filtrados().length === 1 ? 'card' : 'cards' }}</span>
+        </div>
+        <button class="btn ghost" (click)="irMes(proximo())" [disabled]="!proximo()" [title]="proximo() ? proximo()!.nome + ' (→)' : 'Nenhum mês seguinte'">
+          <span class="nav-nome">{{ proximo()?.nome }}</span>›
+        </button>
+      </div>
+      <ul class="lp-lista">
+        @for (g of grupos(); track g.mes) {
+          @for (s of g.semanas; track s.n) {
+            <li class="lp-grupo">
+              <span>{{ s.n }}ª semana · {{ s.inicio }}–{{ s.fim }}/{{ g.mes < 10 ? '0' + g.mes : g.mes }}</span><span>{{ s.cards.length }}</span>
+            </li>
+            @for (c of s.cards; track c.id) {
+              <li [class.on]="selecionado()?.id === c.id" (click)="selId.set(c.id)" (dblclick)="editar(c)">
+                <span class="lp-titulo">#{{ c.numero }} {{ c.descricao }}</span>
+                <span class="lp-meta">{{ dataBr(c.data) }}</span>
+                <span class="lp-resumo">
+                  @if (c.incompleto) {
+                    <span class="tag aviso">incompleto</span>
+                  }
+                  {{ c.sistema }}@if (c.linguagem) { · {{ c.linguagem }}}
+                </span>
+              </li>
+            }
+          }
+        } @empty {
+          <li class="lp-grupo">Nenhum card encontrado</li>
+        }
+      </ul>
+    </div>
+    @if (selecionado(); as c) {
+      <div class="lp-previa">
+        <article class="ficha">
+          <h3>
+            <a class="num" [href]="url(c)" target="_blank" rel="noopener">#{{ c.numero }}</a>
+            {{ c.descricao }}
+          </h3>
+          @if (c.incompleto) {
+            <span class="tag aviso" style="justify-self: start">incompleto: falta linguagem ou o que foi feito</span>
+          }
+          <dl>
+            <dt>Sistema</dt>
+            <dd>
+              @for (n of partes(c.sistema); track n) {
+                <span class="tag">{{ n }}</span>
+              }
+            </dd>
+            <dt>Área</dt>
+            <dd>{{ c.area || '—' }}</dd>
+            <dt>Time</dt>
+            <dd>{{ c.time || '—' }}</dd>
+            <dt>Linguagem</dt>
+            <dd>{{ c.linguagem || '—' }}</dd>
+            <dt>Conclusão</dt>
+            <dd>{{ dataBr(c.data) }}</dd>
+          </dl>
+          @if (c.obs) {
+            <div>
+              <span class="rotulo-obs">O que foi feito</span>
+              <div class="texto-puro">{{ c.obs }}</div>
+            </div>
+          }
+          <div class="acoes">
+            <button class="btn mini ghost perigo" style="margin-right: auto" (click)="remover(c)">Remover</button>
+            <button class="btn mini" (click)="ui.copiar(url(c), 'Link copiado')">⧉ Copiar link</button>
+            <button class="btn mini" (click)="editar(c)">Editar</button>
+          </div>
+        </article>
+      </div>
+    }
+  </div>
 }
 
 @if (form(); as f) {

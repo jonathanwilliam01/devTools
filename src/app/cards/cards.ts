@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -7,6 +7,8 @@ import { Ui } from '../ui';
 import { Card, CampoCard, ISSUE_URL, MESES, Sistema, chaveNome, dataBr, hoje, novoId, partes } from '../models';
 import { Multi } from '../multi';
 import { Github } from '../github';
+import { lerPref, prefSignal, salvarPref } from '../pref';
+import { LISTAS, Vistas } from '../vistas';
 import { Destino, chavesLabel, destinoLabel } from '../labels';
 import { SEMANA, diaBr, itensResumo, lerDiasDaily, lerObsDaily, outraDaily, textoResumo } from '../resumo';
 
@@ -36,10 +38,10 @@ const COLUNAS_PLANILHA = ['Número do Card', 'Descrição', 'Sistema', 'Área Te
 
 @Component({
   selector: 'app-cards',
-  imports: [FormsModule, Multi],
+  imports: [FormsModule, Multi, Vistas],
   templateUrl: './cards.html',
   styleUrl: './cards.css',
-  host: { '(document:mousedown)': 'fecharMenu($event)', '(window:scroll)': 'menu.set(null)', '(window:resize)': 'menu.set(null)' },
+  host: { '(document:mousedown)': 'fecharMenu($event)', '(document:keydown)': 'teclas($event)', '(window:scroll)': 'menu.set(null)', '(window:resize)': 'menu.set(null)' },
 })
 export class Cards {
   protected readonly store = inject(Store);
@@ -95,16 +97,32 @@ export class Cards {
   protected readonly times = this.store.times;
   protected readonly linguagens = this.store.linguagens;
 
-  protected readonly filtrados = computed(() => {
+  // busca, sistema e incompletos (sem ano/mês)
+  private readonly casaFiltro = computed(() => {
     const termo = normalizar(this.busca());
-    return this.doAno().filter(
-      (c) =>
-        (!this.mes() || mesDe(c) === this.mes()) &&
-        (!this.sistema() || partes(c.sistema).includes(this.sistema())) &&
-        (!this.soIncompletos() || c.incompleto) &&
-        (!termo || normalizar(`${c.numero} ${c.descricao} ${c.sistema} ${c.linguagem} ${c.obs}`).includes(termo)),
-    );
+    return (c: Card) =>
+      (!this.sistema() || partes(c.sistema).includes(this.sistema())) &&
+      (!this.soIncompletos() || c.incompleto) &&
+      (!termo || normalizar(`${c.numero} ${c.descricao} ${c.sistema} ${c.linguagem} ${c.obs}`).includes(termo));
   });
+
+  protected readonly filtrados = computed(() => {
+    const casa = this.casaFiltro();
+    return this.doAno().filter((c) => (!this.mes() || mesDe(c) === this.mes()) && casa(c));
+  });
+
+  // meses com cards (yyyy-mm) para navegar na lista, pulando os vazios
+  private readonly mesesComCards = computed(() =>
+    [...new Set(this.store.cards().filter(this.casaFiltro()).map((c) => c.data.slice(0, 7)))].sort(),
+  );
+  private vizinho(passo: 1 | -1) {
+    const atual = `${this.ano()}-${String(this.mes()).padStart(2, '0')}`;
+    const l = this.mesesComCards();
+    const k = passo < 0 ? [...l].reverse().find((m) => m < atual) : l.find((m) => m > atual);
+    return k ? { ano: +k.slice(0, 4), mes: +k.slice(5, 7), nome: `${MESES[+k.slice(5, 7) - 1]} ${k.slice(0, 4)}` } : null;
+  }
+  protected readonly anterior = computed(() => this.vizinho(-1));
+  protected readonly proximo = computed(() => this.vizinho(1));
 
   protected readonly grupos = computed<Grupo[]>(() => {
     const qtd = this.porMes();
@@ -119,6 +137,14 @@ export class Cards {
         anteriores: qtd.slice(0, mes - 1).reduce((a, b) => a + b, 0),
         semanas: semanas(this.ano(), mes, cards, this.doAno().filter((c) => mesDe(c) === mes)),
       }));
+  });
+
+  protected readonly VISTAS = [{ v: 'tabela', i: '▤', t: 'Tabela' }, ...LISTAS] as const;
+  protected readonly vista = prefSignal('devtools:cards-vista', 'tabela' as 'tabela' | 'baixo' | 'lado', ['tabela', 'baixo', 'lado']);
+  protected readonly selId = signal<string | null>(null);
+  protected readonly selecionado = computed(() => {
+    const l = this.grupos().flatMap((g) => g.cards);
+    return l.find((c) => c.id === this.selId()) ?? l[0] ?? null;
   });
 
   protected readonly form = signal<Card | null>(null);
@@ -180,6 +206,13 @@ export class Cards {
   private readonly registrados = computed(() => new Set(this.store.cards().map((c) => c.numero)));
 
   constructor() {
+    // na lista sempre há um mês aberto: o mais recente com cards no ano
+    effect(() => {
+      if (this.vista() === 'tabela') return;
+      const casa = this.casaFiltro();
+      const meses = this.doAno().filter(casa).map(mesDe);
+      if (meses.length && !meses.includes(this.mes())) this.mes.set(Math.max(...meses));
+    });
     const inc = this.store.cards().filter((c) => c.incompleto).map((c) => +c.data.slice(0, 4));
     if (this.soIncompletos() && inc.length) this.ano.set(Math.max(...inc));
     const r = this.store.rascunhoCard();
@@ -309,6 +342,7 @@ export class Cards {
     const id = ids.has(f.id) || ids.has(padrao) ? f.id : padrao;
     this.store.salvarCard({ ...f, id, numero: +f.numero, descricao: f.descricao.trim(), incompleto: undefined });
     this.ano.set(+f.data.slice(0, 4));
+    this.selId.set(id);
     this.form.set(null);
     this.ui.avisar('Card salvo');
   }
@@ -318,7 +352,29 @@ export class Cards {
   }
 
   filtrarMes(m: number) {
-    this.mes.update((atual) => (atual === m ? 0 : m));
+    this.mes.update((atual) => (atual === m && this.vista() === 'tabela' ? 0 : m));
+  }
+
+  irMes(v: { ano: number; mes: number } | null) {
+    if (!v) return;
+    this.ano.set(v.ano);
+    this.mes.set(v.mes);
+  }
+
+  // na lista: ←/→ troca o mês, ↑/↓ troca o card
+  teclas(e: KeyboardEvent) {
+    if (this.vista() === 'tabela' || this.form() || this.painelSistemas() || this.painelResumo()) return;
+    if (e.altKey || e.ctrlKey || e.metaKey || (e.target as HTMLElement).closest('input, textarea, select')) return;
+    if (e.key === 'ArrowLeft') this.irMes(this.anterior());
+    else if (e.key === 'ArrowRight') this.irMes(this.proximo());
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      const l = this.grupos().flatMap((g) => g.cards);
+      const i = l.findIndex((c) => c.id === this.selecionado()?.id) + (e.key === 'ArrowUp' ? -1 : 1);
+      if (i < 0 || i >= l.length) return;
+      this.selId.set(l[i].id);
+      setTimeout(() => document.querySelector('.lp-lista li.on')?.scrollIntoView({ block: 'nearest' }));
+    } else return;
+    e.preventDefault();
   }
 
   filtrarSistema(nome: string) {
@@ -471,16 +527,3 @@ function semanas(ano: number, mes: number, visiveis: Card[], doMes: Card[]): Sem
   return [...mapa.values()].sort((a, b) => b.n - a.n);
 }
 
-function lerPref(chave: string, padrao: string) {
-  try {
-    return localStorage.getItem(chave) ?? padrao;
-  } catch {
-    return padrao;
-  }
-}
-
-function salvarPref(chave: string, valor: string) {
-  try {
-    localStorage.setItem(chave, valor);
-  } catch {}
-}

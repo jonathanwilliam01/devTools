@@ -9,10 +9,13 @@ import { Cofre } from '../cofre';
 import { Bloco, CORES, Nota, novoId } from '../models';
 import { Preencher, copiarOuPreencher, partesVars } from './preencher';
 import { gradeVazia, letraColuna, lerTsv, paraTsv } from './tabela';
+import { markdown } from '../markdown';
+import { prefSignal } from '../pref';
+import { LISTAS, Texto, Vistas } from '../vistas';
 
 @Component({
   selector: 'app-notas',
-  imports: [FormsModule, NgTemplateOutlet, Preencher],
+  imports: [FormsModule, NgTemplateOutlet, Preencher, Vistas],
   templateUrl: './notas.html',
   styleUrl: './notas.css',
 })
@@ -47,11 +50,23 @@ export class Notas {
   });
   protected readonly fixadas = computed(() => this.filtradas().filter((n) => n.fixada));
   protected readonly outras = computed(() => this.filtradas().filter((n) => !n.fixada));
+  protected readonly ordenadas = computed(() => [...this.fixadas(), ...this.outras()]);
+
+  protected readonly VISTAS = [{ v: 'mural', i: '▦', t: 'Mural' }, ...LISTAS] as const;
+  protected readonly vista = prefSignal('devtools:notas-vista', 'mural' as Vista, ['mural', 'baixo', 'lado']);
+  protected readonly texto = prefSignal<Texto>('devtools:notas-texto', 'texto', ['texto', 'md']);
+  protected readonly selId = signal<string | null>(null);
+  protected readonly selecionada = computed(() => {
+    const l = this.ordenadas();
+    return l.find((n) => n.id === this.selId()) ?? l[0] ?? null;
+  });
+  protected readonly markdown = markdown;
 
   constructor() {
     afterNextRender(() => {
       const id = this.destaque();
       if (!id) return;
+      this.selId.set(id);
       document.getElementById('nota-' + id)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
       setTimeout(() => this.destaque.set(null), 2000);
     });
@@ -85,6 +100,7 @@ export class Notas {
       .filter((b) => b.label.trim() || b.conteudo.trim());
     this.form.set(null);
     if (!f.titulo.trim() && !blocos.length) return;
+    this.selId.set(f.id);
     this.store.salvarNota(await this.cofre.selar({ ...f, blocos, atualizado: new Date().toISOString() }));
   }
 
@@ -106,6 +122,17 @@ export class Notas {
       novo.has(b.id) ? novo.delete(b.id) : novo.add(b.id);
       return novo;
     });
+  }
+
+  // primeira linha não secreta, para a lista
+  resumo(n: Nota) {
+    const b = n.blocos.find((b) => !b.secreto && !b.tabela && b.conteudo.trim());
+    return b?.conteudo.trim().split('\n')[0] ?? '';
+  }
+
+  // no markdown, clicar num link abre sem copiar
+  clicarBloco(e: MouseEvent, b: Bloco) {
+    if (!(e.target as HTMLElement).closest('a')) this.copiarBloco(b);
   }
 
   copiarBloco(b: Bloco) {
@@ -204,3 +231,6 @@ export class Notas {
 }
 
 const bloco = (): Bloco => ({ id: novoId(), label: '', conteudo: '' });
+
+type Vista = 'mural' | 'baixo' | 'lado';
+

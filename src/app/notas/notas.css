@@ -289,3 +289,20 @@ mark {
     opacity: 1;
   }
 }
+
+.lp-previa .nota {
+  margin: 0;
+  padding: 18px 20px 10px;
+}
+.lp-previa .nota footer {
+  opacity: 1;
+}
+.lp-previa .nota h4 {
+  font-size: 20px;
+}
+.mini-pino {
+  font-size: 11px;
+}
+.copiavel .md {
+  padding: 6px 34px 6px 10px;
+}

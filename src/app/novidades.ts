@@ -9,6 +9,16 @@ export interface Versao {
 
 export const NOVIDADES: Versao[] = [
   {
+    versao: '1.0.25',
+    data: '2026-11-11',
+    itens: [
+      { tipo: 'novidade', texto: 'Notas, Histórico e Kanban com troca de visualização: mural/tabela/quadro, lista com prévia embaixo ou lista com prévia ao lado. A escolha fica salva.' },
+      { tipo: 'novidade', texto: 'Notas em Markdown formatado (títulos, listas, checklist, código, links) com o botão M↓; Aa volta ao texto normal. Clicar no bloco continua copiando o texto cru.' },
+      { tipo: 'novidade', texto: 'Histórico em lista: um mês por vez com ‹ › para trocar (pula meses vazios e vira o ano), cards separados por semana. Teclado: ←/→ troca o mês, ↑/↓ o card.' },
+      { tipo: 'melhoria', texto: 'Kanban em lista: tarefas agrupadas por status com prazo e prioridade; na prévia, troca de status por botões, sem arrastar.' },
+    ],
+  },
+  {
     versao: '1.0.24',
     data: '2026-11-10',
     itens: [

@@ -76,25 +76,26 @@
   border-color: var(--acento);
   border-left-color: var(--cor-p);
 }
-.tarefa[data-prioridade='urgente'] {
+[data-prioridade='urgente'] {
   --cor-p: var(--p-urgente);
 }
-.tarefa[data-prioridade='alta'] {
+[data-prioridade='alta'] {
   --cor-p: var(--p-alta);
 }
-.tarefa[data-prioridade='media'] {
+[data-prioridade='media'] {
   --cor-p: var(--p-media);
 }
-.tarefa[data-prioridade='baixa'] {
+[data-prioridade='baixa'] {
   --cor-p: var(--p-baixa);
 }
-.tarefa .tags {
+.tarefa .tags,
+.ficha .tags {
   display: flex;
   align-items: center;
   gap: 4px;
   margin-bottom: 4px;
 }
-.tarefa .prio {
+[data-prioridade] .prio {
   color: var(--cor-p);
 }
 .tipo[data-tipo='card'] {
@@ -230,4 +231,28 @@
   .coluna {
     scroll-snap-align: start;
   }
+}
+
+.lp-lista li.item {
+  border-left-color: var(--cor-p);
+}
+.lp-lista li.on {
+  border-left-color: var(--acento);
+}
+li.item[data-status='done'] .lp-titulo {
+  text-decoration: line-through;
+  color: var(--texto-2);
+}
+.lp-meta .prazo {
+  margin: 0 4px 0 0;
+}
+.tarefa-ficha {
+  border-left: 4px solid var(--cor-p);
+}
+.ficha .prazo {
+  margin: 0;
+}
+.status {
+  justify-self: start;
+  flex-wrap: wrap;
 }

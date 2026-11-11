@@ -6,11 +6,14 @@ import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup, moveItemInArray, t
 import { Store } from '../store';
 import { Ui } from '../ui';
 import { Github } from '../github';
+import { temHtml } from '../markdown';
+import { prefSignal } from '../pref';
+import { LISTAS, Vistas } from '../vistas';
 import { COLUNAS, ISSUE_URL, PRIORIDADES, Prioridade, Status, TIPOS, Tarefa, Tipo, hoje, novoId, prazoTarefa } from '../models';
 
 @Component({
   selector: 'app-kanban',
-  imports: [FormsModule, CdkDropListGroup, CdkDropList, CdkDrag],
+  imports: [FormsModule, CdkDropListGroup, CdkDropList, CdkDrag, Vistas],
   templateUrl: './kanban.html',
   styleUrl: './kanban.css',
 })
@@ -30,6 +33,14 @@ export class Kanban {
   protected readonly rapida = signal('');
   protected readonly form = signal<Tarefa | null>(null);
   protected readonly verHtml = signal(true);
+
+  protected readonly VISTAS = [{ v: 'quadro', i: '▥', t: 'Quadro' }, ...LISTAS] as const;
+  protected readonly vista = prefSignal('devtools:kanban-vista', 'quadro' as 'quadro' | 'baixo' | 'lado', ['quadro', 'baixo', 'lado']);
+  protected readonly selId = signal<string | null>(null);
+  protected readonly selecionada = computed(() => {
+    const l = COLUNAS.flatMap((c) => this.colunas()[c.status]);
+    return l.find((t) => t.id === this.selId()) ?? l[0] ?? null;
+  });
 
   private readonly visivel = (t: Tarefa) => {
     const b = this.busca().toLowerCase().trim();
@@ -139,8 +150,17 @@ export class Kanban {
     this.form.set({ ...t });
   }
 
-  temHtml(s: string) {
-    return /<[a-z][^>]*>/i.test(s);
+  protected readonly temHtml = temHtml;
+
+  // primeira linha da descrição, sem html
+  resumo(t: Tarefa) {
+    const d = temHtml(t.descricao) ? new DOMParser().parseFromString(t.descricao, 'text/html').body.textContent ?? '' : t.descricao;
+    return d.trim().split('\n')[0];
+  }
+
+  mover(t: Tarefa, status: Status) {
+    if (t.status === status) return;
+    this.store.salvarTarefa({ ...t, status, concluido: status === 'done' ? hoje() : null });
   }
 
   salvar() {
@@ -150,6 +170,7 @@ export class Kanban {
     if (f.status === 'done' && antes?.status !== 'done') f.concluido = hoje();
     if (f.status !== 'done') f.concluido = null;
     const t = { ...f, titulo: f.titulo.trim(), numeroCard: f.numeroCard ? +f.numeroCard : null, prazo: f.prazo || null };
+    this.selId.set(t.id);
     if (antes) this.store.salvarTarefa(t);
     else this.store.setTarefas([t, ...this.store.tarefas()]);
     this.form.set(null);

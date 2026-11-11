@@ -1,31 +1,58 @@
 <div class="barra">
   <input data-busca class="busca" type="search" placeholder="Buscar notas... ( / )" [ngModel]="busca()" (ngModelChange)="busca.set($event)" />
   <span class="dica">Use <code>{{ EXEMPLO }}</code> no conteúdo para preencher na hora de copiar.</span>
-  <button class="btn primario fim" (click)="nova()" title="Nova nota (n)">+ Nova nota</button>
+  <app-vistas class="fim" [opcoes]="VISTAS" [(vista)]="vista" [(texto)]="texto" />
+  <button class="btn primario" (click)="nova()" title="Nova nota (n)">+ Nova nota</button>
 </div>
 
-@if (fixadas().length) {
-  <h3 class="secao">Fixadas</h3>
-  <div class="mural">
-    @for (n of fixadas(); track n.id) {
-      <ng-container *ngTemplateOutlet="tplNota; context: { $implicit: n }" />
-    }
-  </div>
-}
-
-@if (outras().length) {
+@if (vista() === 'mural') {
   @if (fixadas().length) {
-    <h3 class="secao">Outras</h3>
+    <h3 class="secao">Fixadas</h3>
+    <div class="mural">
+      @for (n of fixadas(); track n.id) {
+        <ng-container *ngTemplateOutlet="tplNota; context: { $implicit: n }" />
+      }
+    </div>
   }
-  <div class="mural">
-    @for (n of outras(); track n.id) {
-      <ng-container *ngTemplateOutlet="tplNota; context: { $implicit: n }" />
+
+  @if (outras().length) {
+    @if (fixadas().length) {
+      <h3 class="secao">Outras</h3>
+    }
+    <div class="mural">
+      @for (n of outras(); track n.id) {
+        <ng-container *ngTemplateOutlet="tplNota; context: { $implicit: n }" />
+      }
+    </div>
+  }
+} @else if (ordenadas().length) {
+  <div class="lp" [class.lado]="vista() === 'lado'">
+    <ul class="lp-lista">
+      @for (n of ordenadas(); track n.id) {
+        <li
+          [attr.data-cor]="n.cor"
+          [class.on]="selecionada()?.id === n.id"
+          (click)="selId.set(n.id)"
+          (dblclick)="editar(n)"
+          [id]="'nota-' + n.id"
+        >
+          <span class="lp-titulo">
+            @if (n.fixada) {
+              <span class="mini-pino">📌</span>
+            }
+            {{ n.titulo || 'sem título' }}
+          </span>
+          <span class="lp-resumo">{{ resumo(n) }}</span>
+          <span class="lp-meta">{{ n.atualizado.slice(0, 10).split('-').reverse().join('/') }}</span>
+        </li>
+      }
+    </ul>
+    @if (selecionada(); as n) {
+      <div class="lp-previa">
+        <ng-container *ngTemplateOutlet="tplNota; context: { $implicit: n }" />
+      </div>
     }
   </div>
-}
-
-@if (!fixadas().length && !outras().length) {
-  <p class="vazio">Nenhuma nota. Crie uma com blocos copiáveis.</p>
 }
 
 <ng-template #tplNota let-n>
@@ -59,9 +86,11 @@
             </span>
           </div>
         } @else if (b.conteudo) {
-          <div class="copiavel" (click)="copiarBloco(b)" title="Clique para copiar">
+          <div class="copiavel" (click)="clicarBloco($event, b)" title="Clique para copiar">
             @if (b.secreto) {
               <pre>{{ exibir(b) }}</pre>
+            } @else if (texto() === 'md') {
+              <div class="md" [innerHTML]="markdown(b.conteudo)"></div>
             } @else {
               <pre>@for (p of partes(b.conteudo); track $index) {@if (p.v) {<mark>{{ p.t }}</mark>} @else {<ng-container>{{ p.t }}</ng-container>}}</pre>
             }

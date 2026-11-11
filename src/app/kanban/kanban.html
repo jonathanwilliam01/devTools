@@ -22,9 +22,11 @@
   @if (atrasadas()) {
     <span class="tag atrasada">{{ atrasadas() }} atrasada(s)</span>
   }
-  <button class="btn primario fim" (click)="nova()" title="Nova tarefa (n)">+ Nova tarefa</button>
+  <app-vistas class="fim" [opcoes]="VISTAS" [(vista)]="vista" [comTexto]="false" />
+  <button class="btn primario" (click)="nova()" title="Nova tarefa (n)">+ Nova tarefa</button>
 </div>
 
+@if (vista() === 'quadro') {
 <div class="quadro" cdkDropListGroup>
   @for (col of COLUNAS; track col.status) {
     <section class="coluna" [attr.data-status]="col.status">
@@ -75,6 +77,79 @@
     </section>
   }
 </div>
+
+} @else {
+  <div class="lp" [class.lado]="vista() === 'lado'">
+    <ul class="lp-lista">
+      @for (col of COLUNAS; track col.status) {
+        @if (colunas()[col.status].length) {
+          <li class="lp-grupo" [attr.data-status]="col.status">
+            <span>{{ col.titulo }}</span><span>{{ colunas()[col.status].length }}</span>
+          </li>
+          @for (t of colunas()[col.status]; track t.id) {
+            <li
+              class="item"
+              [attr.data-prioridade]="t.prioridade"
+              [attr.data-status]="t.status"
+              [class.on]="selecionada()?.id === t.id"
+              (click)="selId.set(t.id)"
+              (dblclick)="editar(t)"
+            >
+              <span class="lp-titulo">{{ t.titulo }}</span>
+              <span class="lp-meta">
+                @if (prazo(t); as p) {
+                  <span class="prazo" [attr.data-nivel]="p.nivel">⏱ {{ p.texto }}</span>
+                }
+                @if (t.numeroCard) {
+                  #{{ t.numeroCard }}
+                }
+              </span>
+              <span class="lp-resumo">{{ label(TIPOS, t.tipo) }} · {{ label(PRIORIDADES, t.prioridade) }}@if (resumo(t); as r) { · {{ r }}}</span>
+            </li>
+          }
+        }
+      }
+      @if (!selecionada()) {
+        <li class="lp-grupo">Nenhuma tarefa</li>
+      }
+    </ul>
+    @if (selecionada(); as t) {
+      <div class="lp-previa">
+        <article class="ficha tarefa-ficha" [attr.data-prioridade]="t.prioridade">
+          <div class="tags">
+            <span class="tag tipo" [attr.data-tipo]="t.tipo">{{ label(TIPOS, t.tipo) }}</span>
+            <span class="tag prio">{{ label(PRIORIDADES, t.prioridade) }}</span>
+            @if (t.numeroCard) {
+              <a class="num" [href]="ISSUE_URL + t.numeroCard" target="_blank" rel="noopener">#{{ t.numeroCard }}</a>
+            }
+            @if (prazo(t); as p) {
+              <span class="prazo" [attr.data-nivel]="p.nivel" [title]="'Prazo: ' + t.prazo">⏱ {{ p.texto }}</span>
+            }
+          </div>
+          <h3 (dblclick)="editar(t)">{{ t.titulo }}</h3>
+          <div class="seg status">
+            @for (c of COLUNAS; track c.status) {
+              <button class="btn mini ghost" [class.on]="t.status === c.status" (click)="mover(t, c.status)">{{ c.titulo }}</button>
+            }
+          </div>
+          @if (t.descricao) {
+            @if (temHtml(t.descricao)) {
+              <div class="md" [innerHTML]="t.descricao"></div>
+            } @else {
+              <div class="texto-puro">{{ t.descricao }}</div>
+            }
+          }
+          <div class="acoes">
+            @if (podeRegistrar(t)) {
+              <button class="btn mini" (click)="registrarCard(t)">Registrar em Cards →</button>
+            }
+            <button class="btn mini" (click)="editar(t)">Editar</button>
+          </div>
+        </article>
+      </div>
+    }
+  </div>
+}
 
 @if (form(); as f) {
   <div class="overlay" (click)="form.set(null)">
