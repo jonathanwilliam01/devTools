@@ -121,16 +121,21 @@ import { Router } from '@angular/router';
               <input type="checkbox" [checked]="notificar.ativo()" (change)="notificar.ativar($any($event.target).checked)" />
               Avisar quando uma issue entra no kanban ou um card é registrado no histórico
             </label>
+            <button class="btn" (click)="notificar.testar()">Testar</button>
           </div>
           <p class="sub">
             @if (notificar.pai()) {
               Exibidas pelo git-calm.
             } @else if (notificar.permissao() === 'indisponivel') {
               Este navegador não tem notificações.
+            } @else if (emIframe) {
+              Dentro de outro site o navegador bloqueia: abra o devTools em aba própria.
             } @else if (notificar.permissao() === 'denied') {
               Bloqueadas no navegador: libere em Configurações do site (cadeado da barra de endereço).
             } @else if (notificar.ativo() && notificar.permissao() === 'granted') {
               Ativas. Funcionam com a aba aberta, mesmo em segundo plano.
+            } @else if (notificar.ativo()) {
+              Clique em Testar e permita no aviso do navegador. Funcionam com a aba aberta, mesmo em segundo plano.
             } @else {
               Funcionam com a aba aberta, mesmo em segundo plano.
             }
@@ -242,6 +247,7 @@ export class PainelDados {
   protected readonly backup = inject(Backup);
   protected readonly github = inject(Github);
   protected readonly notificar = inject(Notificar);
+  protected readonly emIframe = window.parent !== window;
   protected token = this.github.proprio();
   protected readonly dono = ISSUE_URL.split('/')[3];
   protected readonly repo = ISSUE_URL.split('/')[4];

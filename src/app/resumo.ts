@@ -49,7 +49,7 @@ export function itensResumo(cards: Card[], tarefas: Tarefa[], dentro: (d: string
         .filter((t) => t.status === 'done' && t.concluido && dentro(t.concluido) && !(t.numeroCard && registrados.has(t.numeroCard)))
         .map((t) => ({
           data: t.concluido!,
-          titulo: t.numeroCard ? `#${t.numeroCard} - ${t.titulo}` : `${t.tipo === 'verificacao' ? 'Verificação' : 'Ajuda'}: ${t.titulo}`,
+          titulo: t.numeroCard ? `#${t.numeroCard} - ${t.titulo}` : `${t.tipo === 'verificacao' ? 'Verificação' : t.tipo === 'tarefa' ? 'Tarefa' : 'Ajuda'}: ${t.titulo}`,
           obs: '',
         }));
   return [...doCard, ...daTarefa].sort((a, b) => a.data.localeCompare(b.data));

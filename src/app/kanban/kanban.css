@@ -102,6 +102,9 @@
   background: var(--acento-bg);
   color: var(--acento);
 }
+.tipo[data-tipo='tarefa'] {
+  background: var(--nota-verde);
+}
 .tipo[data-tipo='ajuda'] {
   background: var(--nota-roxo);
 }

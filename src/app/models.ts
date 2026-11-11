@@ -46,7 +46,7 @@ export const DIAS_LIXEIRA = 7;
 
 export type Status = 'todo' | 'doing' | 'blocked' | 'done';
 export type Prioridade = 'baixa' | 'media' | 'alta' | 'urgente';
-export type Tipo = 'card' | 'ajuda' | 'verificacao';
+export type Tipo = 'card' | 'tarefa' | 'ajuda' | 'verificacao';
 
 export interface Tarefa {
   id: string;
@@ -132,6 +132,7 @@ export const PRIORIDADES: { valor: Prioridade; label: string }[] = [
 
 export const TIPOS: { valor: Tipo; label: string }[] = [
   { valor: 'card', label: 'Card' },
+  { valor: 'tarefa', label: 'Tarefa' },
   { valor: 'ajuda', label: 'Ajuda' },
   { valor: 'verificacao', label: 'Verificação' },
 ];

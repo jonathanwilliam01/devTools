@@ -18,11 +18,11 @@ import { TipoNovidade, Versao } from '../novidades';
           <button class="btn mini ghost" (click)="fechar.emit()" title="Fechar (Esc)">✕</button>
         </header>
         <div class="lista">
-          @for (v of versoes(); track v.versao) {
-            <section>
-              <h3>
-                v{{ v.versao }} <small>{{ dataBr(v.data) }}</small>
-              </h3>
+          @for (v of versoes(); track v.versao; let primeira = $first) {
+            <details [open]="primeira">
+              <summary>
+                v{{ v.versao }} <small>{{ dataBr(v.data) }} · {{ v.itens.length }}</small>
+              </summary>
               <ul>
                 @for (i of v.itens; track $index) {
                   <li>
@@ -31,7 +31,7 @@ import { TipoNovidade, Versao } from '../novidades';
                   </li>
                 }
               </ul>
-            </section>
+            </details>
           }
         </div>
         <div class="rodape">
@@ -57,7 +57,7 @@ import { TipoNovidade, Versao } from '../novidades';
       overflow-y: auto;
       display: grid;
       align-content: start;
-      gap: 16px;
+      gap: 10px;
       padding-right: 4px;
     }
     header {
@@ -65,12 +65,16 @@ import { TipoNovidade, Versao } from '../novidades';
       align-items: center;
       justify-content: space-between;
     }
-    h3 {
-      margin: 0 0 8px;
+    summary {
+      cursor: pointer;
+      font-weight: 600;
       font-size: 14px;
       font-family: var(--mono);
     }
-    h3 small {
+    details[open] summary {
+      margin-bottom: 8px;
+    }
+    summary small {
       color: var(--texto-2);
       font-weight: 400;
       margin-left: 6px;

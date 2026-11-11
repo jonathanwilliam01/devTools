@@ -29,6 +29,9 @@ export const NOVIDADES: Versao[] = [
       { tipo: 'novidade', texto: 'Kanban: tarefa de ajuda com a pessoa ajudada e contagem de ajudas no mês.' },
       { tipo: 'melhoria', texto: 'Notas: título passa a ser obrigatório para salvar.' },
       { tipo: 'melhoria', texto: 'Labels de área (Arrecadação, Finanças, Suprimentos, Administração/RH) já vêm mapeadas para o campo Área.' },
+      { tipo: 'novidade', texto: 'Kanban: tipo Tarefa, para o que não é card, ajuda nem verificação.' },
+      { tipo: 'melhoria', texto: 'Novidades: só a versão mais recente vem aberta; as anteriores ficam recolhidas, clique para expandir.' },
+      { tipo: 'correcao', texto: 'Notificações do navegador: pedido de permissão repete até ser respondido, permissão liberada no cadeado vale sem recarregar e botão Testar em Dados.' },
     ],
   },
   {

@@ -14,12 +14,16 @@ export class Notificar {
   // origem do git-calm que exibe as notificações por nós
   readonly pai = signal('');
 
-  // ligada por padrão: pede a permissão no primeiro clique (Firefox e Safari exigem gesto)
+  // ligada por padrão: pede a permissão no clique (Firefox e Safari exigem gesto) até o usuário decidir
   constructor() {
-    if (this.permissao() === 'default')
-      addEventListener('click', async () => {
-        if (this.ativo() && !this.pai()) this.permissao.set(await Notification.requestPermission());
-      }, { once: true, capture: true });
+    if (this.permissao() === 'indisponivel') return;
+    const pedir = async () => {
+      if (this.ativo() && !this.pai() && Notification.permission === 'default') this.permissao.set(await Notification.requestPermission());
+      if (Notification.permission !== 'default') removeEventListener('click', pedir, true);
+    };
+    addEventListener('click', pedir, true);
+    // permissão trocada no cadeado da barra de endereço
+    addEventListener('focus', () => this.permissao.set(Notification.permission));
   }
 
   async ativar(v: boolean) {
@@ -33,15 +37,20 @@ export class Notificar {
   enviar(titulo: string, corpo: string, rota: string) {
     if (!this.ativo()) return;
     if (this.pai()) return window.parent.postMessage({ tipo: 'devtools:notificar', titulo, corpo, rota }, this.pai());
-    if (this.permissao() !== 'granted') return;
+    if (this.permissao() === 'indisponivel' || Notification.permission !== 'granted') return;
     try {
-      const n = new Notification(titulo, { body: corpo, tag: rota + corpo, icon: '/favicon.svg' });
+      const n = new Notification(titulo, { body: corpo, icon: '/favicon.svg' });
       n.onclick = () => {
         window.focus();
         this.abrir(rota);
         n.close();
       };
     } catch {}
+  }
+
+  async testar() {
+    await this.ativar(true);
+    this.enviar('Teste do devTools', 'Notificações funcionando', '/kanban');
   }
 
   abrir(rota: string) {
