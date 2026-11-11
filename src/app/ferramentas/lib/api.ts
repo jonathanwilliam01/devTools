@@ -8,6 +8,7 @@ import { corrigir } from './encoding';
 import { empresa, pessoa } from './fake';
 import { FormatoGrade, gerarTabela, lerGrade } from './grade';
 import { hashes } from './hash';
+import { NOVIDADES } from '../../novidades';
 import { DadosPix, gerarPix as _gerarPix, lerPix } from './pix';
 import { compactarSql, formatarSql as _formatarSql, OpcoesSqlFmt } from './sqlfmt';
 import { b64Decode, b64Encode, Charset, decode5t, encode5t, formatarXml, lerJwt, listaSql as _listaSql, OpcoesSql } from './texto';
@@ -92,6 +93,8 @@ export const API = {
     modo === 'encode' ? encode5t(texto, charset) : decode5t(texto, charset),
   lerJwt: (token: string) => lerJwt(token),
   hash: async (texto: string) => Object.fromEntries(await hashes(new TextEncoder().encode(texto))),
+
+  novidades: () => NOVIDADES,
 };
 
 export type NomeApi = keyof typeof API;

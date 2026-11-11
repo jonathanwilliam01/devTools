@@ -16,6 +16,7 @@ export const NOVIDADES: Versao[] = [
       { tipo: 'novidade', texto: 'Notas em Markdown formatado (títulos, listas, checklist, código, links) com o botão M↓; Aa volta ao texto normal. Clicar no bloco continua copiando o texto cru.' },
       { tipo: 'novidade', texto: 'Histórico em lista: um mês por vez com ‹ › para trocar (pula meses vazios e vira o ano), cards separados por semana. Teclado: ←/→ troca o mês, ↑/↓ o card.' },
       { tipo: 'melhoria', texto: 'Kanban em lista: tarefas agrupadas por status com prazo e prioridade; na prévia, troca de status por botões, sem arrastar.' },
+      { tipo: 'melhoria', texto: 'As novidades do devTools aparecem também no "O que há de novo" do git-calm.' },
     ],
   },
   {
