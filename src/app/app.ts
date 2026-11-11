@@ -38,7 +38,7 @@ export class App {
   protected readonly tema = signal(lerTema());
   protected readonly cor = signal(lerPref('devtools:cor') ?? 'azul');
   protected readonly menuTema = signal(false);
-  // abre sozinho na primeira carga de uma versão nova, em qualquer tela
+  // abre sozinho na primeira carga de uma versão nova ou do dia, em qualquer tela
   protected readonly novidades = signal(pendentes(VERSAO.numero));
   protected readonly atrasadas = computed(
     () => this.store.tarefas().filter((t) => t.status !== 'done' && t.prazo && t.prazo < hoje()).length,

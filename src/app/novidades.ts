@@ -31,6 +31,7 @@ export const NOVIDADES: Versao[] = [
       { tipo: 'melhoria', texto: 'Labels de área (Arrecadação, Finanças, Suprimentos, Administração/RH) já vêm mapeadas para o campo Área.' },
       { tipo: 'novidade', texto: 'Kanban: tipo Tarefa, para o que não é card, ajuda nem verificação.' },
       { tipo: 'melhoria', texto: 'Novidades: só a versão mais recente vem aberta; as anteriores ficam recolhidas, clique para expandir.' },
+      { tipo: 'novidade', texto: 'Novidades abrem sozinhas no primeiro acesso do dia.' },
       { tipo: 'correcao', texto: 'Notificações do navegador: pedido de permissão repete até ser respondido, permissão liberada no cadeado vale sem recarregar e botão Testar em Dados.' },
     ],
   },
@@ -70,20 +71,28 @@ export const NOVIDADES: Versao[] = [
 ];
 
 const CHAVE = 'devtools:novidades';
+const CHAVE_DIA = 'devtools:novidades-dia';
 const cmp = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true });
 
-// versões ainda não vistas até a atual; sem registro mostra só a atual
-export function pendentes(atual: string): Versao[] {
-  let visto: string | null = null;
+const ler = (k: string) => {
   try {
-    visto = localStorage.getItem(CHAVE);
-  } catch {}
-  if (visto === atual) return [];
-  return NOVIDADES.filter((v) => cmp(v.versao, atual) <= 0 && (visto ? cmp(v.versao, visto) > 0 : v.versao === atual));
+    return localStorage.getItem(k);
+  } catch {
+    return null;
+  }
+};
+const hojeLocal = () => new Date().toLocaleDateString('sv');
+
+// versão nova: só as não vistas; senão, no primeiro acesso do dia, todas
+export function pendentes(atual: string): Versao[] {
+  const visto = ler(CHAVE);
+  if (visto !== atual) return NOVIDADES.filter((v) => cmp(v.versao, atual) <= 0 && (visto ? cmp(v.versao, visto) > 0 : v.versao === atual));
+  return ler(CHAVE_DIA) === hojeLocal() ? [] : NOVIDADES.filter((v) => cmp(v.versao, atual) <= 0);
 }
 
 export function marcarVisto(atual: string) {
   try {
     localStorage.setItem(CHAVE, atual);
+    localStorage.setItem(CHAVE_DIA, hojeLocal());
   } catch {}
 }
