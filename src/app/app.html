@@ -93,12 +93,16 @@
   @case ('cofre') {
     <app-painel-cofre (fechar)="ui.painel.set(null)" />
   }
+  @case ('paleta') {
+    <app-paleta (fechar)="ui.painel.set(null)" />
+  }
   @case ('atalhos') {
     <div class="overlay" (click)="ui.painel.set(null)">
       <div class="dialogo atalhos" (click)="$event.stopPropagation()">
         <h2>Atalhos</h2>
         <dl>
-          <dt><kbd>/</kbd></dt><dd>Buscar</dd>          <dt><kbd>n</kbd></dt><dd>Novo (card, nota ou tarefa) / gerar de novo</dd>
+          <dt><kbd>/</kbd></dt><dd>Buscar</dd>
+          <dt><kbd>Ctrl</kbd> + <kbd>K</kbd></dt><dd>Copiar bloco de qualquer nota</dd>          <dt><kbd>n</kbd></dt><dd>Novo (card, nota ou tarefa) / gerar de novo</dd>
           <dt><kbd>0</kbd></dt><dd>Início</dd>
           <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Histórico, Notas, Kanban, Ferramentas</dd>
           <dt><kbd>Esc</kbd></dt><dd>Fechar janela</dd>

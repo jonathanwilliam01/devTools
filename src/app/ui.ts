@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 
 export type Atalho = 'novo' | 'esc';
-export type Painel = 'dados' | 'cofre' | 'atalhos' | null;
+export type Painel = 'dados' | 'cofre' | 'atalhos' | 'paleta' | null;
 
 @Injectable({ providedIn: 'root' })
 export class Ui {

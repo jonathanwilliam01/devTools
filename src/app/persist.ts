@@ -53,7 +53,7 @@ function compactar(d: Dados, qtdCards: number) {
     ...n,
     blocos: n.blocos.map((b) => (b.secreto && !b.conteudo.startsWith('enc:') ? { ...b, conteudo: '' } : b)),
   }));
-  return JSON.stringify({ ...d, cards, notas, totalCards: d.cards.length });
+  return JSON.stringify({ ...d, lixeira: undefined, cards, notas, totalCards: d.cards.length });
 }
 
 export async function salvarCookies(d: Dados): Promise<StatusCookie> {

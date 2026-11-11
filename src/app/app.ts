@@ -11,12 +11,13 @@ import { ehNova, FERRAMENTAS } from './ferramentas/catalogo';
 import { PainelDados } from './shell/painel-dados';
 import { PainelCofre } from './shell/painel-cofre';
 import { PainelNovidades } from './shell/painel-novidades';
+import { Paleta } from './shell/paleta';
 import { NOVIDADES, marcarVisto, pendentes } from './novidades';
 import { iniciarPonte } from './ponte';
 import { Notificar } from './notificar';
 
 @Component({
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, PainelDados, PainelCofre, PainelNovidades],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, PainelDados, PainelCofre, PainelNovidades, Paleta],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -81,7 +82,7 @@ export class App {
       if (!s || !chaveNome(s.status).includes('VALIDA') || this.store.cards().some((c) => c.numero === t.numeroCard)) continue;
       const i = await this.github.issue(t.numeroCard!);
       if (!i) continue;
-      const obs = (await this.github.trabalhoExecutado(t.numeroCard!, i.descricao)) ?? '';
+      const obs = (await this.github.trabalhoExecutado(t.numeroCard!, i.descricao)) || t.trabalho || '';
       const campos = this.store.camposDaIssue(i);
       this.store.salvarCard({
         id: `c-${t.numeroCard}-${s.data}`,
@@ -165,6 +166,11 @@ export class App {
       this.ui.painel.set(null);
       this.menuTema.set(false);
       this.ui.atalhos.next('esc');
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      this.ui.painel.set(this.ui.painel() === 'paleta' ? null : 'paleta');
       return;
     }
     const alvo = e.target as HTMLElement;

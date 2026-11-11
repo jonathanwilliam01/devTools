@@ -22,6 +22,9 @@
   @if (atrasadas()) {
     <span class="tag atrasada">{{ atrasadas() }} atrasada(s)</span>
   }
+  @if (ajudasMes().total) {
+    <span class="tag ajudas" [title]="ajudasMes().texto">🤝 {{ ajudasMes().total }} ajuda(s) no mês</span>
+  }
   <app-vistas class="fim" [opcoes]="VISTAS" [(vista)]="vista" [comTexto]="false" />
   <button class="btn primario" (click)="nova()" title="Nova tarefa (n)">+ Nova tarefa</button>
 </div>
@@ -51,6 +54,9 @@
             <div class="tags">
               <span class="tag tipo" [attr.data-tipo]="t.tipo">{{ label(TIPOS, t.tipo) }}</span>
               <span class="tag prio">{{ label(PRIORIDADES, t.prioridade) }}</span>
+              @if (ticket(t); as tk) {
+                <a class="tk" [href]="TICKET_URL(tk)" target="_blank" rel="noopener" (click)="$event.stopPropagation()" title="Abrir ticket">🎫 {{ tk }}</a>
+              }
               @if (t.numeroCard) {
                 <a class="num" [href]="ISSUE_URL + t.numeroCard" target="_blank" rel="noopener" (click)="$event.stopPropagation()">
                   #{{ t.numeroCard }}
@@ -58,6 +64,20 @@
               }
             </div>
             <h4>{{ t.titulo }}</h4>
+            <div class="extras">
+              @if (campo(t, 'Cliente'); as c) {
+                <span title="Cliente">🏛 {{ c }}</span>
+              }
+              @if (t.tipo === 'ajuda' && pessoa(t); as p) {
+                <span title="Pessoa ajudada">🤝 {{ p }}</span>
+              }
+              @if (progresso(t); as p) {
+                <span title="Checklist">☑ {{ p }}</span>
+              }
+              @if (tempo(t); as tm) {
+                <span [class.rodando]="t.inicio" [title]="t.inicio ? 'Contando tempo em Fazendo' : 'Tempo em Fazendo'">⏲ {{ tm }}</span>
+              }
+            </div>
             @if (prazo(t); as p) {
               <span class="prazo" [attr.data-nivel]="p.nivel" [title]="'Prazo: ' + t.prazo">⏱ {{ p.texto }}</span>
             }
@@ -100,6 +120,12 @@
                 @if (prazo(t); as p) {
                   <span class="prazo" [attr.data-nivel]="p.nivel">⏱ {{ p.texto }}</span>
                 }
+                @if (tempo(t); as tm) {
+                  ⏲ {{ tm }}
+                }
+                @if (progresso(t); as p) {
+                  ☑ {{ p }}
+                }
                 @if (t.numeroCard) {
                   #{{ t.numeroCard }}
                 }
@@ -119,11 +145,20 @@
           <div class="tags">
             <span class="tag tipo" [attr.data-tipo]="t.tipo">{{ label(TIPOS, t.tipo) }}</span>
             <span class="tag prio">{{ label(PRIORIDADES, t.prioridade) }}</span>
+            @if (ticket(t); as tk) {
+              <a class="tk" [href]="TICKET_URL(tk)" target="_blank" rel="noopener" title="Abrir ticket">🎫 {{ tk }}</a>
+            }
             @if (t.numeroCard) {
               <a class="num" [href]="ISSUE_URL + t.numeroCard" target="_blank" rel="noopener">#{{ t.numeroCard }}</a>
             }
             @if (prazo(t); as p) {
               <span class="prazo" [attr.data-nivel]="p.nivel" [title]="'Prazo: ' + t.prazo">⏱ {{ p.texto }}</span>
+            }
+            @if (tempo(t); as tm) {
+              <span class="prazo" [class.rodando]="t.inicio">⏲ {{ tm }}</span>
+            }
+            @if (t.tipo === 'ajuda' && pessoa(t); as p) {
+              <span class="prazo">🤝 {{ p }}</span>
             }
           </div>
           <h3 (dblclick)="editar(t)">{{ t.titulo }}</h3>
@@ -132,6 +167,21 @@
               <button class="btn mini ghost" [class.on]="t.status === c.status" (click)="mover(t, c.status)">{{ c.titulo }}</button>
             }
           </div>
+          @if (campos(t).length) {
+            <ng-container *ngTemplateOutlet="tplCampos; context: { $implicit: campos(t) }" />
+          }
+          @if (t.checklist?.length) {
+            <ul class="checklist">
+              @for (i of t.checklist; track i.id) {
+                <li [class.feito]="i.feito">
+                  <label><input type="checkbox" [checked]="i.feito" (change)="alternarItem(t, i.id)" /> {{ i.texto }}</label>
+                </li>
+              }
+            </ul>
+          }
+          @if (t.trabalho) {
+            <div class="trabalho"><b>Trabalho executado</b><div class="texto-puro">{{ t.trabalho }}</div></div>
+          }
           @if (t.descricao) {
             @if (temHtml(t.descricao)) {
               <div class="md" [innerHTML]="t.descricao"></div>
@@ -192,7 +242,42 @@
           Prazo
           <input type="date" name="prazo" [(ngModel)]="f.prazo" />
         </label>
+        @if (f.tipo === 'ajuda') {
+          <label class="campo">
+            Pessoa
+            <input name="pessoa" [(ngModel)]="f.pessoa" [placeholder]="pessoa(f) || 'Quem foi ajudado'" list="pessoas-kanban" />
+            <datalist id="pessoas-kanban">
+              @for (p of pessoas(); track p) {
+                <option [value]="p"></option>
+              }
+            </datalist>
+          </label>
+        }
       </div>
+      <div class="campo">
+        Checklist
+        <ul class="checklist edit">
+          @for (i of f.checklist ?? []; track i.id; let j = $index) {
+            <li>
+              <input type="checkbox" [name]="'ck' + i.id" [(ngModel)]="i.feito" />
+              <input class="ck-texto" [name]="'ct' + i.id" [(ngModel)]="i.texto" />
+              <button type="button" class="btn mini ghost perigo" (click)="removerItem(f, j)" title="Remover item">✕</button>
+            </li>
+          }
+          <li>
+            <input class="ck-texto" name="novoItem" [ngModel]="novoItem()" (ngModelChange)="novoItem.set($event)" (keydown.enter)="addItem(f, $event)" placeholder="+ item (Enter adiciona)" />
+          </li>
+        </ul>
+      </div>
+      @if (f.tipo === 'card' && (f.status === 'done' || f.trabalho)) {
+        <label class="campo">
+          Trabalho executado
+          <textarea name="trabalho" rows="3" [(ngModel)]="f.trabalho" placeholder="Vira o obs do card no histórico"></textarea>
+        </label>
+      }
+      @if (campos(f).length && verHtml()) {
+        <ng-container *ngTemplateOutlet="tplCampos; context: { $implicit: campos(f) }" />
+      }
       <label class="campo">
         <span class="rotulo">
           Descrição / anotações
@@ -210,6 +295,35 @@
         <button type="button" class="btn perigo ghost" style="margin-right: auto" (click)="remover(f)">Excluir</button>
         <button type="button" class="btn" (click)="form.set(null)">Cancelar</button>
         <button type="submit" class="btn primario">Salvar</button>
+      </div>
+    </form>
+  </div>
+}
+
+<ng-template #tplCampos let-cs>
+  <dl class="campos-tiflux">
+    @for (c of cs; track c.rotulo) {
+      <dt>{{ c.rotulo }}</dt>
+      <dd>
+        @for (p of c.partes; track $index) {@if (p.url) {<a [href]="p.t" target="_blank" rel="noopener">{{ p.t }}</a>} @else {{{ p.t }}}}
+      </dd>
+    }
+  </dl>
+</ng-template>
+
+@if (concluindo(); as c) {
+  <div class="overlay" (click)="concluindo.set(null)">
+    <form class="dialogo concluir" (click)="$event.stopPropagation()" (ngSubmit)="salvarTrabalho(true)" (keydown.control.enter)="salvarTrabalho(true)">
+      <h2>Concluído: #{{ c.numeroCard }}</h2>
+      <p class="dica">{{ c.titulo }}</p>
+      <label class="campo">
+        Trabalho executado
+        <textarea name="trabalho" rows="5" [ngModel]="trabalhoTxt()" (ngModelChange)="trabalhoTxt.set($event)" placeholder="Realizado ajuste/correção ... (vira o obs do card)" autofocus></textarea>
+      </label>
+      <div class="rodape">
+        <button type="button" class="btn" style="margin-right: auto" (click)="concluindo.set(null)">Pular</button>
+        <button type="button" class="btn" (click)="salvarTrabalho(false)">Só salvar</button>
+        <button type="submit" class="btn primario">Salvar e registrar em Cards →</button>
       </div>
     </form>
   </div>

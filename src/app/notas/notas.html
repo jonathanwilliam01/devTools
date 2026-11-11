@@ -2,8 +2,19 @@
   <input data-busca class="busca" type="search" placeholder="Buscar notas... ( / )" [ngModel]="busca()" (ngModelChange)="busca.set($event)" />
   <span class="dica">Use <code>{{ EXEMPLO }}</code> no conteúdo para preencher na hora de copiar.</span>
   <app-vistas class="fim" [opcoes]="VISTAS" [(vista)]="vista" [(texto)]="texto" />
+  @if (lixeira().length) {
+    <button class="btn ghost" (click)="verLixeira.set(true)" title="Notas removidas nos últimos {{ DIAS_LIXEIRA }} dias">🗑 {{ lixeira().length }}</button>
+  }
   <button class="btn primario" (click)="nova()" title="Nova nota (n)">+ Nova nota</button>
 </div>
+@if (todasTags().length) {
+  <div class="filtro-tags">
+    <button class="chip" [class.on]="!tag()" (click)="tag.set(null)">Todas</button>
+    @for (t of todasTags(); track t) {
+      <button class="chip" [class.on]="tag() === t" (click)="tag.set(tag() === t ? null : t)">{{ t }}</button>
+    }
+  </div>
+}
 
 @if (vista() === 'mural') {
   @if (fixadas().length) {
@@ -44,6 +55,9 @@
           </span>
           <span class="lp-resumo">{{ resumo(n) }}</span>
           <span class="lp-meta">{{ n.atualizado.slice(0, 10).split('-').reverse().join('/') }}</span>
+          @if (n.tags?.length) {
+            <span class="lp-tags">@for (t of n.tags; track t) {<span class="chip mini">{{ t }}</span>}</span>
+          }
         </li>
       }
     </ul>
@@ -61,6 +75,13 @@
       <h4 (dblclick)="editar(n)">{{ n.titulo }}</h4>
       <button class="btn mini ghost pino" [class.on]="n.fixada" (click)="fixar(n)" [title]="n.fixada ? 'Desafixar' : 'Fixar'">📌</button>
     </header>
+    @if (n.tags?.length) {
+      <div class="nota-tags">
+        @for (t of n.tags; track t) {
+          <button class="chip mini" (click)="tag.set(t)" title="Filtrar por tag">{{ t }}</button>
+        }
+      </div>
+    }
 
     @for (b of n.blocos; track b.id) {
       <div class="bloco">
@@ -89,6 +110,8 @@
           <div class="copiavel" (click)="clicarBloco($event, b)" title="Clique para copiar">
             @if (b.secreto) {
               <pre>{{ exibir(b) }}</pre>
+            } @else if (b.sql) {
+              <pre class="sql" [innerHTML]="realcar(b.conteudo)"></pre>
             } @else if (texto() === 'md') {
               <div class="md" [innerHTML]="markdown(b.conteudo)"></div>
             } @else {
@@ -109,6 +132,7 @@
 
     <footer>
       <button class="btn mini ghost" (click)="copiarTudo(n)">Copiar tudo</button>
+      <button class="btn mini ghost" (click)="duplicar(n)">Duplicar</button>
       <button class="btn mini ghost" (click)="editar(n)">Editar</button>
     </footer>
   </article>
@@ -117,7 +141,13 @@
 @if (form(); as f) {
   <div class="overlay" (click)="salvar()">
     <form class="dialogo" [attr.data-cor]="f.cor" (click)="$event.stopPropagation()" (ngSubmit)="salvar()" (keydown.control.enter)="salvar()">
-      <input class="titulo" name="titulo" [(ngModel)]="f.titulo" placeholder="Título" autofocus />
+      <input class="titulo" name="titulo" [(ngModel)]="f.titulo" (ngModelChange)="semTitulo.set(false)" [class.erro]="semTitulo()" placeholder="Título (obrigatório)" required autofocus />
+      <input class="tags-edit" name="tags" [ngModel]="tagsTxt()" (ngModelChange)="tagsTxt.set($event)" placeholder="Tags separadas por vírgula (ex.: Jucesp, SQL)" list="tags-notas" />
+      <datalist id="tags-notas">
+        @for (t of todasTags(); track t) {
+          <option [value]="t"></option>
+        }
+      </datalist>
 
       @for (b of f.blocos; track b.id; let i = $index) {
         <div class="bloco-edit">
@@ -126,6 +156,15 @@
             <label class="chk" [title]="cofre.ativo() ? 'Cifrado com a senha mestra' : 'Oculta na tela; defina a senha mestra (🔒) para cifrar'">
               <input type="checkbox" [name]="'s' + b.id" [(ngModel)]="b.secreto" /> secreto
             </label>
+            @if (!b.tabela) {
+              <label class="chk" title="Destaque de sintaxe SQL">
+                <input type="checkbox" [name]="'q' + b.id" [(ngModel)]="b.sql" /> SQL
+              </label>
+              @if (b.sql) {
+                <button type="button" class="btn mini ghost" (click)="formatar(b)" title="Formatar SQL">⇶ formatar</button>
+              }
+            }
+            <button type="button" class="btn mini ghost" (click)="duplicarBloco(f, i)" title="Duplicar bloco">⧉</button>
             <button type="button" class="btn mini ghost" (click)="moverBloco(f, i, -1)" title="Subir">↑</button>
             <button type="button" class="btn mini ghost" (click)="moverBloco(f, i, 1)" title="Descer">↓</button>
             <button type="button" class="btn mini ghost perigo" (click)="f.blocos.splice(i, 1)" title="Remover bloco">✕</button>
@@ -170,7 +209,7 @@
               <span class="dica">Enter desce; colar do Excel preenche várias células.</span>
             </div>
           } @else {
-            <textarea [name]="'c' + b.id" [(ngModel)]="b.conteudo" rows="3" [placeholder]="'Conteúdo copiável (aceita ' + EXEMPLO + ')'"></textarea>
+            <textarea [name]="'c' + b.id" [(ngModel)]="b.conteudo" [rows]="b.sql ? 8 : 3" [class.mono]="b.sql" [placeholder]="'Conteúdo copiável (aceita ' + EXEMPLO + ')'"></textarea>
           }
         </div>
       }
@@ -191,6 +230,33 @@
         <button type="submit" class="btn primario">Salvar</button>
       </div>
     </form>
+  </div>
+}
+
+@if (verLixeira()) {
+  <div class="overlay" (click)="verLixeira.set(false)">
+    <div class="dialogo lixeira" (click)="$event.stopPropagation()">
+      <h2>Lixeira</h2>
+      <p class="dica">Notas removidas somem de vez depois de {{ DIAS_LIXEIRA }} dias.</p>
+      <ul>
+        @for (r of lixeira(); track r.nota.id) {
+          <li>
+            <span class="lx-titulo">{{ r.nota.titulo || 'sem título' }}</span>
+            <small>{{ diasRestantes(r) }}d</small>
+            <button class="btn mini" (click)="restaurar(r)">Restaurar</button>
+            <button class="btn mini ghost perigo" (click)="excluirDeVez(r)" title="Excluir de vez">✕</button>
+          </li>
+        } @empty {
+          <li class="dica">Vazia.</li>
+        }
+      </ul>
+      <div class="rodape">
+        @if (lixeira().length) {
+          <button class="btn perigo ghost" style="margin-right: auto" (click)="excluirDeVez()">Esvaziar</button>
+        }
+        <button class="btn" (click)="verLixeira.set(false)">Fechar</button>
+      </div>
+    </div>
   </div>
 }
 

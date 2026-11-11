@@ -24,6 +24,7 @@ export interface Bloco {
   conteudo: string; // secreto com senha mestra: "enc:<iv>:<dados>"
   secreto?: boolean;
   tabela?: boolean; // conteudo em TSV
+  sql?: boolean; // destaque de sintaxe e botão formatar
 }
 
 export interface Nota {
@@ -33,7 +34,15 @@ export interface Nota {
   fixada: boolean;
   cor: string;
   atualizado: string;
+  tags?: string[];
 }
+
+// nota removida fica DIAS_LIXEIRA dias antes de sumir
+export interface Removida {
+  nota: Nota;
+  removido: string; // ISO
+}
+export const DIAS_LIXEIRA = 7;
 
 export type Status = 'todo' | 'doing' | 'blocked' | 'done';
 export type Prioridade = 'baixa' | 'media' | 'alta' | 'urgente';
@@ -50,6 +59,20 @@ export interface Tarefa {
   prazo?: string | null;
   criado: string;
   concluido?: string | null;
+  checklist?: ItemChecklist[];
+  // "trabalho executado" pedido ao concluir; vira o obs do card
+  trabalho?: string;
+  // tipo ajuda: quem foi ajudado
+  pessoa?: string;
+  // tempo em "Fazendo": acumulado (ms) e início da rodada atual (ISO)
+  tempo?: number;
+  inicio?: string | null;
+}
+
+export interface ItemChecklist {
+  id: string;
+  texto: string;
+  feito: boolean;
 }
 
 export type CampoCard = 'sistema' | 'area' | 'time' | 'linguagem';
@@ -76,6 +99,7 @@ export interface Dados {
   tarefas: Tarefa[];
   vars: Record<string, string>;
   config: Config;
+  lixeira?: Removida[];
 }
 
 export const MENUS = [
@@ -136,3 +160,27 @@ export function prazoTarefa(t: Tarefa): { texto: string; nivel: string } | null 
   if (d <= 2) return { texto: d === 1 ? 'amanhã' : `em ${d}d`, nivel: 'proxima' };
   return { texto: dataBr(t.prazo).slice(0, 5), nivel: 'ok' };
 }
+
+// troca de status cuidando da data de conclusão e do tempo em "Fazendo"
+export function mudarStatus(t: Tarefa, status: Status): Tarefa {
+  if (t.status === status) return t;
+  const agora = new Date();
+  const tempo = (t.tempo ?? 0) + (t.inicio ? agora.getTime() - Date.parse(t.inicio) : 0);
+  return {
+    ...t,
+    status,
+    concluido: status === 'done' ? (t.concluido ?? hoje()) : null,
+    tempo,
+    inicio: status === 'doing' ? agora.toISOString() : null,
+  };
+}
+
+export function tempoTarefa(t: Tarefa) {
+  const ms = (t.tempo ?? 0) + (t.inicio ? Date.now() - Date.parse(t.inicio) : 0);
+  const min = Math.round(ms / 60000);
+  if (!min && !t.inicio) return '';
+  return min < 60 ? `${min}min` : `${Math.floor(min / 60)}h${String(min % 60).padStart(2, '0')}`;
+}
+
+// "Ajudar Diniz com..." sem pessoa informada
+export const pessoaTarefa = (t: Tarefa) => t.pessoa?.trim() || t.titulo.match(/^ajudar\s+(?:o\s+|a\s+)?([\p{L}]+)/iu)?.[1] || '';

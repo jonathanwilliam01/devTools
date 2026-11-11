@@ -108,6 +108,19 @@
 .tipo[data-tipo='verificacao'] {
   background: var(--nota-amarelo);
 }
+.tk {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  text-decoration: none;
+  color: var(--texto-2);
+}
+.tk:hover {
+  color: var(--acento);
+}
+.tk + .num {
+  margin-left: 6px;
+}
 .num {
   margin-left: auto;
   font-family: var(--mono);
@@ -255,4 +268,82 @@ li.item[data-status='done'] .lp-titulo {
 .status {
   justify-self: start;
   flex-wrap: wrap;
+}
+
+.extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--texto-2);
+}
+.extras:empty {
+  display: none;
+}
+.rodando {
+  color: var(--acento);
+  font-weight: 600;
+}
+.tag.ajudas {
+  cursor: help;
+}
+.campos-tiflux {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 3px 12px;
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg-2);
+  font-size: 12.5px;
+}
+.campos-tiflux dt {
+  color: var(--texto-2);
+  font-weight: 600;
+}
+.campos-tiflux dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.checklist {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+  font-size: 13px;
+}
+.checklist li.feito {
+  color: var(--texto-2);
+  text-decoration: line-through;
+}
+.checklist label {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  cursor: pointer;
+}
+.checklist.edit li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.checklist.edit input[type='checkbox'] {
+  width: auto;
+}
+.checklist .ck-texto {
+  flex: 1;
+  padding: 3px 6px;
+}
+.trabalho {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--p-baixa);
+  background: var(--bg-2);
+  border-radius: 6px;
+  font-size: 13px;
+}
+.dialogo.concluir {
+  width: min(560px, 100%);
 }

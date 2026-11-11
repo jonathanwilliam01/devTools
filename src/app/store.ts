@@ -1,5 +1,5 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
-import { Card, Config, Dados, MENUS, Nota, Sistema, Tarefa, chaveNome, hoje, novoId, partes } from './models';
+import { Card, Config, DIAS_LIXEIRA, Dados, MENUS, Nota, Removida, Sistema, Tarefa, chaveNome, hoje, mudarStatus, novoId, partes } from './models';
 import { StatusCookie, lerCookies, salvarCookies } from './persist';
 import { Issue } from './github';
 import { Destino, LABELS_PADRAO, LINGUAGEM_PADRAO, SIGLAS_AREA, destinoLabel, semPrefixo } from './labels';
@@ -14,6 +14,7 @@ export class Store {
   readonly tarefas = signal<Tarefa[]>([]);
   readonly vars = signal<Record<string, string>>({});
   readonly config = signal<Config>({});
+  readonly lixeira = signal<Removida[]>([]);
   // card vindo do kanban para abrir pré-preenchido na tela de cards
   readonly rascunhoCard = signal<Partial<Card> | null>(null);
   readonly statusCookie = signal<StatusCookie | null>(null);
@@ -27,6 +28,7 @@ export class Store {
     tarefas: this.tarefas(),
     vars: this.vars(),
     config: this.config(),
+    lixeira: this.lixeira(),
   }));
 
   readonly areas = computed(() => unicos(this.cards().flatMap((c) => partes(c.area))).sort());
@@ -79,6 +81,7 @@ export class Store {
     this.tarefas.set(d.tarefas ?? []);
     this.vars.set(d.vars ?? {});
     this.config.set(d.config ?? {});
+    this.lixeira.set(validas(d.lixeira));
     this.sincronizarSistemas();
   }
 
@@ -97,6 +100,8 @@ export class Store {
     this.cards.update((a) => mesclar(a, d.cards).map((c) => ({ ...c, sistema: this.normalizarSistemas(c.sistema) })));
     this.notas.update((a) => mesclar(a, d.notas));
     this.tarefas.update((a) => mesclar(a, d.tarefas));
+    const ativas = new Set(this.notas().map((n) => n.id));
+    this.lixeira.update((a) => validas([...a, ...(d.lixeira ?? [])].filter((r, i, l) => !ativas.has(r.nota.id) && l.findIndex((x) => x.nota.id === r.nota.id) === i)));
     this.vars.update((v) => ({ ...d.vars, ...v }));
     this.sincronizarSistemas();
     this.config.update((c) => ({ ...c, labels: { ...d.config?.labels, ...c.labels }, menusOcultos: c.menusOcultos ?? d.config?.menusOcultos, favoritas: unicos([...(c.favoritas ?? []), ...(d.config?.favoritas ?? [])]), vistas: unicos([...(c.vistas ?? []), ...(d.config?.vistas ?? [])]) }));
@@ -122,7 +127,7 @@ export class Store {
     // card registrado conclui a tarefa do kanban com o mesmo número
     if (this.tarefas().some((t) => t.numeroCard === c.numero && t.status !== 'done')) {
       this.tarefas.update((l) =>
-        l.map((t) => (t.numeroCard === c.numero && t.status !== 'done' ? { ...t, status: 'done', concluido: c.data || hoje() } : t)),
+        l.map((t) => (t.numeroCard === c.numero && t.status !== 'done' ? { ...mudarStatus(t, 'done'), concluido: c.data || hoje() } : t)),
       );
     }
   }
@@ -254,8 +259,21 @@ export class Store {
   salvarNota(n: Nota) {
     this.notas.update((l) => upsert(l, n));
   }
+  // vai para a lixeira; some de vez depois de DIAS_LIXEIRA dias
   removerNota(id: string) {
+    const n = this.notas().find((x) => x.id === id);
+    if (!n) return;
     this.notas.update((l) => l.filter((x) => x.id !== id));
+    this.lixeira.update((l) => [{ nota: n, removido: new Date().toISOString() }, ...l.filter((r) => r.nota.id !== id)]);
+  }
+  restaurarNota(id: string) {
+    const r = this.lixeira().find((x) => x.nota.id === id);
+    if (!r) return;
+    this.lixeira.update((l) => l.filter((x) => x !== r));
+    this.salvarNota(r.nota);
+  }
+  excluirDaLixeira(id?: string) {
+    this.lixeira.update((l) => (id ? l.filter((x) => x.nota.id !== id) : []));
   }
 
   salvarTarefa(t: Tarefa) {
@@ -275,6 +293,11 @@ function upsert<T extends { id: string }>(lista: T[], item: T): T[] {
 }
 
 const unicos = (l: string[]) => [...new Set(l)];
+
+const validas = (l: Removida[] = []) => {
+  const limite = Date.now() - DIAS_LIXEIRA * 86400000;
+  return l.filter((r) => Date.parse(r.removido) > limite);
+};
 
 function trocarSistema(cards: Card[], de: string, para: string) {
   return cards.map((c) =>

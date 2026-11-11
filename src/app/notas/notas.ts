@@ -6,7 +6,9 @@ import { FormsModule } from '@angular/forms';
 import { Store } from '../store';
 import { Ui } from '../ui';
 import { Cofre } from '../cofre';
-import { Bloco, CORES, Nota, novoId } from '../models';
+import { Bloco, CORES, DIAS_LIXEIRA, Nota, Removida, novoId } from '../models';
+import { formatarSql } from '../ferramentas/lib/sqlfmt';
+import { realcarSql } from './sql';
 import { Preencher, copiarOuPreencher, partesVars } from './preencher';
 import { gradeVazia, letraColuna, lerTsv, paraTsv } from './tabela';
 import { markdown } from '../markdown';
@@ -30,6 +32,14 @@ export class Notas {
   protected readonly visiveis = signal(new Set<string>());
   protected readonly form = signal<Nota | null>(null);
   protected readonly preencher = signal<string | null>(null);
+  protected readonly semTitulo = signal(false);
+  protected readonly tagsTxt = signal('');
+  protected readonly tag = signal<string | null>(null);
+  protected readonly verLixeira = signal(false);
+  protected readonly lixeira = this.store.lixeira;
+  protected readonly DIAS_LIXEIRA = DIAS_LIXEIRA;
+  protected readonly realcar = realcarSql;
+  protected readonly todasTags = computed(() => [...new Set(this.store.notas().flatMap((n) => n.tags ?? []))].sort((a, b) => a.localeCompare(b)));
   // células das tabelas em edição, por id do bloco
   protected readonly grades = new Map<string, string[][]>();
   protected readonly letra = letraColuna;
@@ -38,12 +48,15 @@ export class Notas {
 
   private readonly filtradas = computed(() => {
     const t = this.busca().toLowerCase().trim();
+    const tag = this.tag();
     return this.store
       .notas()
+      .filter((n) => !tag || n.tags?.includes(tag))
       .filter(
         (n) =>
           !t ||
           n.titulo.toLowerCase().includes(t) ||
+          n.tags?.some((x) => x.toLowerCase().includes(t)) ||
           n.blocos.some((b) => b.label.toLowerCase().includes(t) || (!b.secreto && b.conteudo.toLowerCase().includes(t))),
       )
       .sort((a, b) => b.atualizado.localeCompare(a.atualizado));
@@ -74,12 +87,15 @@ export class Notas {
       if (a === 'esc') {
         this.form.set(null);
         this.preencher.set(null);
+        this.verLixeira.set(false);
       } else if (a === 'novo' && !this.form() && !this.preencher()) this.nova();
     });
   }
 
   nova() {
     this.grades.clear();
+    this.semTitulo.set(false);
+    this.tagsTxt.set(this.tag() ?? '');
     this.form.set({ id: novoId(), titulo: '', blocos: [bloco()], fixada: false, cor: '', atualizado: '' });
   }
 
@@ -88,7 +104,42 @@ export class Notas {
     const f = this.cofre.abrirNota(n);
     this.grades.clear();
     f.blocos.filter((b) => b.tabela).forEach((b) => this.grades.set(b.id, lerTsv(b.conteudo)));
+    this.semTitulo.set(false);
+    this.tagsTxt.set((f.tags ?? []).join(', '));
     this.form.set(f);
+  }
+
+  // abre o editor com a cópia; só grava ao salvar
+  duplicar(n: Nota) {
+    this.editar(n);
+    this.form.update((f) => f && { ...f, id: novoId(), titulo: `${f.titulo} (cópia)`, fixada: false, blocos: f.blocos.map((b) => this.copiaBloco(b)) });
+  }
+
+  duplicarBloco(f: Nota, i: number) {
+    f.blocos.splice(i + 1, 0, this.copiaBloco(f.blocos[i]));
+  }
+
+  private copiaBloco(b: Bloco) {
+    const c = { ...b, id: novoId() };
+    if (b.tabela) this.grades.set(c.id, structuredClone(this.grades.get(b.id) ?? gradeVazia()));
+    return c;
+  }
+
+  formatar(b: Bloco) {
+    b.conteudo = formatarSql(b.conteudo, { caixa: 'manter', indent: 2 });
+  }
+
+  restaurar(r: Removida) {
+    this.store.restaurarNota(r.nota.id);
+    this.ui.avisar('Nota restaurada');
+  }
+
+  excluirDeVez(r?: Removida) {
+    if (confirm(r ? `Excluir "${r.nota.titulo}" de vez?` : 'Esvaziar a lixeira?')) this.store.excluirDaLixeira(r?.nota.id);
+  }
+
+  diasRestantes(r: Removida) {
+    return Math.max(0, Math.ceil(DIAS_LIXEIRA - (Date.now() - Date.parse(r.removido)) / 86400000));
   }
 
   async salvar() {
@@ -98,17 +149,23 @@ export class Notas {
     const blocos = f.blocos
       .map((b) => (b.tabela ? { ...b, conteudo: paraTsv(this.grades.get(b.id) ?? []) } : b))
       .filter((b) => b.label.trim() || b.conteudo.trim());
+    if (!f.titulo.trim()) {
+      if (!blocos.length) return this.form.set(null);
+      this.semTitulo.set(true);
+      document.querySelector<HTMLInputElement>('.dialogo .titulo')?.focus();
+      return this.ui.avisar('Informe o título da nota');
+    }
     this.form.set(null);
-    if (!f.titulo.trim() && !blocos.length) return;
     this.selId.set(f.id);
-    this.store.salvarNota(await this.cofre.selar({ ...f, blocos, atualizado: new Date().toISOString() }));
+    const tags = [...new Set(this.tagsTxt().split(',').map((t) => t.trim()).filter(Boolean))];
+    this.store.salvarNota(await this.cofre.selar({ ...f, blocos, tags, atualizado: new Date().toISOString() }));
   }
 
   remover(n: Nota) {
-    if (confirm(`Remover a nota "${n.titulo || 'sem título'}"?`)) {
-      this.store.removerNota(n.id);
-      this.form.set(null);
-    }
+    this.form.set(null);
+    if (!this.store.notas().some((x) => x.id === n.id)) return;
+    this.store.removerNota(n.id);
+    this.ui.avisar(`Nota movida para a lixeira (${DIAS_LIXEIRA} dias)`);
   }
 
   fixar(n: Nota) {
