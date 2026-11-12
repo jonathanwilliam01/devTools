@@ -1,4 +1,5 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { Ui } from '../../ui';
 import { FormsModule } from '@angular/forms';
 import { lembrado } from '../lib/estado';
 import { lerExplain, No } from '../lib/explain';
@@ -8,9 +9,30 @@ import { lerExplain, No } from '../lib/explain';
   imports: [FormsModule],
   template: `
     <div class="ft">
+      <details class="ft-painel" [open]="!texto().trim()">
+        <summary class="ft-titulo ex-sum">1. Gerar o comando a partir do SELECT</summary>
+        <textarea class="ft-texto" [(ngModel)]="sql" rows="5" spellcheck="false" placeholder="select ... from ... where ..."></textarea>
+        <div class="ft-linha">
+          <label class="ft-chk"><input type="checkbox" [(ngModel)]="analyze" /> ANALYZE (executa a consulta)</label>
+          <label class="ft-chk"><input type="checkbox" [(ngModel)]="buffers" [disabled]="!analyze()" /> BUFFERS</label>
+          <label class="ft-chk"><input type="checkbox" [(ngModel)]="json" /> FORMAT JSON</label>
+        </div>
+        @if (comando(); as c) {
+          <button class="ft-valor ft-mono" style="white-space: pre-wrap" (click)="ui.copiar(c.sql)">{{ c.sql }}</button>
+          @if (c.dml) {
+            <p class="ft-aviso">ANALYZE executa de verdade: o comando vai entre BEGIN e ROLLBACK para não gravar nada.</p>
+          }
+        }
+        <ol class="ex-passos">
+          <li>Copie o comando acima e rode no banco (psql, DBeaver, pgAdmin).</li>
+          <li>Copie <b>todas</b> as linhas da coluna QUERY PLAN (no DBeaver/pgAdmin: selecionar a coluna inteira e copiar).</li>
+          <li>Cole no campo Plano abaixo.</li>
+        </ol>
+      </details>
+
       <div class="ft-painel">
         <h4 class="ft-titulo">
-          Plano
+          2. Plano
           @if (plano(); as p) {
             @if (p.erro) {
               <span class="ft-selo erro">✕ Não reconhecido</span>
@@ -128,6 +150,8 @@ import { lerExplain, No } from '../lib/explain';
     </div>
   `,
   styles: `
+    .ex-sum { cursor: pointer; }
+    .ex-passos { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 13px; color: var(--texto-2); }
     .ex-link { all: unset; cursor: pointer; color: var(--acento); font-family: var(--mono); font-size: 13px; overflow-wrap: anywhere; }
     .ex-link:hover { text-decoration: underline; }
     .ex-alertas { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
@@ -152,6 +176,20 @@ import { lerExplain, No } from '../lib/explain';
 export class Explain {
   protected readonly texto = lembrado('explain.texto', '');
   protected readonly detalhes = lembrado('explain.detalhes', false);
+  protected readonly ui = inject(Ui);
+  protected readonly sql = lembrado('explain.sql', '');
+  protected readonly analyze = lembrado('explain.analyze', true);
+  protected readonly buffers = lembrado('explain.buffers', true);
+  protected readonly json = lembrado('explain.json', false);
+
+  protected readonly comando = computed(() => {
+    const q = this.sql().trim().replace(/;\s*$/, '').replace(/^explain\s*(\([^)]*\)|(\s+(analyze|verbose))*)\s*/i, '');
+    if (!q) return null;
+    const ops = [this.analyze() && 'ANALYZE', this.analyze() && this.buffers() && 'BUFFERS', this.json() && 'FORMAT JSON'].filter(Boolean);
+    const cmd = `EXPLAIN${ops.length ? ` (${ops.join(', ')})` : ''}\n${q};`;
+    const dml = this.analyze() && /^\s*(with\b[\s\S]*\b)?(insert|update|delete|merge)\b/i.test(q);
+    return { sql: dml ? `BEGIN;\n${cmd}\nROLLBACK;` : cmd, dml };
+  });
   protected readonly foco = signal<number | null>(null);
 
   protected readonly plano = computed(() => {

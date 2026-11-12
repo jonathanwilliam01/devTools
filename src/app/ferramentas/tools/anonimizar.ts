@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
-import { anonimizar, ModoAnonimo, TipoAnonimo } from '../lib/anonimizar';
+import { anonimizar, CHAVES, ModoAnonimo, TipoAnonimo } from '../lib/anonimizar';
 import { lembrado } from '../lib/estado';
 
 const TIPOS: [TipoAnonimo, string][] = [
@@ -14,7 +14,6 @@ const TIPOS: [TipoAnonimo, string][] = [
   ['ip', 'IP'],
   ['termos', 'Outros termos'],
 ];
-const CHAVES = 'nome razao senha password passwd pwd token secret email telefone celular endereco logradouro';
 
 @Component({
   selector: 'ft-anonimizar',

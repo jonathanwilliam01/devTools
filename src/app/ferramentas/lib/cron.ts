@@ -31,16 +31,34 @@ const ALIASES: Record<string, string> = {
 export interface Cron {
   partes: string[];
   valores: Set<number>[];
+  segundos: number[];
+  campos: string[];
   descricao: string;
 }
 
+const SEGUNDO: Campo = { nome: 'Segundo', min: 0, max: 59 };
+
 export function lerCron(expr: string): Cron {
   const e = ALIASES[expr.trim().toLowerCase()] ?? expr.trim();
-  const partes = e.split(/\s+/);
-  if (partes.length !== 5) throw new Error('Use 5 campos: minuto hora dia-do-mês mês dia-da-semana.');
+  const todas = e.split(/\s+/);
+  if (todas.length !== 5 && todas.length !== 6) throw new Error('Use 5 campos (minuto hora dia mês dia-semana) ou 6 com segundo no início.');
+  const seg = todas.length === 6 ? todas[0] : '0';
+  const partes = todas.slice(-5);
   const valores = partes.map((p, i) => valoresCampo(p, CAMPOS[i]));
   if (valores[4].delete(7)) valores[4].add(0);
-  return { partes, valores, descricao: descrever(partes) };
+  const segundos = [...valoresCampo(seg, SEGUNDO)].sort((a, b) => a - b);
+  const campos = todas.length === 6 ? [SEGUNDO.nome, ...CAMPOS_CRON] : CAMPOS_CRON;
+  let descricao = descrever(partes);
+  if (todas.length === 6 && seg !== '0') {
+    const resto = descricao.replace(/^A cada minuto(, )?/, '');
+    descricao = textoSeg(seg) + (resto ? ', ' + resto[0].toLowerCase() + resto.slice(1) : '');
+  }
+  return { partes: todas, valores, segundos, campos, descricao };
+}
+
+function textoSeg(p: string) {
+  const t = textoCampo(p, SEGUNDO, String);
+  return t.startsWith('a cada') ? t.replace(/^a cada (\d+)/, 'A cada $1 segundos') : p === '*' ? 'A cada segundo' : 'No segundo ' + t;
 }
 
 function numero(s: string, c: Campo) {
@@ -71,21 +89,28 @@ function valoresCampo(p: string, c: Campo) {
 // dia do mês e da semana restritos: vale qualquer um dos dois (regra do cron)
 export function proximas(c: Cron, qtd: number, de = new Date()): Date[] {
   const [mi, ho, dm, me, ds] = c.valores;
-  const dmLivre = c.partes[2] === '*';
-  const dsLivre = c.partes[4] === '*';
+  const [, , dmP, , dsP] = c.partes.slice(-5);
+  const dmLivre = dmP === '*';
+  const dsLivre = dsP === '*';
   const diaOk = (d: Date) =>
     dmLivre && dsLivre ? true : dmLivre ? ds.has(d.getDay()) : dsLivre ? dm.has(d.getDate()) : dm.has(d.getDate()) || ds.has(d.getDay());
 
   const d = new Date(de);
   d.setSeconds(0, 0);
-  d.setMinutes(d.getMinutes() + 1);
+  if (!c.segundos.some((s) => d.getTime() + s * 1000 > de.getTime())) d.setMinutes(d.getMinutes() + 1);
   const res: Date[] = [];
   for (let passos = 0; res.length < qtd && passos < 200_000; passos++) {
     if (!me.has(d.getMonth() + 1)) d.setMonth(d.getMonth() + 1, 1), d.setHours(0, 0);
     else if (!diaOk(d)) d.setDate(d.getDate() + 1), d.setHours(0, 0);
     else if (!ho.has(d.getHours())) d.setHours(d.getHours() + 1, 0);
     else if (!mi.has(d.getMinutes())) d.setMinutes(d.getMinutes() + 1);
-    else res.push(new Date(d)), d.setMinutes(d.getMinutes() + 1);
+    else {
+      for (const s of c.segundos) {
+        const t = new Date(d.getTime() + s * 1000);
+        if (t > de && res.length < qtd) res.push(t);
+      }
+      d.setMinutes(d.getMinutes() + 1);
+    }
   }
   return res;
 }

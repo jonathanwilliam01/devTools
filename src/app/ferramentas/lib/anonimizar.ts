@@ -13,6 +13,8 @@ export interface OpcoesAnonimo {
   termos: string;
 }
 
+export const CHAVES = 'nome razao senha password passwd pwd token secret email telefone celular endereco logradouro';
+
 const escapar = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // dígitos derivados do original: o falso não muda a cada tecla
 function digitos(v: string, n: number) {

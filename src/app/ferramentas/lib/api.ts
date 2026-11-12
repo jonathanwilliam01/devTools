@@ -10,6 +10,14 @@ import { FormatoGrade, gerarTabela, lerGrade } from './grade';
 import { hashes } from './hash';
 import { formatarData as _formatarData, lerData, OrdemEntrada, todosFormatos } from './formatodata';
 import { NOVIDADES } from '../../novidades';
+import { anonimizar as _anonimizar, CHAVES, OpcoesAnonimo } from './anonimizar';
+import { codificar, decodificar, OpcoesEntidade } from './entidades';
+import { extrair as _extrair, OpcoesExtrair, TipoExtrair } from './extrair';
+import { GrupoLimpeza, limparTexto as _limpar } from './limpeza';
+import { inserirLinhas, OpcoesLinhas, Par, substituir as _substituir } from './lote';
+import { aplicar, verificar } from './ortografia';
+import { Ajuste, gerar as gerarMd, ler as lerMd } from './paramd';
+import { traduzir as _traduzir } from './tradutor';
 import { DadosPix, gerarPix as _gerarPix, lerPix } from './pix';
 import { compactarSql, formatarSql as _formatarSql, OpcoesSqlFmt } from './sqlfmt';
 import { b64Decode, b64Encode, Charset, decode5t, encode5t, formatarXml, lerJwt, listaSql as _listaSql, OpcoesSql } from './texto';
@@ -99,6 +107,34 @@ export const API = {
   base64x5: (texto: string, modo: 'encode' | 'decode' = 'encode', charset: Charset = 'utf-8') =>
     modo === 'encode' ? encode5t(texto, charset) : decode5t(texto, charset),
   lerJwt: (token: string) => lerJwt(token),
+
+  // ajustes: { "1|linha original": { tipo: 'h2', negrito: true, ... } }
+  paraMarkdown: (texto: string, ajustes: Record<string, Ajuste> = {}) => gerarMd(lerMd(texto, ajustes)),
+  verificarOrtografia: (texto: string, idioma = 'pt-BR') => verificar(texto, idioma),
+  // aplica a 1ª sugestão de cada erro
+  corrigirOrtografia: async (texto: string, idioma = 'pt-BR') => {
+    let r = { texto, erros: await verificar(texto, idioma) };
+    const restantes = [];
+    while (r.erros.length) {
+      const e = r.erros[0];
+      if (e.sugestoes.length) r = aplicar(r.texto, r.erros, e, e.sugestoes[0]);
+      else restantes.push(e), (r.erros = r.erros.slice(1));
+    }
+    return { texto: r.texto, semSugestao: restantes };
+  },
+  // idiomas: pt, en, es, fr, it, de; de = 'auto' detecta
+  traduzir: (texto: string, para = 'en', de = 'auto') => _traduzir(texto, de, para),
+  limparTexto: (texto: string, grupos: GrupoLimpeza[] = ['espaco', 'invisivel', 'controle', 'cr', 'tipografico'], aparar = true) =>
+    _limpar(texto, { grupos, aparar }),
+  extrair: (texto: string, tipo: TipoExtrair, o?: Partial<OpcoesExtrair>) => _extrair(texto, tipo, { validos: true, distintos: true, mascara: 'manter', ...o }),
+  anonimizar: (texto: string, o?: Partial<OpcoesAnonimo>) =>
+    _anonimizar(texto, { tipos: ['campos', 'cpf', 'cnpj', 'email', 'telefone', 'termos'], modo: 'parcial', chaves: CHAVES, termos: '', ...o }).texto,
+  entidades: (texto: string, modo: 'codificar' | 'decodificar' = 'codificar', o?: Partial<OpcoesEntidade>) =>
+    modo === 'decodificar' ? decodificar(texto) : codificar(texto, { formato: 'nome', especiais: false, ...o }),
+  linhas: (texto: string, o?: Partial<OpcoesLinhas>) =>
+    inserirLinhas(texto, { antes: '', depois: '', numerar: false, inicio: 1, passo: 1, digitos: 1, separador: '. ', pularVazias: true, ...o }),
+  substituir: (texto: string, pares: Par[], o?: { caixa?: boolean; palavra?: boolean }) =>
+    _substituir(texto, pares, { caixa: false, palavra: false, ...o }).texto,
   hash: async (texto: string) => Object.fromEntries(await hashes(new TextEncoder().encode(texto))),
 
   novidades: () => NOVIDADES,

@@ -49,6 +49,9 @@ import { SelectUpd } from './tools/selectupd';
 import { Ddl } from './tools/ddl';
 import { PgDiag } from './tools/pgdiag';
 import { FormatoData } from './tools/formatodata';
+import { ParaMd } from './tools/paramd';
+import { Ortografia } from './tools/ortografia';
+import { Tradutor } from './tools/tradutor';
 import { ehNova, FERRAMENTAS, Ferramenta, prepararColado } from './lista';
 import { marcarRecente } from './catalogo';
 
@@ -58,7 +61,7 @@ const CHAVE_FAV_ANTIGA = 'devtools:favoritas';
 
 @Component({
   selector: 'app-ferramentas',
-  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote, Ocr, PgBusca, ArrayJson, Builder, SqlStr, Explain, Extenso, Entidades, Limpeza, Extrair, Anonimizar, Log, Acrescimos, SelectUpd, Ddl, PgDiag, FormatoData],
+  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote, Ocr, PgBusca, ArrayJson, Builder, SqlStr, Explain, Extenso, Entidades, Limpeza, Extrair, Anonimizar, Log, Acrescimos, SelectUpd, Ddl, PgDiag, FormatoData, ParaMd, Ortografia, Tradutor],
   templateUrl: './ferramentas.html',
   styleUrl: './ferramentas.css',
   encapsulation: ViewEncapsulation.None,

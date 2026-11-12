@@ -2,11 +2,12 @@ import { Component, computed, inject } from '@angular/core';
 import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
+import { CampoData } from './campo-data';
 import { contarUteis, deIso, DIA, diferencaCalendario, extenso, feriadosNoPeriodo, hojeIso, paraIso, somarUteis } from '../lib/datas';
 
 @Component({
   selector: 'ft-datas',
-  imports: [FormsModule],
+  imports: [FormsModule, CampoData],
   template: `
     <div class="ft">
       <div class="ft-linha">
@@ -20,9 +21,9 @@ import { contarUteis, deIso, DIA, diferencaCalendario, extenso, feriadosNoPeriod
         <div class="ft-painel">
           <h4 class="ft-titulo">Diferença entre datas</h4>
           <div class="ft-linha">
-            <label class="ft-rotulo">Início <input type="date" [(ngModel)]="inicio" /></label>
+            <label class="ft-rotulo">Início <ft-data [(valor)]="inicio" /></label>
             <span>→</span>
-            <label class="ft-rotulo">Fim <input type="date" [(ngModel)]="fim" /></label>
+            <label class="ft-rotulo">Fim <ft-data [(valor)]="fim" /></label>
             <button class="btn mini ghost" (click)="inverter()" title="Trocar">⇄</button>
           </div>
           @if (diferenca(); as d) {
@@ -55,7 +56,7 @@ import { contarUteis, deIso, DIA, diferencaCalendario, extenso, feriadosNoPeriod
         <div class="ft-painel">
           <h4 class="ft-titulo">Somar ou subtrair dias</h4>
           <div class="ft-linha">
-            <label class="ft-rotulo">Data <input type="date" [(ngModel)]="base" /></label>
+            <label class="ft-rotulo">Data <ft-data [(valor)]="base" /></label>
             <label class="ft-rotulo">Dias <input type="number" [(ngModel)]="dias" style="width: 100px" /></label>
           </div>
           <div class="ft-seg">
