@@ -49,6 +49,47 @@
       }
     </div>
   }
+} @else if (vista() === 'cards') {
+  <div class="cards">
+    @for (n of ordenadas(); track n.id) {
+      <article
+        class="card-nota"
+        [attr.data-cor]="n.cor"
+        [id]="'nota-' + n.id"
+        [class.destaque]="destaque() === n.id"
+        [class.marcada]="selecionando() && marcadas().has(n.id)"
+        tabindex="0"
+        (click)="selecionando() ? marcar(n) : abertaId.set(n.id)"
+        (keydown.enter)="abertaId.set(n.id)"
+      >
+        <header>
+          @if (selecionando()) {
+            <input type="checkbox" class="sel" [checked]="marcadas().has(n.id)" (click)="$event.stopPropagation()" (change)="marcar(n)" />
+          }
+          <h4>{{ n.titulo || 'sem título' }}</h4>
+          <button class="btn mini ghost pino" [class.on]="n.fixada" (click)="$event.stopPropagation(); fixar(n)" [title]="n.fixada ? 'Desafixar' : 'Fixar'">📌</button>
+        </header>
+        @if (n.tags?.length) {
+          <div class="nota-tags">
+            @for (t of n.tags; track t) {
+              <span class="chip mini">{{ t }}</span>
+            }
+          </div>
+        }
+        <div class="card-corpo">
+          @for (b of previa(n); track b.id) {
+            @if (b.label) {
+              <span class="label">{{ b.label }}</span>
+            }
+            @if (b.texto) {
+              <pre>{{ b.texto }}</pre>
+            }
+          }
+        </div>
+        <span class="lp-meta">{{ n.atualizado.slice(0, 10).split('-').reverse().join('/') }}</span>
+      </article>
+    }
+  </div>
 } @else if (ordenadas().length) {
   <div class="lp" [class.lado]="vista() === 'lado'">
     <ul class="lp-lista">
@@ -155,6 +196,15 @@
     }
   </article>
 </ng-template>
+
+@if (aberta(); as n) {
+  <div class="overlay" (click)="abertaId.set(null)">
+    <div class="dialogo modal-nota" (click)="$event.stopPropagation()">
+      <button class="btn mini ghost fechar" (click)="abertaId.set(null)" title="Fechar (Esc)">✕</button>
+      <ng-container *ngTemplateOutlet="tplNota; context: { $implicit: n }" />
+    </div>
+  </div>
+}
 
 @if (form(); as f) {
   <div class="overlay" (click)="salvar()">

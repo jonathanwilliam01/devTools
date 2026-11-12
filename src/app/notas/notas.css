@@ -428,3 +428,94 @@ textarea.mono {
 .nota.marcada {
   outline: 2px solid var(--acento);
 }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.card-nota {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--bg-elev);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  padding: 12px 12px 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.card-nota:hover,
+.card-nota:focus-visible {
+  border-color: var(--acento);
+  transform: translateY(-2px);
+  outline: none;
+}
+.card-nota header {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+.card-nota h4 {
+  flex: 1;
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 500;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.card-nota:hover .pino {
+  opacity: 1;
+}
+.card-corpo {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+.card-corpo pre {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--texto-2);
+}
+.card-nota .lp-meta {
+  font-size: 11px;
+  color: var(--texto-2);
+  text-align: right;
+}
+.card-nota.destaque,
+.card-nota.marcada {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+.modal-nota {
+  position: relative;
+  width: min(820px, 100%);
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.modal-nota .nota {
+  margin: 0;
+  padding: 18px 44px 10px 20px;
+}
+.modal-nota .nota h4 {
+  font-size: 20px;
+}
+.modal-nota .acoes-nota {
+  opacity: 1;
+}
+.modal-nota .fechar {
+  position: absolute;
+  top: 12px;
+  right: 10px;
+  z-index: 1;
+}

@@ -16,6 +16,7 @@ export const NOVIDADES: Versao[] = [
       { tipo: 'novidade', texto: 'Compartilhar (⤴ no topo): gera um link do devTools só com os menus escolhidos; quem abrir fica com os outros escondidos (reativa em Dados).' },
       { tipo: 'novidade', texto: 'Notas: compartilhamento. Selecione notas (☑ Selecionar, com marcar/desmarcar todas) e exporte para JSON; ⇪ Importar cria as notas a partir desse arquivo.' },
       { tipo: 'novidade', texto: 'Notas: excluir várias de uma vez pela seleção (vão para a lixeira).' },
+      { tipo: 'novidade', texto: 'Notas: vista em cards (▣) quadrados do mesmo tamanho com prévia do conteúdo; clicar abre a nota em janela.' },
       { tipo: 'melhoria', texto: 'Notas: Copiar tudo, Duplicar e Editar ficam no topo da nota, sem precisar rolar até o fim.' },
       { tipo: 'novidade', texto: 'Início: painel "Fazendo agora" com cronômetro ao vivo e botões para pausar, concluir (card pede o trabalho executado) ou iniciar as próximas.' },
       { tipo: 'novidade', texto: 'Início: prazos da semana em mini-agenda de seg a sex, com atrasadas e próxima semana.' },

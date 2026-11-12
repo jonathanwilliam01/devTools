@@ -65,8 +65,11 @@ export class Notas {
   protected readonly outras = computed(() => this.filtradas().filter((n) => !n.fixada));
   protected readonly ordenadas = computed(() => [...this.fixadas(), ...this.outras()]);
 
-  protected readonly VISTAS = [{ v: 'mural', i: '▦', t: 'Mural' }, ...LISTAS] as const;
-  protected readonly vista = prefSignal('devtools:notas-vista', 'mural' as Vista, ['mural', 'baixo', 'lado']);
+  protected readonly VISTAS = [{ v: 'mural', i: '▦', t: 'Mural' }, { v: 'cards', i: '▣', t: 'Cards (clique abre a nota)' }, ...LISTAS] as const;
+  protected readonly vista = prefSignal('devtools:notas-vista', 'mural' as Vista, ['mural', 'cards', 'baixo', 'lado']);
+  // nota aberta no modal da vista cards
+  protected readonly abertaId = signal<string | null>(null);
+  protected readonly aberta = computed(() => this.store.notas().find((n) => n.id === this.abertaId()) ?? null);
   protected readonly texto = prefSignal<Texto>('devtools:notas-texto', 'texto', ['texto', 'md']);
   protected readonly selId = signal<string | null>(null);
   protected readonly selecionada = computed(() => {
@@ -87,6 +90,7 @@ export class Notas {
     });
     this.ui.atalhos.pipe(takeUntilDestroyed()).subscribe((a) => {
       if (a === 'esc') {
+        if (!this.form() && !this.preencher()) this.abertaId.set(null);
         this.form.set(null);
         this.preencher.set(null);
         this.verLixeira.set(false);
@@ -166,6 +170,7 @@ export class Notas {
 
   remover(n: Nota) {
     this.form.set(null);
+    if (this.abertaId() === n.id) this.abertaId.set(null);
     if (!this.store.notas().some((x) => x.id === n.id)) return;
     this.store.removerNota(n.id);
     this.ui.avisar(`Nota movida para a lixeira (${DIAS_LIXEIRA} dias)`);
@@ -188,6 +193,11 @@ export class Notas {
   resumo(n: Nota) {
     const b = n.blocos.find((b) => !b.secreto && !b.tabela && b.conteudo.trim());
     return b?.conteudo.trim().split('\n')[0] ?? '';
+  }
+
+  // texto dos blocos para o card; secretos ficam ocultos
+  previa(n: Nota) {
+    return n.blocos.map((b) => ({ id: b.id, label: b.label, texto: b.secreto ? '•'.repeat(12) : b.tabela ? b.conteudo.replaceAll('\t', '  ') : b.conteudo }));
   }
 
   // no markdown, clicar num link abre sem copiar
@@ -371,7 +381,7 @@ export class Notas {
 
 const bloco = (): Bloco => ({ id: novoId(), label: '', conteudo: '' });
 
-type Vista = 'mural' | 'baixo' | 'lado';
+type Vista = 'mural' | 'cards' | 'baixo' | 'lado';
 
 const TIPO_EXPORT = 'devtools-notas';
 interface Exportacao {
