@@ -12,16 +12,22 @@ import { lerTexto } from '../lib/ocr';
     <div class="ft">
       <div class="ft-duas">
         <div class="ft-painel">
-          <h4 class="ft-titulo">Imagem</h4>
-          <label class="ocr-area" data-imagem tabindex="0" [class.sobre]="sobre()"
+          <h4 class="ft-titulo">
+            Imagem
+            <label class="btn mini fim">
+              Escolher arquivo
+              <input type="file" accept="image/*" hidden (change)="escolher($event)" />
+            </label>
+          </h4>
+          <!-- clicar só foca para colar; escolher arquivo fica no botão -->
+          <div class="ocr-area" data-imagem tabindex="0" [class.sobre]="sobre()"
             (dragover)="$event.preventDefault(); sobre.set(true)" (dragleave)="sobre.set(false)" (drop)="soltar($event)">
             @if (previa()) {
               <img [src]="previa()" alt="Imagem enviada" />
             } @else {
-              <span>Cole (Ctrl+V), arraste ou clique para escolher uma imagem</span>
+              <span>Cole a imagem aqui (Ctrl+V) ou arraste</span>
             }
-            <input type="file" accept="image/*" hidden (change)="escolher($event)" />
-          </label>
+          </div>
         </div>
         <div class="ft-painel">
           <h4 class="ft-titulo">
@@ -69,7 +75,8 @@ import { lerTexto } from '../lib/ocr';
       border-radius: 8px;
       color: var(--texto-2);
       text-align: center;
-      cursor: pointer;
+      cursor: text;
+      outline: none;
     }
     .ocr-area:hover, .ocr-area:focus, .ocr-area.sobre {
       border-color: var(--acento);

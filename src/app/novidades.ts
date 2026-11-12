@@ -12,6 +12,7 @@ export const NOVIDADES: Versao[] = [
     versao: '1.0.26',
     data: '2026-11-12',
     itens: [
+      { tipo: 'melhoria', texto: 'Imagem para texto: clicar na área não abre mais o seletor de arquivo, só prepara para colar (Ctrl+V); escolher arquivo virou botão.' },
       { tipo: 'melhoria', texto: 'Kanban agora se chama Tarefas (menu, tela e textos); links e preferências antigos continuam valendo.' },
       { tipo: 'novidade', texto: 'Compartilhar (⤴ no topo): gera um link do devTools só com os menus escolhidos; quem abrir fica com os outros escondidos (reativa em Dados).' },
       { tipo: 'novidade', texto: 'Notas: compartilhamento. Selecione notas (☑ Selecionar, com marcar/desmarcar todas) e exporte para JSON; ⇪ Importar cria as notas a partir desse arquivo.' },
