@@ -8,7 +8,7 @@ import { Cofre } from '../cofre';
 import { Github } from '../github';
 import { VERSAO } from '../versao';
 import { lerPref, prefSignal, salvarPref } from '../pref';
-import { Bloco, COLUNAS, ISSUE_URL, MESES, Nota, PRIORIDADES, Tarefa, hoje, mudarStatus, novoId, partes, prazoTarefa, tarefaRapida } from '../models';
+import { Bloco, COLUNAS, ISSUE_URL, MESES, Nota, PRIORIDADES, Tarefa, hoje, mudarStatus, novoId, partes, prazoTarefa, tarefaRapida, semKanban } from '../models';
 import { FERRAMENTAS, prepararColado } from '../ferramentas/lista';
 import { lerRecentes } from '../ferramentas/catalogo';
 import { imagemDe, lerImagem } from '../ferramentas/lib/leitor';
@@ -31,15 +31,15 @@ interface Layout {
 }
 // painel some junto com o menu escondido em Dados
 const PAINEIS: { id: string; nome: string; menu: string; col: Coluna }[] = [
-  { id: 'agora', nome: 'Fazendo agora', menu: 'kanban', col: 'principal' },
-  { id: 'kanban', nome: 'Kanban', menu: 'kanban', col: 'principal' },
-  { id: 'semana', nome: 'Prazos da semana', menu: 'kanban', col: 'principal' },
+  { id: 'agora', nome: 'Fazendo agora', menu: 'tarefas', col: 'principal' },
+  { id: 'tarefas', nome: 'Tarefas', menu: 'tarefas', col: 'principal' },
+  { id: 'semana', nome: 'Prazos da semana', menu: 'tarefas', col: 'principal' },
   { id: 'daily', nome: 'Daily', menu: 'cards', col: 'principal' },
-  { id: 'checklists', nome: 'Checklists', menu: 'kanban', col: 'principal' },
-  { id: 'captura', nome: 'Nova tarefa', menu: 'kanban', col: 'lateral' },
+  { id: 'checklists', nome: 'Checklists', menu: 'tarefas', col: 'principal' },
+  { id: 'captura', nome: 'Nova tarefa', menu: 'tarefas', col: 'lateral' },
   { id: 'ferramentas', nome: 'Ferramentas', menu: 'ferramentas', col: 'lateral' },
   { id: 'notas', nome: 'Notas', menu: 'notas', col: 'lateral' },
-  { id: 'github', nome: 'Issues fora do kanban', menu: 'kanban', col: 'lateral' },
+  { id: 'github', nome: 'Issues fora das tarefas', menu: 'tarefas', col: 'lateral' },
   { id: 'distribuicao', nome: 'Sistemas e linguagens', menu: 'cards', col: 'lateral' },
 ];
 const CHAVE_LAYOUT = 'devtools:inicio-layout';
@@ -57,9 +57,9 @@ function lerLayout(): Layout {
   } catch {}
   const ids = new Set(PAINEIS.map((p) => p.id));
   const r: Layout = {
-    principal: (l.principal ?? []).filter((x) => ids.has(x)),
-    lateral: (l.lateral ?? []).filter((x) => ids.has(x)),
-    ocultos: l.ocultos ?? [],
+    principal: semKanban(l.principal).filter((x) => ids.has(x)),
+    lateral: semKanban(l.lateral).filter((x) => ids.has(x)),
+    ocultos: semKanban(l.ocultos),
   };
   // painel novo entra na coluna padrão
   PAINEIS.filter((p) => !r.principal.includes(p.id) && !r.lateral.includes(p.id)).forEach((p) => r[p.col].push(p.id));
@@ -102,7 +102,7 @@ export class Inicio {
     if (this.oculto(id)) return false;
     if (id === 'agora') return this.fazendo().length + this.proximas().length > 0;
     if (id === 'checklists') return this.checklists().length > 0;
-    if (id === 'github') return !!this.foraKanban()?.length;
+    if (id === 'github') return !!this.foraTarefas()?.length;
     return true;
   }
 
@@ -233,7 +233,7 @@ export class Inicio {
     return [...m].map(([dia, itens]) => ({ dia, itens }));
   });
 
-  // ---- kanban
+  // ---- tarefas
   protected readonly colunas = computed(() =>
     COLUNAS.filter((c) => c.status !== 'done').map((c) => ({
       ...c,
@@ -322,7 +322,7 @@ export class Inicio {
     if (!r) return;
     this.store.setTarefas([r.tarefa, ...this.store.tarefas()]);
     this.rapida.set('');
-    this.ui.avisar('Tarefa adicionada ao kanban');
+    this.ui.avisar('Tarefa adicionada às tarefas');
     if (r.buscar) this.preencherDoGithub(r.tarefa.id, r.buscar);
   }
 
@@ -332,8 +332,8 @@ export class Inicio {
     if (i && t) this.store.salvarTarefa({ ...t, titulo: i.titulo, descricao: t.descricao || i.descricao });
   }
 
-  // ---- github: atribuídas sem tarefa nem card (removidas do kanban)
-  protected readonly foraKanban = computed(() => {
+  // ---- github: atribuídas sem tarefa nem card (removidas das tarefas)
+  protected readonly foraTarefas = computed(() => {
     const l = this.github.ultimasAtribuidas();
     if (!l) return null;
     const conhecidas = new Set<number | null | undefined>([...this.store.tarefas().map((t) => t.numeroCard), ...this.store.cards().map((c) => c.numero)]);
@@ -345,7 +345,7 @@ export class Inicio {
       { id: novoId(), titulo: i.titulo, descricao: i.descricao, status: 'todo', prioridade: 'media', tipo: 'card', numeroCard: i.numero, criado: hoje() },
       ...this.store.tarefas(),
     ]);
-    this.ui.avisar(`Issue #${i.numero} adicionada ao kanban`);
+    this.ui.avisar(`Issue #${i.numero} adicionada às tarefas`);
   }
 
   // ---- sistemas e linguagens

@@ -245,8 +245,8 @@
         @if (f.tipo === 'ajuda') {
           <label class="campo">
             Pessoa
-            <input name="pessoa" [(ngModel)]="f.pessoa" [placeholder]="pessoa(f) || 'Quem foi ajudado'" list="pessoas-kanban" />
-            <datalist id="pessoas-kanban">
+            <input name="pessoa" [(ngModel)]="f.pessoa" [placeholder]="pessoa(f) || 'Quem foi ajudado'" list="pessoas-tarefas" />
+            <datalist id="pessoas-tarefas">
               @for (p of pessoas(); track p) {
                 <option [value]="p"></option>
               }

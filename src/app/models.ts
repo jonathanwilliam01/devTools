@@ -81,7 +81,7 @@ export interface Config {
   senha?: { salt: string; verificador: string } | null;
   // label do GitHub (chaveNome) -> campo do card
   labels?: Record<string, CampoCard | 'ignorar'>;
-  // issues atribuídas já levadas ao kanban, para não recriar tarefa removida
+  // issues atribuídas já levadas às tarefas, para não recriar tarefa removida
   issuesVistas?: number[];
   // ids de MENUS escondidos na barra do topo
   menusOcultos?: string[];
@@ -105,7 +105,7 @@ export interface Dados {
 export const MENUS = [
   { id: 'cards', nome: 'Histórico', tecla: '1' },
   { id: 'notas', nome: 'Notas', tecla: '2' },
-  { id: 'kanban', nome: 'Kanban', tecla: '3' },
+  { id: 'tarefas', nome: 'Tarefas', tecla: '3' },
   { id: 'ferramentas', nome: 'Ferramentas', tecla: '4' },
 ];
 
@@ -151,7 +151,7 @@ export const chaveNome = (s: string) =>
 export const diasEntre = (a: string, b: string) =>
   Math.round((Date.parse(b + 'T00:00') - Date.parse(a + 'T00:00')) / 86400000);
 
-// selo de prazo da tarefa (kanban e início)
+// selo de prazo da tarefa (tarefas e início)
 export function prazoTarefa(t: Tarefa): { texto: string; nivel: string } | null {
   if (!t.prazo) return null;
   if (t.status === 'done') return { texto: dataBr(t.prazo).slice(0, 5), nivel: 'ok' };
@@ -220,3 +220,6 @@ export function tarefaRapida(txt: string): { tarefa: Tarefa; buscar: number | nu
     buscar: m && !m[2] ? +m[1] : null,
   };
 }
+
+// id antigo do menu/painel Tarefas
+export const semKanban = (l: string[] = []) => l.map((x) => (x === 'kanban' ? 'tarefas' : x));

@@ -8,8 +8,8 @@
     @if (diaDaily && visivel('cards')) {
       <span class="chip daily-hoje">Hoje tem daily</span>
     }
-    @if (atrasadas() && visivel('kanban')) {
-      <a class="chip perigo" routerLink="/kanban">{{ atrasadas() }} {{ atrasadas() === 1 ? 'atrasada' : 'atrasadas' }}</a>
+    @if (atrasadas() && visivel('tarefas')) {
+      <a class="chip perigo" routerLink="/tarefas">{{ atrasadas() }} {{ atrasadas() === 1 ? 'atrasada' : 'atrasadas' }}</a>
     }
     <button type="button" class="chip" (click)="abrirNovidades()">Novidades da v{{ versao }}</button>
     <button type="button" class="chip" [class.ativo]="editando()" (click)="editando.set(!editando())">
@@ -119,7 +119,7 @@
         @case ('agora') {
           <header>
             <h2>Fazendo agora</h2>
-            <a routerLink="/kanban">Kanban →</a>
+            <a routerLink="/tarefas">Tarefas →</a>
           </header>
           @for (t of fazendo(); track t.id) {
             <div class="agora" [attr.data-prioridade]="t.prioridade">
@@ -155,7 +155,7 @@
             <ul class="tarefas">
               @for (t of proximas(); track t.id) {
                 <li [attr.data-prioridade]="t.prioridade">
-                  <a routerLink="/kanban">
+                  <a routerLink="/tarefas">
                     @if (t.numeroCard) {
                       <span class="num">#{{ t.numeroCard }}</span>
                     }
@@ -168,10 +168,10 @@
           }
         }
 
-        @case ('kanban') {
+        @case ('tarefas') {
           <header>
-            <h2>Kanban</h2>
-            <a routerLink="/kanban">Abrir →</a>
+            <h2>Tarefas</h2>
+            <a routerLink="/tarefas">Abrir →</a>
           </header>
           <div class="contagem">
             @for (c of colunas(); track c.status) {
@@ -182,7 +182,7 @@
             @for (t of abertas().slice(0, 8); track t.id) {
               <li [attr.data-prioridade]="t.prioridade">
                 <span class="status" [attr.data-status]="t.status">{{ nomeStatus(t.status) }}</span>
-                <a routerLink="/kanban">
+                <a routerLink="/tarefas">
                   @if (t.numeroCard) {
                     <span class="num">#{{ t.numeroCard }}</span>
                   }
@@ -198,14 +198,14 @@
             }
           </ul>
           @if (abertas().length > 8) {
-            <a class="mais" routerLink="/kanban">+ {{ abertas().length - 8 }} tarefas</a>
+            <a class="mais" routerLink="/tarefas">+ {{ abertas().length - 8 }} tarefas</a>
           }
         }
 
         @case ('semana') {
           <header>
             <h2>Prazos da semana</h2>
-            <a routerLink="/kanban">Kanban →</a>
+            <a routerLink="/tarefas">Tarefas →</a>
           </header>
           <div class="semana">
             @for (d of semana(); track d.dia) {
@@ -213,7 +213,7 @@
                 <span class="rotulo">{{ d.rotulo }}</span>
                 <div class="itens">
                   @for (t of d.tarefas; track t.id) {
-                    <a class="chip-tarefa" routerLink="/kanban" [attr.data-prioridade]="t.prioridade" [title]="t.titulo">
+                    <a class="chip-tarefa" routerLink="/tarefas" [attr.data-prioridade]="t.prioridade" [title]="t.titulo">
                       @if (t.numeroCard) {
                         <span class="num">#{{ t.numeroCard }}</span>
                       }
@@ -254,12 +254,12 @@
         @case ('checklists') {
           <header>
             <h2>Checklists</h2>
-            <a routerLink="/kanban">Kanban →</a>
+            <a routerLink="/tarefas">Tarefas →</a>
           </header>
           <ul class="checklists">
             @for (c of checklists(); track c.t.id) {
               <li>
-                <a routerLink="/kanban" class="titulo" [title]="c.t.titulo">
+                <a routerLink="/tarefas" class="titulo" [title]="c.t.titulo">
                   @if (c.t.numeroCard) {
                     <span class="num">#{{ c.t.numeroCard }}</span>
                   }
@@ -356,9 +356,9 @@
 
         @case ('github') {
           <header>
-            <h2>Issues fora do kanban</h2>
+            <h2>Issues fora das tarefas</h2>
           </header>
-          @if (foraKanban(); as l) {
+          @if (foraTarefas(); as l) {
             <ul class="tarefas">
               @for (i of l; track i.numero) {
                 <li>
@@ -366,10 +366,10 @@
                     <span class="num">#{{ i.numero }}</span>
                     <span class="titulo" [title]="i.titulo">{{ i.titulo }}</span>
                   </a>
-                  <button type="button" class="btn mini ghost" (click)="importar(i)">+ Kanban</button>
+                  <button type="button" class="btn mini ghost" (click)="importar(i)">+ Tarefa</button>
                 </li>
               } @empty {
-                <li class="vazio-mini">Todas as issues atribuídas a você estão no kanban.</li>
+                <li class="vazio-mini">Todas as issues atribuídas a você estão nas tarefas.</li>
               }
             </ul>
           } @else {

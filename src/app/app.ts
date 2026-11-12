@@ -4,7 +4,7 @@ import { Store } from './store';
 import { Ui } from './ui';
 import { Backup } from './backup';
 import { Cofre } from './cofre';
-import { MENUS, chaveNome, hoje, novoId } from './models';
+import { MENUS, chaveNome, hoje, novoId, semKanban } from './models';
 import { Github } from './github';
 import { VERSAO } from './versao';
 import { ehNova, FERRAMENTAS } from './ferramentas/catalogo';
@@ -131,9 +131,9 @@ export class App {
       })),
       ...this.store.tarefas(),
     ]);
-    const msg = novas.length === 1 ? `Issue #${novas[0].numero} adicionada ao kanban` : `${novas.length} issues adicionadas ao kanban`;
+    const msg = novas.length === 1 ? `Issue #${novas[0].numero} adicionada às tarefas` : `${novas.length} issues adicionadas às tarefas`;
     this.ui.avisar(msg);
-    this.notificar.enviar(msg, novas.map((i) => `#${i.numero} ${i.titulo}`).join('\n'), '/kanban');
+    this.notificar.enviar(msg, novas.map((i) => `#${i.numero} ${i.titulo}`).join('\n'), '/tarefas');
   }
 
   // issue nova no repo do devTools, já com versão e tela atual
@@ -156,7 +156,7 @@ export class App {
     const url = new URL(location.href);
     const p = url.searchParams.get('menus');
     if (p === null) return;
-    const ids = p.split(',');
+    const ids = semKanban(p.split(','));
     this.store.config.update((c) => ({ ...c, menusOcultos: MENUS.map((m) => m.id).filter((id) => !ids.includes(id)) }));
     url.searchParams.delete('menus');
     history.replaceState(history.state, '', url.pathname + url.search + url.hash);

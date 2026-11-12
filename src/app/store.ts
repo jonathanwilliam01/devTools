@@ -1,5 +1,5 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
-import { Card, Config, DIAS_LIXEIRA, Dados, MENUS, Nota, Removida, Sistema, Tarefa, chaveNome, hoje, mudarStatus, novoId, partes } from './models';
+import { Card, Config, DIAS_LIXEIRA, Dados, MENUS, Nota, Removida, Sistema, Tarefa, chaveNome, hoje, mudarStatus, novoId, partes, semKanban } from './models';
 import { StatusCookie, lerCookies, salvarCookies } from './persist';
 import { Issue } from './github';
 import { Destino, LABELS_PADRAO, LINGUAGEM_PADRAO, SIGLAS_AREA, destinoLabel, semPrefixo } from './labels';
@@ -15,7 +15,7 @@ export class Store {
   readonly vars = signal<Record<string, string>>({});
   readonly config = signal<Config>({});
   readonly lixeira = signal<Removida[]>([]);
-  // card vindo do kanban para abrir pré-preenchido na tela de cards
+  // card vindo das tarefas para abrir pré-preenchido na tela de cards
   readonly rascunhoCard = signal<Partial<Card> | null>(null);
   readonly statusCookie = signal<StatusCookie | null>(null);
   readonly restaurado = signal('');
@@ -80,7 +80,7 @@ export class Store {
     this.notas.set(d.notas ?? []);
     this.tarefas.set(d.tarefas ?? []);
     this.vars.set(d.vars ?? {});
-    this.config.set(d.config ?? {});
+    this.config.set({ ...d.config, menusOcultos: d.config?.menusOcultos && semKanban(d.config.menusOcultos) });
     this.lixeira.set(validas(d.lixeira));
     this.sincronizarSistemas();
   }
@@ -104,7 +104,7 @@ export class Store {
     this.lixeira.update((a) => validas([...a, ...(d.lixeira ?? [])].filter((r, i, l) => !ativas.has(r.nota.id) && l.findIndex((x) => x.nota.id === r.nota.id) === i)));
     this.vars.update((v) => ({ ...d.vars, ...v }));
     this.sincronizarSistemas();
-    this.config.update((c) => ({ ...c, labels: { ...d.config?.labels, ...c.labels }, menusOcultos: c.menusOcultos ?? d.config?.menusOcultos, favoritas: unicos([...(c.favoritas ?? []), ...(d.config?.favoritas ?? [])]), vistas: unicos([...(c.vistas ?? []), ...(d.config?.vistas ?? [])]) }));
+    this.config.update((c) => ({ ...c, labels: { ...d.config?.labels, ...c.labels }, menusOcultos: c.menusOcultos ?? (d.config?.menusOcultos && semKanban(d.config.menusOcultos)), favoritas: unicos([...(c.favoritas ?? []), ...(d.config?.favoritas ?? [])]), vistas: unicos([...(c.vistas ?? []), ...(d.config?.vistas ?? [])]) }));
     const senhaArq = d.config?.senha;
     if (!senhaArq) return '';
     if (!this.config().senha) {
@@ -124,7 +124,7 @@ export class Store {
 
   salvarCard(c: Card) {
     this.cards.update((l) => upsert(l, { ...c, sistema: this.garantirSistemas(c.sistema) }));
-    // card registrado conclui a tarefa do kanban com o mesmo número
+    // card registrado conclui a tarefa com o mesmo número
     if (this.tarefas().some((t) => t.numeroCard === c.numero && t.status !== 'done')) {
       this.tarefas.update((l) =>
         l.map((t) => (t.numeroCard === c.numero && t.status !== 'done' ? { ...mudarStatus(t, 'done'), concluido: c.data || hoje() } : t)),

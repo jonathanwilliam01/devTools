@@ -8,18 +8,18 @@ import { Store } from '../store';
 import { Ui } from '../ui';
 import { Github } from '../github';
 import { temHtml } from '../markdown';
-import { prefSignal } from '../pref';
+import { lerPref, prefSignal } from '../pref';
 import { LISTAS, Vistas } from '../vistas';
 import { COLUNAS, ISSUE_URL, PRIORIDADES, Prioridade, Status, TIPOS, Tarefa, Tipo, hoje, mudarStatus, novoId, pessoaTarefa, prazoTarefa, tarefaRapida, tempoTarefa } from '../models';
 import { CampoTiflux, TICKET_URL, camposTiflux, ticketTarefa } from './tiflux';
 
 @Component({
-  selector: 'app-kanban',
+  selector: 'app-tarefas',
   imports: [FormsModule, NgTemplateOutlet, CdkDropListGroup, CdkDropList, CdkDrag, Vistas],
-  templateUrl: './kanban.html',
-  styleUrl: './kanban.css',
+  templateUrl: './tarefas.html',
+  styleUrl: './tarefas.css',
 })
-export class Kanban {
+export class Tarefas {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   protected readonly ui = inject(Ui);
@@ -47,7 +47,7 @@ export class Kanban {
   private readonly cacheCampos = new Map<string, CampoTiflux[]>();
 
   protected readonly VISTAS = [{ v: 'quadro', i: '▥', t: 'Quadro' }, ...LISTAS] as const;
-  protected readonly vista = prefSignal('devtools:kanban-vista', 'quadro' as 'quadro' | 'baixo' | 'lado', ['quadro', 'baixo', 'lado']);
+  protected readonly vista = prefSignal('devtools:tarefas-vista', lerPref('devtools:kanban-vista', 'quadro') as 'quadro' | 'baixo' | 'lado', ['quadro', 'baixo', 'lado']);
   protected readonly selId = signal<string | null>(null);
   protected readonly selecionada = computed(() => {
     const l = COLUNAS.flatMap((c) => this.colunas()[c.status]);

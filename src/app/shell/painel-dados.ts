@@ -83,8 +83,8 @@ import { Router } from '@angular/router';
 
         <section>
           <h3>GitHub</h3>
-          <p>Com o token, informar o nº do card preenche os dados da issue: título, descrição, labels e campos do quadro (Cards e Kanban).</p>
-          <p>Issues atribuídas a você entram no kanban sozinhas, e quando a issue vai para <b>Validar</b> no quadro o card é registrado com a linguagem e o "o que foi feito" do comentário de entrega. Isso exige a permissão de <b>Projects</b> abaixo; sem ela nada é registrado.</p>
+          <p>Com o token, informar o nº do card preenche os dados da issue: título, descrição, labels e campos do quadro (Cards e Tarefas).</p>
+          <p>Issues atribuídas a você entram nas tarefas sozinhas, e quando a issue vai para <b>Validar</b> no quadro o card é registrado com a linguagem e o "o que foi feito" do comentário de entrega. Isso exige a permissão de <b>Projects</b> abaixo; sem ela nada é registrado.</p>
           <div class="linha">
             <input type="password" name="token" [(ngModel)]="token" [placeholder]="github.gitcalm() ? 'Token gerenciado pelo git-calm' : 'github_pat_...'" autocomplete="off" />
             <button class="btn primario" (click)="salvarToken()">Salvar</button>
@@ -119,7 +119,7 @@ import { Router } from '@angular/router';
           <div class="linha">
             <label class="chk">
               <input type="checkbox" [checked]="notificar.ativo()" (change)="notificar.ativar($any($event.target).checked)" />
-              Avisar quando uma issue entra no kanban ou um card é registrado no histórico
+              Avisar quando uma issue entra nas tarefas ou um card é registrado no histórico
             </label>
             <button class="btn" (click)="notificar.testar()">Testar</button>
           </div>

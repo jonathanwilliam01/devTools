@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 
 const CHAVE = 'devtools:notificar';
 
-// Notificação do navegador para o que o devTools faz sozinho (issue no kanban, card no histórico).
+// Notificação do navegador para o que o devTools faz sozinho (issue nas tarefas, card no histórico).
 // Dentro do git-calm (iframe de outra origem) o navegador bloqueia Notification: vai para o pai
 // (devtools:notificar) quando ele avisou que exibe (gitcalm:notificacoes); senão tenta a nativa.
 @Injectable({ providedIn: 'root' })
@@ -50,7 +50,7 @@ export class Notificar {
 
   async testar() {
     await this.ativar(true);
-    this.enviar('Teste do devTools', 'Notificações funcionando', '/kanban');
+    this.enviar('Teste do devTools', 'Notificações funcionando', '/tarefas');
   }
 
   abrir(rota: string) {

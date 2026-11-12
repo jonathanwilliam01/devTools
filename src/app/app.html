@@ -11,9 +11,9 @@
     @if (visivel('notas')) {
       <a routerLink="/notas" routerLinkActive="ativo">Notas <small>{{ store.notas().length }}</small></a>
     }
-    @if (visivel('kanban')) {
-      <a routerLink="/kanban" routerLinkActive="ativo">
-        Kanban <small>{{ store.tarefas().length }}</small>
+    @if (visivel('tarefas')) {
+      <a routerLink="/tarefas" routerLinkActive="ativo">
+        Tarefas <small>{{ store.tarefas().length }}</small>
         @if (atrasadas()) {
           <span class="alerta-nav" title="Tarefas com prazo vencido">{{ atrasadas() }}</span>
         }
@@ -126,7 +126,7 @@
           <dt><kbd>/</kbd></dt><dd>Buscar</dd>
           <dt><kbd>Ctrl</kbd> + <kbd>K</kbd></dt><dd>Copiar bloco de qualquer nota</dd>          <dt><kbd>n</kbd></dt><dd>Novo (card, nota ou tarefa) / gerar de novo</dd>
           <dt><kbd>0</kbd></dt><dd>Início</dd>
-          <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Histórico, Notas, Kanban, Ferramentas</dd>
+          <dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt><dd>Histórico, Notas, Tarefas, Ferramentas</dd>
           <dt><kbd>Esc</kbd></dt><dd>Fechar janela</dd>
           <dt><kbd>Ctrl</kbd> + <kbd>Enter</kbd></dt><dd>Salvar formulário</dd>
           <dt><kbd>?</kbd></dt><dd>Esta ajuda</dd>
