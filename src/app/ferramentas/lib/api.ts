@@ -8,6 +8,7 @@ import { corrigir } from './encoding';
 import { empresa, pessoa } from './fake';
 import { FormatoGrade, gerarTabela, lerGrade } from './grade';
 import { hashes } from './hash';
+import { formatarData as _formatarData, lerData, OrdemEntrada, todosFormatos } from './formatodata';
 import { NOVIDADES } from '../../novidades';
 import { DadosPix, gerarPix as _gerarPix, lerPix } from './pix';
 import { compactarSql, formatarSql as _formatarSql, OpcoesSqlFmt } from './sqlfmt';
@@ -68,6 +69,12 @@ export const API = {
   }),
   feriados: (inicio: string, fim: string, o?: Partial<OpcoesUteis>) =>
     feriadosNoPeriodo(data(inicio), data(fim), uteis(o)).map(([ms, nome]) => ({ data: paraIso(ms), nome })),
+  // sem formato devolve todos; formato: br, us, iso, compacto, extenso, extensoSemana, extensoTotal, en...
+  formatarData: (valor: string, formato?: string, ordem: OrdemEntrada = 'auto') => {
+    const d = lerData(valor, ordem);
+    if (!d) throw new Error(`Data não reconhecida: "${valor}".`);
+    return formato ? _formatarData(d, formato) : todosFormatos(d);
+  },
   cron: (expr: string, qtd = 5) => {
     const c = lerCron(expr);
     return { descricao: c.descricao, proximas: proximas(c, qtd).map((d) => d.toLocaleString('sv-SE')) };

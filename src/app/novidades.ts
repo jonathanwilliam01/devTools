@@ -12,6 +12,8 @@ export const NOVIDADES: Versao[] = [
     versao: '1.0.26',
     data: '2026-11-12',
     itens: [
+      { tipo: 'novidade', texto: 'Formato de data (Ferramentas › Datas): converte para americano, ISO, por extenso, inglês e outros, uma ou várias datas; também disponível ao git-calm pela função formatarData.' },
+      { tipo: 'novidade', texto: 'Novidades: botão Copiar em cada versão. Clique nas linhas para marcar e copiar só as escolhidas.' },
       { tipo: 'melhoria', texto: 'Imagem para texto: clicar na área não abre mais o seletor de arquivo, só prepara para colar (Ctrl+V); escolher arquivo virou botão.' },
       { tipo: 'melhoria', texto: 'Kanban agora se chama Tarefas (menu, tela e textos); links e preferências antigos continuam valendo.' },
       { tipo: 'novidade', texto: 'Compartilhar (⤴ no topo): gera um link do devTools só com os menus escolhidos; quem abrir fica com os outros escondidos (reativa em Dados).' },

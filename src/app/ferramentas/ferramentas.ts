@@ -48,6 +48,7 @@ import { Acrescimos } from './tools/acrescimos';
 import { SelectUpd } from './tools/selectupd';
 import { Ddl } from './tools/ddl';
 import { PgDiag } from './tools/pgdiag';
+import { FormatoData } from './tools/formatodata';
 import { ehNova, FERRAMENTAS, Ferramenta, prepararColado } from './lista';
 import { marcarRecente } from './catalogo';
 
@@ -57,7 +58,7 @@ const CHAVE_FAV_ANTIGA = 'devtools:favoritas';
 
 @Component({
   selector: 'app-ferramentas',
-  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote, Ocr, PgBusca, ArrayJson, Builder, SqlStr, Explain, Extenso, Entidades, Limpeza, Extrair, Anonimizar, Log, Acrescimos, SelectUpd, Ddl, PgDiag],
+  imports: [FormsModule, RouterLink, Gerador, Validador, Mascara, Boleto, Datas, Tempo, Sql, Formatador, Base64, JwtTool, Hash, Diff, Conversor, Regex, CronTool, Pix, Cep, Fake, SqlFmt, Grade, Caixa, Encoding, Contador, Senha, Lote, Ocr, PgBusca, ArrayJson, Builder, SqlStr, Explain, Extenso, Entidades, Limpeza, Extrair, Anonimizar, Log, Acrescimos, SelectUpd, Ddl, PgDiag, FormatoData],
   templateUrl: './ferramentas.html',
   styleUrl: './ferramentas.css',
   encapsulation: ViewEncapsulation.None,

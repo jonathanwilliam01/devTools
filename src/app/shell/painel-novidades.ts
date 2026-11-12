@@ -1,4 +1,5 @@
-import { Component, input, output } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
+import { Ui } from '../ui';
 import { dataBr } from '../models';
 import { TipoNovidade, Versao } from '../novidades';
 
@@ -22,10 +23,14 @@ import { TipoNovidade, Versao } from '../novidades';
             <details [open]="primeira">
               <summary>
                 v{{ v.versao }} <small>{{ dataBr(v.data) }} · {{ v.itens.length }}</small>
+                <button class="btn mini ghost copiar" (click)="$event.preventDefault(); copiar(v)"
+                  [title]="qtd(v) ? 'Copiar as linhas marcadas' : 'Copiar todas as notas da versão'">
+                  {{ qtd(v) ? 'Copiar ' + qtd(v) : 'Copiar' }}
+                </button>
               </summary>
               <ul>
                 @for (i of v.itens; track $index) {
-                  <li>
+                  <li [class.marcada]="marcadas().has(i)" (click)="marcar(i)" title="Clique para marcar e copiar só as linhas escolhidas">
                     <span class="flag" [attr.data-tipo]="i.tipo">{{ ROTULO[i.tipo] }}</span>
                     <span>{{ i.texto }}</span>
                   </li>
@@ -73,6 +78,21 @@ import { TipoNovidade, Versao } from '../novidades';
     }
     details[open] summary {
       margin-bottom: 8px;
+    }
+    .copiar {
+      float: right;
+      font-family: inherit;
+    }
+    li {
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    li:hover {
+      background: var(--bg-2);
+    }
+    li.marcada {
+      background: var(--acento-bg);
     }
     summary small {
       color: var(--texto-2);
@@ -124,4 +144,23 @@ export class PainelNovidades {
     melhoria: 'Melhoria',
     correcao: 'Correção',
   };
+  private readonly ui = inject(Ui);
+  protected readonly marcadas = signal(new Set<Versao['itens'][number]>());
+
+  marcar(i: Versao['itens'][number]) {
+    const s = new Set(this.marcadas());
+    if (!s.delete(i)) s.add(i);
+    this.marcadas.set(s);
+  }
+
+  qtd(v: Versao) {
+    return v.itens.filter((i) => this.marcadas().has(i)).length;
+  }
+
+  // só as marcadas da versão; sem marcação, todas
+  copiar(v: Versao) {
+    const itens = this.qtd(v) ? v.itens.filter((i) => this.marcadas().has(i)) : v.itens;
+    const linhas = itens.map((i) => `- ${this.ROTULO[i.tipo]}: ${i.texto}`);
+    this.ui.copiar(`v${v.versao} (${this.dataBr(v.data)})\n${linhas.join('\n')}`);
+  }
 }
