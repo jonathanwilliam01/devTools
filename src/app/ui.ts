@@ -2,13 +2,14 @@ import { Injectable, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 
 export type Atalho = 'novo' | 'esc';
-export type Painel = 'dados' | 'cofre' | 'atalhos' | 'paleta' | null;
+export type Painel = 'dados' | 'cofre' | 'atalhos' | 'paleta' | 'compartilhar' | null;
 
 @Injectable({ providedIn: 'root' })
 export class Ui {
   readonly toast = signal('');
   readonly atalhos = new Subject<Atalho>();
   readonly painel = signal<Painel>(null);
+  readonly novidades = new Subject<void>();
   private timer?: ReturnType<typeof setTimeout>;
 
   avisar(msg: string) {

@@ -9,6 +9,26 @@ export interface Versao {
 
 export const NOVIDADES: Versao[] = [
   {
+    versao: '1.0.26',
+    data: '2026-11-12',
+    itens: [
+      { tipo: 'novidade', texto: 'Compartilhar (⤴ no topo): gera um link do devTools só com os menus escolhidos; quem abrir fica com os outros escondidos (reativa em Dados).' },
+      { tipo: 'novidade', texto: 'Notas: compartilhamento. Selecione notas (☑ Selecionar, com marcar/desmarcar todas) e exporte para JSON; ⇪ Importar cria as notas a partir desse arquivo.' },
+      { tipo: 'novidade', texto: 'Notas: excluir várias de uma vez pela seleção (vão para a lixeira).' },
+      { tipo: 'melhoria', texto: 'Notas: Copiar tudo, Duplicar e Editar ficam no topo da nota, sem precisar rolar até o fim.' },
+      { tipo: 'novidade', texto: 'Início: painel "Fazendo agora" com cronômetro ao vivo e botões para pausar, concluir (card pede o trabalho executado) ou iniciar as próximas.' },
+      { tipo: 'novidade', texto: 'Início: prazos da semana em mini-agenda de seg a sex, com atrasadas e próxima semana.' },
+      { tipo: 'novidade', texto: 'Início: progresso dos checklists das tarefas abertas.' },
+      { tipo: 'novidade', texto: 'Início: sequência de dias úteis com card (e recorde), média por dia útil e projeção do mês.' },
+      { tipo: 'novidade', texto: 'Início: top 5 de sistemas e linguagens no mês ou no ano.' },
+      { tipo: 'novidade', texto: 'Início: campo "Nova tarefa" direto na tela. Aceita !urgente/!alta/!baixa e prazo dd/mm (também no Adicionar rápido do Kanban).' },
+      { tipo: 'novidade', texto: 'Início: ferramentas usadas recentemente e notas editadas recentemente.' },
+      { tipo: 'novidade', texto: 'Início: issues atribuídas a você que saíram do kanban, com botão para trazer de volta.' },
+      { tipo: 'novidade', texto: 'Início: saudação com aviso de daily no dia, atrasadas e atalho para as novidades.' },
+      { tipo: 'novidade', texto: 'Início: ⚙ Organizar para ordenar, trocar de coluna e esconder os painéis.' },
+    ],
+  },
+  {
     versao: '1.0.25',
     data: '2026-11-11',
     itens: [

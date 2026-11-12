@@ -49,6 +49,7 @@ import { SelectUpd } from './tools/selectupd';
 import { Ddl } from './tools/ddl';
 import { PgDiag } from './tools/pgdiag';
 import { ehNova, FERRAMENTAS, Ferramenta, prepararColado } from './lista';
+import { marcarRecente } from './catalogo';
 
 const CHAVE = 'devtools:ferramenta';
 // favoritas iam só no localStorage antes de entrar no backup
@@ -99,6 +100,7 @@ export class Ferramentas {
     effect(() => {
       const f = this.atual();
       if (untracked(() => this.nova(f))) this.store.config.update((c) => ({ ...c, vistas: [...(c.vistas ?? []), f.id] }));
+      if (this.id() === f.id) marcarRecente(f.id);
     });
     try {
       const antiga = localStorage.getItem(CHAVE_FAV_ANTIGA);

@@ -10,7 +10,7 @@ import { Github } from '../github';
 import { temHtml } from '../markdown';
 import { prefSignal } from '../pref';
 import { LISTAS, Vistas } from '../vistas';
-import { COLUNAS, ISSUE_URL, PRIORIDADES, Prioridade, Status, TIPOS, Tarefa, Tipo, hoje, mudarStatus, novoId, pessoaTarefa, prazoTarefa, tempoTarefa } from '../models';
+import { COLUNAS, ISSUE_URL, PRIORIDADES, Prioridade, Status, TIPOS, Tarefa, Tipo, hoje, mudarStatus, novoId, pessoaTarefa, prazoTarefa, tarefaRapida, tempoTarefa } from '../models';
 import { CampoTiflux, TICKET_URL, camposTiflux, ticketTarefa } from './tiflux';
 
 @Component({
@@ -175,25 +175,11 @@ export class Kanban {
 
   // "#1234 titulo" ou "1234 titulo" já vira tarefa do tipo card
   adicionarRapida() {
-    const txt = this.rapida().trim();
-    if (!txt) return;
-    const m = txt.match(/^#?(\d{3,})\s*[-–:]?\s*(.*)$/);
-    const id = novoId();
-    this.store.setTarefas([
-      {
-        id,
-        titulo: m ? m[2] || `Card #${m[1]}` : txt,
-        descricao: '',
-        status: 'todo',
-        prioridade: 'media',
-        tipo: m ? 'card' : 'ajuda',
-        numeroCard: m ? +m[1] : null,
-        criado: hoje(),
-      },
-      ...this.store.tarefas(),
-    ]);
+    const r = tarefaRapida(this.rapida());
+    if (!r) return;
+    this.store.setTarefas([r.tarefa, ...this.store.tarefas()]);
     this.rapida.set('');
-    if (m && !m[2]) this.preencherDoGithub(id, +m[1]);
+    if (r.buscar) this.preencherDoGithub(r.tarefa.id, r.buscar);
   }
 
   // só número informado: título e descrição vêm da issue

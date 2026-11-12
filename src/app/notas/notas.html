@@ -5,8 +5,21 @@
   @if (lixeira().length) {
     <button class="btn ghost" (click)="verLixeira.set(true)" title="Notas removidas nos últimos {{ DIAS_LIXEIRA }} dias">🗑 {{ lixeira().length }}</button>
   }
+  <button class="btn ghost" (click)="arquivo.click()" title="Importar notas de um JSON exportado">⇪ Importar</button>
+  <input #arquivo type="file" accept=".json,application/json" hidden (change)="importar(arquivo)" />
+  <button class="btn ghost" [class.on]="selecionando()" (click)="alternarSelecao()" title="Selecionar notas para exportar ou excluir">☑ Selecionar</button>
   <button class="btn primario" (click)="nova()" title="Nova nota (n)">+ Nova nota</button>
 </div>
+@if (selecionando()) {
+  <div class="barra-sel">
+    <span>{{ marcadas().size }} selecionada(s)</span>
+    <button class="btn mini" (click)="marcarTodas()">Marcar todas</button>
+    <button class="btn mini" (click)="desmarcarTodas()">Desmarcar todas</button>
+    <button class="btn mini primario" [disabled]="!marcadas().size" (click)="exportar()">⇩ Exportar JSON</button>
+    <button class="btn mini ghost perigo" [disabled]="!marcadas().size" (click)="excluirMarcadas()">Excluir</button>
+    <button class="btn mini ghost fim" (click)="alternarSelecao()">Cancelar</button>
+  </div>
+}
 @if (todasTags().length) {
   <div class="filtro-tags">
     <button class="chip" [class.on]="!tag()" (click)="tag.set(null)">Todas</button>
@@ -48,6 +61,9 @@
           [id]="'nota-' + n.id"
         >
           <span class="lp-titulo">
+            @if (selecionando()) {
+              <input type="checkbox" class="sel" [checked]="marcadas().has(n.id)" (click)="$event.stopPropagation()" (change)="marcar(n)" />
+            }
             @if (n.fixada) {
               <span class="mini-pino">📌</span>
             }
@@ -70,11 +86,19 @@
 }
 
 <ng-template #tplNota let-n>
-  <article class="nota" [attr.data-cor]="n.cor" [id]="'nota-' + n.id" [class.destaque]="destaque() === n.id">
+  <article class="nota" [attr.data-cor]="n.cor" [id]="'nota-' + n.id" [class.destaque]="destaque() === n.id" [class.marcada]="selecionando() && marcadas().has(n.id)">
     <header>
+      @if (selecionando()) {
+        <input type="checkbox" class="sel" [checked]="marcadas().has(n.id)" (change)="marcar(n)" title="Selecionar" />
+      }
       <h4 (dblclick)="editar(n)">{{ n.titulo }}</h4>
       <button class="btn mini ghost pino" [class.on]="n.fixada" (click)="fixar(n)" [title]="n.fixada ? 'Desafixar' : 'Fixar'">📌</button>
     </header>
+    <div class="acoes-nota">
+      <button class="btn mini ghost" (click)="copiarTudo(n)">Copiar tudo</button>
+      <button class="btn mini ghost" (click)="duplicar(n)">Duplicar</button>
+      <button class="btn mini ghost" (click)="editar(n)">Editar</button>
+    </div>
     @if (n.tags?.length) {
       <div class="nota-tags">
         @for (t of n.tags; track t) {
@@ -129,12 +153,6 @@
         }
       </div>
     }
-
-    <footer>
-      <button class="btn mini ghost" (click)="copiarTudo(n)">Copiar tudo</button>
-      <button class="btn mini ghost" (click)="duplicar(n)">Duplicar</button>
-      <button class="btn mini ghost" (click)="editar(n)">Editar</button>
-    </footer>
   </article>
 </ng-template>
 

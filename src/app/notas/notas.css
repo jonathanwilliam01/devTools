@@ -101,14 +101,15 @@
   opacity: 1;
   color: var(--acento);
 }
-.nota footer {
+.nota .acoes-nota {
   display: flex;
   justify-content: flex-end;
   gap: 2px;
+  margin: -4px 0 6px;
   opacity: 0;
   transition: opacity 0.15s;
 }
-.nota:hover footer {
+.nota:hover .acoes-nota {
   opacity: 1;
 }
 
@@ -172,7 +173,7 @@
 }
 
 @media (hover: none) {
-  .nota footer {
+  .nota .acoes-nota {
     opacity: 1;
   }
 }
@@ -300,7 +301,7 @@ mark {
   margin: 0;
   padding: 18px 20px 10px;
 }
-.lp-previa .nota footer {
+.lp-previa .nota .acoes-nota {
   opacity: 1;
 }
 .lp-previa .nota h4 {
@@ -392,4 +393,38 @@ textarea.mono {
 }
 .lixeira small {
   color: var(--texto-2);
+}
+
+.barra .btn.on {
+  background: var(--acento-bg);
+  color: var(--acento);
+}
+.barra-sel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: -8px 0 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--acento);
+  border-radius: 10px;
+  background: var(--acento-bg);
+  font-size: 13px;
+}
+.barra-sel .fim {
+  margin-left: auto;
+}
+.sel {
+  width: 16px;
+  height: 16px;
+  margin: 3px 4px 0 0;
+  flex: none;
+  cursor: pointer;
+}
+.lp-titulo .sel {
+  margin: 0 6px 0 0;
+  vertical-align: -3px;
+}
+.nota.marcada {
+  outline: 2px solid var(--acento);
 }

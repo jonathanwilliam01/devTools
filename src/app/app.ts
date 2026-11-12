@@ -4,7 +4,7 @@ import { Store } from './store';
 import { Ui } from './ui';
 import { Backup } from './backup';
 import { Cofre } from './cofre';
-import { chaveNome, hoje, novoId } from './models';
+import { MENUS, chaveNome, hoje, novoId } from './models';
 import { Github } from './github';
 import { VERSAO } from './versao';
 import { ehNova, FERRAMENTAS } from './ferramentas/catalogo';
@@ -46,14 +46,21 @@ export class App {
 
   protected readonly temNova = computed(() => FERRAMENTAS.some((f) => ehNova(f, this.store.config().vistas)));
 
+  protected readonly MENUS = MENUS;
+  // menus que vão no link de compartilhar
+  protected readonly menusLink = signal<string[]>([]);
+  protected readonly link = computed(() => `${location.origin}${location.pathname.replace(/[^/]*$/, '')}?menus=${this.menusLink().join(',')}`);
+
   protected visivel(id: string) {
     return this.store.menusVisiveis().some((m) => m.id === id);
   }
 
   constructor() {
+    this.aplicarLinkCompartilhado();
     this.aplicarTema();
     iniciarPonte();
     navigator.storage?.persist?.();
+    this.ui.novidades.subscribe(() => this.abrirNovidades());
     // no celular nav e lista de ferramentas rolam na horizontal: mantém o item ativo à vista
     this.router.events.subscribe((e) => {
       if (e instanceof NavigationEnd)
@@ -133,6 +140,26 @@ export class App {
   protected urlBug() {
     const corpo = `**O que aconteceu**\n\n\n**Como reproduzir**\n1. \n\n---\nVersão: v${VERSAO.numero}${VERSAO.commit ? ' · ' + VERSAO.commit : ''}\nTela: ${this.router.url}\nNavegador: ${navigator.userAgent}`;
     return `${REPO_DEVTOOLS}/issues/new?body=${encodeURIComponent(corpo)}`;
+  }
+
+  abrirCompartilhar() {
+    this.menusLink.set(this.store.menusVisiveis().map((m) => m.id));
+    this.ui.painel.set('compartilhar');
+  }
+
+  alternarMenuLink(id: string) {
+    this.menusLink.update((l) => (l.includes(id) ? l.filter((x) => x !== id) : MENUS.map((m) => m.id).filter((x) => x === id || l.includes(x))));
+  }
+
+  // ?menus=notas,ferramentas: deixa só esses menus e limpa a URL
+  private aplicarLinkCompartilhado() {
+    const url = new URL(location.href);
+    const p = url.searchParams.get('menus');
+    if (p === null) return;
+    const ids = p.split(',');
+    this.store.config.update((c) => ({ ...c, menusOcultos: MENUS.map((m) => m.id).filter((id) => !ids.includes(id)) }));
+    url.searchParams.delete('menus');
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
   }
 
   abrirNovidades() {

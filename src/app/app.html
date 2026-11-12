@@ -30,6 +30,7 @@
   </nav>
   <div class="acoes">
     <a class="btn ghost" [href]="urlBug()" target="_blank" rel="noopener" title="Reportar bug ou sugerir melhoria no devTools"><span class="txt-bug">Reportar bug</span><span class="ico-bug">🐞</span></a>
+    <button class="btn ghost icone" (click)="abrirCompartilhar()" title="Compartilhar o devTools">⤴</button>
     <button class="btn ghost" (click)="ui.painel.set('dados')" title="Backup, importar e exportar">
       Dados
       @if (backup.lembrete() || backup.estado() === 'reativar') {
@@ -95,6 +96,27 @@
   }
   @case ('paleta') {
     <app-paleta (fechar)="ui.painel.set(null)" />
+  }
+  @case ('compartilhar') {
+    <div class="overlay" (click)="ui.painel.set(null)">
+      <div class="dialogo compartilhar" (click)="$event.stopPropagation()">
+        <h2>Compartilhar</h2>
+        <p class="sub">Escolha os menus que quem abrir o link vai ver. Os demais ficam escondidos (podem ser reativados em Dados). Nenhum dado seu vai no link.</p>
+        <div class="linha">
+          <label class="chk"><input type="checkbox" checked disabled /> Início</label>
+          @for (m of MENUS; track m.id) {
+            <label class="chk">
+              <input type="checkbox" [checked]="menusLink().includes(m.id)" (change)="alternarMenuLink(m.id)" />
+              {{ m.nome }}
+            </label>
+          }
+        </div>
+        <input class="link-compartilhar" readonly [value]="link()" (focus)="$any($event.target).select()" />
+        <div class="linha">
+          <button class="btn primario" (click)="ui.copiar(link(), 'Link copiado')">Copiar link</button>
+        </div>
+      </div>
+    </div>
   }
   @case ('atalhos') {
     <div class="overlay" (click)="ui.painel.set(null)">

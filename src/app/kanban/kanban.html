@@ -1,7 +1,7 @@
 <div class="barra">
   <input
     class="busca"
-    placeholder="Adicionar rápido: '#7570' (busca no GitHub) ou '#7570 Ajuste no boleto' + Enter"
+    placeholder="Adicionar rápido: '#7570' (busca no GitHub), '#7570 Ajuste no boleto', '!alta' e prazo '20/11' + Enter"
     [ngModel]="rapida()"
     (ngModelChange)="rapida.set($event)"
     (keydown.enter)="adicionarRapida()"

@@ -38,6 +38,8 @@ export class Github {
   readonly gitcalm = signal('');
   readonly token = computed(() => this.proprio() || this.gitcalm());
   private login = '';
+  // última lista de atribuídas, para o início
+  readonly ultimasAtribuidas = signal<{ numero: number; titulo: string; descricao: string }[] | null>(null);
 
   async issue(n: number): Promise<Issue | null> {
     const r = await this.chamar(API + n);
@@ -114,7 +116,9 @@ export class Github {
     const r = await this.chamar(`${API.replace(/\/$/, '')}?assignee=${this.login}&state=open&per_page=100`);
     if (!r?.ok) return null;
     const l: any[] = await r.json();
-    return l.filter((i) => !i.pull_request).map((i) => ({ numero: i.number, titulo: i.title, descricao: (i.body ?? '').trim() }));
+    const res = l.filter((i) => !i.pull_request).map((i) => ({ numero: i.number, titulo: i.title, descricao: (i.body ?? '').trim() }));
+    this.ultimasAtribuidas.set(res);
+    return res;
   }
 
   // valida o token lendo o repositório

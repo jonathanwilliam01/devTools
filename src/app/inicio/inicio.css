@@ -1,6 +1,6 @@
 .numeros {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -339,9 +339,15 @@ button.atalho {
   margin: 4px 0;
 }
 
+@media (max-width: 1200px) {
+  .numeros {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   .numeros {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .grade {
     grid-template-columns: 1fr;
@@ -360,5 +366,324 @@ button.atalho {
   }
   .painel {
     padding: 12px;
+  }
+}
+
+.tile strong em {
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--texto-2);
+}
+
+.saudacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.saudacao h1 {
+  margin: 0;
+  font-size: 22px;
+}
+.saudacao .data {
+  font-size: 13px;
+  color: var(--texto-2);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--borda);
+  background: var(--bg-elev);
+  color: var(--texto);
+  text-decoration: none;
+  cursor: pointer;
+}
+.chip:hover,
+.chip.ativo {
+  border-color: var(--acento);
+  color: var(--acento);
+}
+.chip.perigo {
+  background: var(--perigo);
+  border-color: var(--perigo);
+  color: #fff;
+}
+.chip.daily-hoje {
+  background: var(--acento-bg);
+  border-color: var(--acento);
+  color: var(--acento);
+  cursor: default;
+}
+
+.barra-edicao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  border: 1px dashed var(--acento);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--texto-2);
+}
+.ctrl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: -4px 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--borda);
+}
+.ctrl b {
+  flex: 1;
+  font-size: 12px;
+  color: var(--texto-2);
+}
+.ctrl button {
+  font: inherit;
+  min-width: 28px;
+  padding: 2px 6px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--texto);
+  cursor: pointer;
+}
+.ctrl button:hover {
+  border-color: var(--acento);
+}
+.oculto > :not(.ctrl) {
+  opacity: 0.35;
+}
+.bloco-numeros.oculto {
+  margin-bottom: 18px;
+}
+
+.painel.daily-hoje {
+  border-color: var(--acento);
+  box-shadow: 0 0 0 1px var(--acento);
+}
+.selo {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--acento);
+  color: #fff;
+  vertical-align: middle;
+}
+
+.agora {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 8px 10px;
+  border-left: 3px solid var(--cor-p, var(--acento));
+}
+.agora + .agora {
+  border-top: 1px solid var(--borda);
+}
+.agora-tit {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+}
+.cronometro {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--acento);
+  font-variant-numeric: tabular-nums;
+}
+.agora[data-prioridade='urgente'] {
+  --cor-p: var(--p-urgente);
+}
+.agora[data-prioridade='alta'] {
+  --cor-p: var(--p-alta);
+}
+.agora[data-prioridade='media'] {
+  --cor-p: var(--p-media);
+}
+.agora[data-prioridade='baixa'] {
+  --cor-p: var(--p-baixa);
+}
+.trabalho {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 10px 13px;
+}
+.trabalho label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.trabalho .acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.semana {
+  display: grid;
+}
+.dia-semana {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 5px 0;
+  border-top: 1px solid var(--borda);
+}
+.dia-semana:first-child {
+  border-top: 0;
+}
+.dia-semana .rotulo {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-2);
+}
+.dia-semana.hoje .rotulo {
+  color: var(--acento);
+}
+.dia-semana.passado .chip-tarefa {
+  border-color: var(--perigo);
+}
+.itens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.nada {
+  color: var(--texto-2);
+  font-size: 12px;
+}
+.chip-tarefa {
+  display: inline-flex;
+  gap: 4px;
+  max-width: 100%;
+  padding: 2px 8px;
+  border: 1px solid var(--borda);
+  border-left: 3px solid var(--cor-p, var(--borda));
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--texto);
+  text-decoration: none;
+}
+.chip-tarefa:hover {
+  border-color: var(--acento);
+}
+a[data-prioridade='urgente'] {
+  --cor-p: var(--p-urgente);
+}
+a[data-prioridade='alta'] {
+  --cor-p: var(--p-alta);
+}
+a[data-prioridade='media'] {
+  --cor-p: var(--p-media);
+}
+a[data-prioridade='baixa'] {
+  --cor-p: var(--p-baixa);
+}
+
+.checklists,
+.barras {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.checklists li,
+.barras li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px 34px;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 13px;
+}
+.checklists .titulo {
+  color: var(--texto);
+  text-decoration: none;
+}
+.checklists small,
+.barras b {
+  text-align: right;
+  font-size: 12px;
+}
+.barra {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-2);
+  overflow: hidden;
+}
+.barra span {
+  display: block;
+  height: 100%;
+  background: var(--acento);
+}
+.barras .nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.barras li.vazio-mini,
+.checklists li.vazio-mini {
+  display: block;
+}
+
+.dica {
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-2);
+}
+.dica code {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.atalho.leve {
+  background: transparent;
+  font-weight: 400;
+}
+.alternar {
+  display: inline-flex;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.alternar button {
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--texto-2);
+  cursor: pointer;
+}
+.alternar button.ativo {
+  background: var(--acento-bg);
+  color: var(--acento);
+}
+
+@media (max-width: 700px) {
+  .agora {
+    flex-wrap: wrap;
+  }
+  .agora-tit {
+    flex-basis: 100%;
+  }
+  .dia-semana {
+    grid-template-columns: 70px minmax(0, 1fr);
   }
 }

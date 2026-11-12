@@ -97,6 +97,35 @@ main {
   border-bottom: 1px solid var(--borda);
   font-size: 13px;
 }
+.compartilhar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.compartilhar .sub {
+  margin: 0;
+  color: var(--texto-2);
+  font-size: 12px;
+}
+.compartilhar .linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.compartilhar .chk {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.compartilhar .chk input {
+  width: auto;
+  accent-color: var(--acento);
+}
+.link-compartilhar {
+  width: 100%;
+  font-family: monospace;
+  font-size: 12px;
+}
 .atalhos dl {
   display: grid;
   grid-template-columns: auto 1fr;

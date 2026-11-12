@@ -74,6 +74,8 @@ export class Notas {
     return l.find((n) => n.id === this.selId()) ?? l[0] ?? null;
   });
   protected readonly markdown = markdown;
+  protected readonly selecionando = signal(false);
+  protected readonly marcadas = signal(new Set<string>());
 
   constructor() {
     afterNextRender(() => {
@@ -88,6 +90,7 @@ export class Notas {
         this.form.set(null);
         this.preencher.set(null);
         this.verLixeira.set(false);
+        if (!this.form() && !this.preencher()) this.selecionando.set(false);
       } else if (a === 'novo' && !this.form() && !this.preencher()) this.nova();
     });
   }
@@ -280,6 +283,85 @@ export class Notas {
     });
   }
 
+  alternarSelecao() {
+    this.selecionando.update((v) => !v);
+    this.marcadas.set(new Set());
+  }
+
+  marcar(n: Nota) {
+    this.marcadas.update((s) => {
+      const novo = new Set(s);
+      novo.has(n.id) ? novo.delete(n.id) : novo.add(n.id);
+      return novo;
+    });
+  }
+
+  // marca as visíveis com o filtro atual
+  marcarTodas() {
+    this.marcadas.set(new Set(this.ordenadas().map((n) => n.id)));
+  }
+
+  desmarcarTodas() {
+    this.marcadas.set(new Set());
+  }
+
+  excluirMarcadas() {
+    const ids = [...this.marcadas()];
+    if (!ids.length || !confirm(`Mover ${ids.length} nota(s) para a lixeira?`)) return;
+    ids.forEach((id) => this.store.removerNota(id));
+    this.marcadas.set(new Set());
+    this.ui.avisar(`${ids.length} nota(s) movida(s) para a lixeira`);
+  }
+
+  // JSON com conteúdo legível (secretos decifrados), sem ids, para compartilhar
+  exportar() {
+    const notas = this.store.notas().filter((n) => this.marcadas().has(n.id));
+    const blocos = notas.flatMap((n) => n.blocos);
+    if (blocos.some((b) => this.cofre.ler(b) === null)) return this.pedirCofre();
+    if (blocos.some((b) => b.secreto) && !confirm('Há blocos secretos; eles vão abertos no arquivo. Exportar mesmo assim?')) return;
+    const dados: Exportacao = {
+      tipo: TIPO_EXPORT,
+      notas: notas.map((n) => ({
+        titulo: n.titulo,
+        cor: n.cor,
+        tags: n.tags ?? [],
+        blocos: n.blocos.map(({ id, ...b }) => ({ ...b, conteudo: this.cofre.ler({ id, conteudo: b.conteudo })! })),
+      })),
+    };
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' }));
+    a.download = `notas-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    this.ui.avisar(`${notas.length} nota(s) exportada(s)`);
+  }
+
+  async importar(input: HTMLInputElement) {
+    const arq = input.files?.[0];
+    input.value = '';
+    if (!arq) return;
+    let lista: unknown;
+    try {
+      const d = JSON.parse(await arq.text());
+      lista = Array.isArray(d) ? d : d?.notas;
+    } catch {
+      return this.ui.avisar('Arquivo não é um JSON válido');
+    }
+    const notas = Array.isArray(lista) ? lista.filter((n) => n && typeof n.titulo === 'string' && Array.isArray(n.blocos)) : [];
+    if (!notas.length) return this.ui.avisar('Nenhuma nota encontrada no arquivo');
+    if (notas.some((n) => n.blocos.some((b: Bloco) => b?.secreto)) && this.cofre.bloqueado()) return this.pedirCofre();
+    const agora = new Date().toISOString();
+    for (const n of notas) {
+      const blocos: Bloco[] = n.blocos
+        .filter((b: Bloco) => b && typeof b.conteudo === 'string')
+        .map((b: Bloco) => ({ id: novoId(), label: String(b.label ?? ''), conteudo: b.conteudo, secreto: !!b.secreto, tabela: !!b.tabela, sql: !!b.sql }));
+      const tags = Array.isArray(n.tags) ? n.tags.map(String) : [];
+      const cor = CORES.includes(n.cor) ? n.cor : '';
+      this.store.salvarNota(await this.cofre.selar({ id: novoId(), titulo: n.titulo, blocos, tags, cor, fixada: false, atualizado: agora }));
+    }
+    this.ui.avisar(`${notas.length} nota(s) importada(s)`);
+  }
+
   moverBloco(f: Nota, i: number, d: number) {
     const j = i + d;
     if (j < 0 || j >= f.blocos.length) return;
@@ -290,4 +372,10 @@ export class Notas {
 const bloco = (): Bloco => ({ id: novoId(), label: '', conteudo: '' });
 
 type Vista = 'mural' | 'baixo' | 'lado';
+
+const TIPO_EXPORT = 'devtools-notas';
+interface Exportacao {
+  tipo: typeof TIPO_EXPORT;
+  notas: (Pick<Nota, 'titulo' | 'cor' | 'tags'> & { blocos: Omit<Bloco, 'id'>[] })[];
+}
 

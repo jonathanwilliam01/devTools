@@ -185,3 +185,38 @@ export function tempoTarefa(t: Tarefa) {
 
 // "Ajudar Diniz com..." sem pessoa informada
 export const pessoaTarefa = (t: Tarefa) => t.pessoa?.trim() || t.titulo.match(/^ajudar\s+(?:o\s+|a\s+)?([\p{L}]+)/iu)?.[1] || '';
+
+const PRIO_RAPIDA: Record<string, Prioridade> = { urgente: 'urgente', alta: 'alta', media: 'media', 'média': 'media', baixa: 'baixa' };
+
+// "#7570 título !alta 20/11": número vira card, !prioridade e dd/mm[/aa] viram prioridade e prazo.
+// buscar: só o número informado, título vem do GitHub
+export function tarefaRapida(txt: string): { tarefa: Tarefa; buscar: number | null } | null {
+  let prioridade: Prioridade = 'media';
+  let prazo: string | null = null;
+  const resto = txt
+    .replace(/(^|\s)!(urgente|alta|m[eé]dia|baixa)(?=\s|$)/i, (_, e: string, p: string) => ((prioridade = PRIO_RAPIDA[p.toLowerCase()]), e))
+    .replace(/(^|\s)(\d{1,2})\/(\d{1,2})(?:\/(\d{4}|\d{2}))?(?=\s|$)/, (t, e: string, d: string, m: string, a?: string) => {
+      const x = `${a ? (a.length === 2 ? '20' + a : a) : hoje().slice(0, 4)}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      if (new Date(x + 'T00:00').toLocaleDateString('sv-SE') !== x) return t;
+      prazo = x;
+      return e;
+    })
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!resto) return null;
+  const m = resto.match(/^#?(\d{3,})\s*[-–:]?\s*(.*)$/);
+  return {
+    tarefa: {
+      id: novoId(),
+      titulo: m ? m[2] || `Card #${m[1]}` : resto,
+      descricao: '',
+      status: 'todo',
+      prioridade,
+      tipo: m ? 'card' : 'ajuda',
+      numeroCard: m ? +m[1] : null,
+      prazo,
+      criado: hoje(),
+    },
+    buscar: m && !m[2] ? +m[1] : null,
+  };
+}

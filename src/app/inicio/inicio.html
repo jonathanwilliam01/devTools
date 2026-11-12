@@ -1,180 +1,418 @@
-@if (visivel('cards')) {
-  @let n = numeros();
-  <section class="numeros">
-    <a class="tile" routerLink="/cards">
-      <span>Hoje</span>
-      <strong>{{ n.hoje }}</strong>
-    </a>
-    <a class="tile" routerLink="/cards">
-      <span>Esta semana</span>
-      <strong>{{ n.semana }}</strong>
-    </a>
-    <a class="tile destaque" routerLink="/cards">
-      <span>{{ n.nomeMes }}</span>
-      <strong>{{ n.mes }}</strong>
-      <small [title]="n.nomeMesAnterior + ' completo: ' + n.mesAnterior">
-        {{ n.nomeMesAnterior }} até dia {{ n.dia }}: {{ n.mesAnteriorAteHoje }}
-      </small>
-    </a>
-    <a class="tile" routerLink="/cards">
-      <span>Total {{ n.anoNum }}</span>
-      <strong>{{ n.ano }}</strong>
-      <span class="meses">
-        @for (q of n.porMes; track $index) {
-          <span
-            class="mes"
-            [class.atual]="$index === n.mesAtual"
-            [style.height.%]="(q / n.maxMes) * 100"
-            [title]="MESES[$index] + ': ' + q"
-          ></span>
-        }
-      </span>
-    </a>
-  </section>
+@let s = saudacao();
+<div class="saudacao">
+  <div>
+    <h1>{{ s.texto }}!</h1>
+    <span class="data">{{ s.data }}</span>
+  </div>
+  <div class="chips">
+    @if (diaDaily && visivel('cards')) {
+      <span class="chip daily-hoje">Hoje tem daily</span>
+    }
+    @if (atrasadas() && visivel('kanban')) {
+      <a class="chip perigo" routerLink="/kanban">{{ atrasadas() }} {{ atrasadas() === 1 ? 'atrasada' : 'atrasadas' }}</a>
+    }
+    <button type="button" class="chip" (click)="abrirNovidades()">Novidades da v{{ versao }}</button>
+    <button type="button" class="chip" [class.ativo]="editando()" (click)="editando.set(!editando())">
+      {{ editando() ? '✓ Concluir' : '⚙ Organizar' }}
+    </button>
+  </div>
+</div>
 
-  @if (incompletos(); as qtd) {
-    <a class="aviso" routerLink="/cards" [queryParams]="{ incompletos: 1 }">
-      ⚠ {{ qtd }} {{ qtd === 1 ? 'card incompleto' : 'cards incompletos' }} (falta linguagem ou o
-      que foi feito) →
-    </a>
-  }
+@if (editando()) {
+  <div class="barra-edicao">
+    <span>Use ↑ ↓ para ordenar, ⇄ para trocar de coluna e 👁 para mostrar ou esconder. Painéis vazios só aparecem aqui.</span>
+    <button type="button" class="btn mini ghost" (click)="restaurarLayout()">Restaurar padrão</button>
+  </div>
+}
+
+@if (mostrar('numeros')) {
+  @let n = numeros();
+  @let sq = sequencia();
+  <div class="bloco-numeros" [class.oculto]="oculto('numeros')">
+    @if (editando()) {
+      <div class="ctrl">
+        <b>Números</b>
+        <button type="button" (click)="alternarOculto('numeros')" [title]="oculto('numeros') ? 'Mostrar' : 'Esconder'">
+          {{ oculto('numeros') ? '🙈' : '👁' }}
+        </button>
+      </div>
+    }
+    <section class="numeros">
+      <a class="tile" routerLink="/cards">
+        <span>Hoje</span>
+        <strong>{{ n.hoje }}</strong>
+      </a>
+      <a class="tile" routerLink="/cards">
+        <span>Esta semana</span>
+        <strong>{{ n.semana }}</strong>
+      </a>
+      <a class="tile destaque" routerLink="/cards">
+        <span>{{ n.nomeMes }}</span>
+        <strong>{{ n.mes }}</strong>
+        <small [title]="n.nomeMesAnterior + ' completo: ' + n.mesAnterior">
+          {{ n.nomeMesAnterior }} até dia {{ n.dia }}: {{ n.mesAnteriorAteHoje }}
+        </small>
+      </a>
+      <a class="tile" routerLink="/cards" title="Média de cards por dia útil (seg a sex) no mês">
+        <span>Média/dia útil</span>
+        <strong>{{ n.media }}</strong>
+        <small>projeção {{ n.nomeMes }}: {{ n.projecao }}</small>
+      </a>
+      <a class="tile" routerLink="/cards" title="Dias úteis seguidos com card registrado; hoje sem card ainda não quebra">
+        <span>Sequência</span>
+        <strong>{{ sq.atual }} <em>{{ sq.atual === 1 ? 'dia' : 'dias' }}</em></strong>
+        <small>recorde: {{ sq.recorde }}</small>
+      </a>
+      <a class="tile" routerLink="/cards">
+        <span>Total {{ n.anoNum }}</span>
+        <strong>{{ n.ano }}</strong>
+        <span class="meses">
+          @for (q of n.porMes; track $index) {
+            <span
+              class="mes"
+              [class.atual]="$index === n.mesAtual"
+              [style.height.%]="(q / n.maxMes) * 100"
+              [title]="MESES[$index] + ': ' + q"
+            ></span>
+          }
+        </span>
+      </a>
+    </section>
+
+    @if (incompletos(); as qtd) {
+      <a class="aviso" routerLink="/cards" [queryParams]="{ incompletos: 1 }">
+        ⚠ {{ qtd }} {{ qtd === 1 ? 'card incompleto' : 'cards incompletos' }} (falta linguagem ou o
+        que foi feito) →
+      </a>
+    }
+  </div>
 }
 
 <div class="grade">
   <div class="coluna">
-    @if (visivel('kanban')) {
-      <section class="painel">
-        <header>
-          <h2>Kanban</h2>
-          <a routerLink="/kanban">Abrir →</a>
-        </header>
-        <div class="contagem">
-          @for (c of colunas(); track c.status) {
-            <span class="tag status" [attr.data-status]="c.status"
-              >{{ c.titulo }} <b>{{ c.qtd }}</b></span
-            >
-          }
-        </div>
-        <ul class="tarefas">
-          @for (t of abertas().slice(0, 8); track t.id) {
-            <li [attr.data-prioridade]="t.prioridade">
-              <span class="status" [attr.data-status]="t.status">{{ nomeStatus(t.status) }}</span>
-              <a routerLink="/kanban">
-                @if (t.numeroCard) {
-                  <span class="num">#{{ t.numeroCard }}</span>
-                }
-                <span class="titulo">{{ t.titulo }}</span>
-              </a>
-              <span class="prio">{{ label(t.prioridade) }}</span>
-              @if (prazo(t); as p) {
-                <span class="prazo" [attr.data-nivel]="p.nivel" [title]="'Prazo: ' + t.prazo"
-                  >⏱ {{ p.texto }}</span
-                >
-              }
-            </li>
-          } @empty {
-            <li class="vazio-mini">Nenhuma tarefa aberta.</li>
-          }
-        </ul>
-        @if (abertas().length > 8) {
-          <a class="mais" routerLink="/kanban">+ {{ abertas().length - 8 }} tarefas</a>
-        }
-      </section>
-    }
-
-    @if (visivel('cards')) {
-      @let d = daily();
-      <section class="painel">
-        <header>
-          <h2>
-            Daily <small>desde {{ diaBr(d.de) }}</small>
-          </h2>
-          <button class="btn mini" (click)="copiarDaily()">⧉ Copiar</button>
-        </header>
-        @for (g of diasDaily(); track g.dia) {
-          <h3 class="dia">{{ diaBr(g.dia) }}</h3>
-          <ul class="daily">
-            @for (i of g.itens; track $index) {
-              <li [title]="i.obs">{{ i.titulo }}</li>
-            }
-          </ul>
-        } @empty {
-          <p class="vazio-mini">Nenhum concluído desde a última daily.</p>
-        }
-      </section>
+    @for (id of layout().principal; track id) {
+      <ng-container *ngTemplateOutlet="painel; context: { $implicit: id }" />
     }
   </div>
-
   <div class="lateral">
-    @if (visivel('ferramentas')) {
-      <section class="painel">
-        <header>
-          <h2>Ferramentas</h2>
-          <a routerLink="/ferramentas">Todas →</a>
-        </header>
-        <input
-          class="colar"
-          placeholder="Cole aqui boleto, Pix, JWT, CEP, CPF/CNPJ, JSON, SQL ou imagem com código"
-          (paste)="colarCampo($event)"
-          (keydown.enter)="colar($any($event.target).value)"
-        />
-        @if (favoritas().length) {
-          <div class="atalhos">
-            @for (f of favoritas(); track f.id) {
-              <a class="atalho" [routerLink]="['/ferramentas', f.id]" [title]="f.desc">
-                <span class="ico">{{ f.icone }}</span>
-                {{ f.nome }}
-              </a>
-            }
-          </div>
-        } @else {
-          <p class="vazio-mini">Marque ☆ numa ferramenta para ela aparecer aqui.</p>
-        }
-      </section>
-    }
-
-    @if (visivel('notas')) {
-      <section class="painel">
-        <header>
-          <h2>Notas fixadas</h2>
-          <a routerLink="/notas">Todas →</a>
-        </header>
-        @if (notas().length) {
-          <div class="atalhos">
-            @for (nt of notas(); track nt.id) {
-              <button
-                type="button"
-                class="atalho nota"
-                [attr.data-cor]="nt.cor"
-                (click)="notaAberta.set(nt)"
-              >
-                {{ nt.titulo || 'Sem título' }}
-              </button>
-            }
-          </div>
-        } @else {
-          <p class="vazio-mini">Fixe uma nota com 📌 para ela aparecer aqui.</p>
-        }
-      </section>
+    @for (id of layout().lateral; track id) {
+      <ng-container *ngTemplateOutlet="painel; context: { $implicit: id }" />
     }
   </div>
 </div>
 
+<ng-template #painel let-id>
+  @if (mostrar(id)) {
+    <section class="painel" [class.oculto]="oculto(id)" [class.daily-hoje]="id === 'daily' && diaDaily">
+      @if (editando()) {
+        <div class="ctrl">
+          <b>{{ nomePainel(id) }}</b>
+          <button type="button" (click)="moverPainel(id, -1)" title="Subir">↑</button>
+          <button type="button" (click)="moverPainel(id, 1)" title="Descer">↓</button>
+          <button type="button" (click)="trocarColuna(id)" title="Trocar de coluna">⇄</button>
+          <button type="button" (click)="alternarOculto(id)" [title]="oculto(id) ? 'Mostrar' : 'Esconder'">
+            {{ oculto(id) ? '🙈' : '👁' }}
+          </button>
+        </div>
+      }
+      @switch (id) {
+        @case ('agora') {
+          <header>
+            <h2>Fazendo agora</h2>
+            <a routerLink="/kanban">Kanban →</a>
+          </header>
+          @for (t of fazendo(); track t.id) {
+            <div class="agora" [attr.data-prioridade]="t.prioridade">
+              <div class="agora-tit">
+                @if (t.numeroCard) {
+                  <span class="num">#{{ t.numeroCard }}</span>
+                }
+                <span class="titulo" [title]="t.titulo">{{ t.titulo }}</span>
+              </div>
+              <span class="cronometro">{{ cronometro(t) }}</span>
+              <button type="button" class="btn mini ghost" (click)="mover(t, 'todo')" title="Volta para A fazer e pausa o tempo">⏸ Pausar</button>
+              <button type="button" class="btn mini" (click)="concluir(t)">✓ Concluir</button>
+            </div>
+            @if (concluindo()?.id === t.id) {
+              <form class="trabalho" (submit)="$event.preventDefault(); salvarConclusao()">
+                <label for="trab-{{ t.id }}">Trabalho executado <small>(vira o obs do card)</small></label>
+                <textarea
+                  id="trab-{{ t.id }}"
+                  rows="3"
+                  [value]="trabalhoTxt()"
+                  (input)="trabalhoTxt.set($any($event.target).value)"
+                  (keydown.control.enter)="salvarConclusao()"
+                  placeholder="Realizado ajuste/correção ..."
+                ></textarea>
+                <div class="acoes">
+                  <button type="button" class="btn mini ghost" (click)="concluindo.set(null)">Cancelar</button>
+                  <button type="submit" class="btn mini">Concluir</button>
+                </div>
+              </form>
+            }
+          } @empty {
+            <p class="vazio-mini">Nada em Fazendo. Próximas:</p>
+            <ul class="tarefas">
+              @for (t of proximas(); track t.id) {
+                <li [attr.data-prioridade]="t.prioridade">
+                  <a routerLink="/kanban">
+                    @if (t.numeroCard) {
+                      <span class="num">#{{ t.numeroCard }}</span>
+                    }
+                    <span class="titulo">{{ t.titulo }}</span>
+                  </a>
+                  <button type="button" class="btn mini ghost" (click)="mover(t, 'doing')" title="Mover para Fazendo e iniciar o tempo">▶ Iniciar</button>
+                </li>
+              }
+            </ul>
+          }
+        }
+
+        @case ('kanban') {
+          <header>
+            <h2>Kanban</h2>
+            <a routerLink="/kanban">Abrir →</a>
+          </header>
+          <div class="contagem">
+            @for (c of colunas(); track c.status) {
+              <span class="tag status" [attr.data-status]="c.status">{{ c.titulo }} <b>{{ c.qtd }}</b></span>
+            }
+          </div>
+          <ul class="tarefas">
+            @for (t of abertas().slice(0, 8); track t.id) {
+              <li [attr.data-prioridade]="t.prioridade">
+                <span class="status" [attr.data-status]="t.status">{{ nomeStatus(t.status) }}</span>
+                <a routerLink="/kanban">
+                  @if (t.numeroCard) {
+                    <span class="num">#{{ t.numeroCard }}</span>
+                  }
+                  <span class="titulo">{{ t.titulo }}</span>
+                </a>
+                <span class="prio">{{ label(t.prioridade) }}</span>
+                @if (prazo(t); as p) {
+                  <span class="prazo" [attr.data-nivel]="p.nivel" [title]="'Prazo: ' + t.prazo">⏱ {{ p.texto }}</span>
+                }
+              </li>
+            } @empty {
+              <li class="vazio-mini">Nenhuma tarefa aberta.</li>
+            }
+          </ul>
+          @if (abertas().length > 8) {
+            <a class="mais" routerLink="/kanban">+ {{ abertas().length - 8 }} tarefas</a>
+          }
+        }
+
+        @case ('semana') {
+          <header>
+            <h2>Prazos da semana</h2>
+            <a routerLink="/kanban">Kanban →</a>
+          </header>
+          <div class="semana">
+            @for (d of semana(); track d.dia) {
+              <div class="dia-semana" [class.hoje]="d.hoje" [class.passado]="d.passado">
+                <span class="rotulo">{{ d.rotulo }}</span>
+                <div class="itens">
+                  @for (t of d.tarefas; track t.id) {
+                    <a class="chip-tarefa" routerLink="/kanban" [attr.data-prioridade]="t.prioridade" [title]="t.titulo">
+                      @if (t.numeroCard) {
+                        <span class="num">#{{ t.numeroCard }}</span>
+                      }
+                      <span class="titulo">{{ t.titulo }}</span>
+                    </a>
+                  } @empty {
+                    <span class="nada">—</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @case ('daily') {
+          @let d = daily();
+          <header>
+            <h2>
+              Daily <small>desde {{ diaBr(d.de) }}</small>
+              @if (diaDaily) {
+                <span class="selo">hoje</span>
+              }
+            </h2>
+            <button class="btn mini" (click)="copiarDaily()">⧉ Copiar</button>
+          </header>
+          @for (g of diasDaily(); track g.dia) {
+            <h3 class="dia">{{ diaBr(g.dia) }}</h3>
+            <ul class="daily">
+              @for (i of g.itens; track $index) {
+                <li [title]="i.obs">{{ i.titulo }}</li>
+              }
+            </ul>
+          } @empty {
+            <p class="vazio-mini">Nenhum concluído desde a última daily.</p>
+          }
+        }
+
+        @case ('checklists') {
+          <header>
+            <h2>Checklists</h2>
+            <a routerLink="/kanban">Kanban →</a>
+          </header>
+          <ul class="checklists">
+            @for (c of checklists(); track c.t.id) {
+              <li>
+                <a routerLink="/kanban" class="titulo" [title]="c.t.titulo">
+                  @if (c.t.numeroCard) {
+                    <span class="num">#{{ c.t.numeroCard }}</span>
+                  }
+                  {{ c.t.titulo }}
+                </a>
+                <span class="barra"><span [style.width.%]="(c.feitos / c.total) * 100"></span></span>
+                <small>{{ c.feitos }}/{{ c.total }}</small>
+              </li>
+            } @empty {
+              <li class="vazio-mini">Nenhuma tarefa aberta com checklist.</li>
+            }
+          </ul>
+        }
+
+        @case ('captura') {
+          <header>
+            <h2>Nova tarefa</h2>
+          </header>
+          <input
+            class="colar"
+            placeholder="#7570, Ajudar Diniz !alta 20/11 + Enter"
+            [value]="rapida()"
+            (input)="rapida.set($any($event.target).value)"
+            (keydown.enter)="adicionar()"
+            (paste)="$event.stopPropagation()"
+          />
+          <p class="dica">Só o número busca o título no GitHub. <code>!urgente</code> <code>!alta</code> <code>!baixa</code> define a prioridade e <code>dd/mm</code> o prazo.</p>
+        }
+
+        @case ('ferramentas') {
+          <header>
+            <h2>Ferramentas</h2>
+            <a routerLink="/ferramentas">Todas →</a>
+          </header>
+          <input
+            class="colar"
+            placeholder="Cole aqui boleto, Pix, JWT, CEP, CPF/CNPJ, JSON, SQL ou imagem com código"
+            (paste)="colarCampo($event)"
+            (keydown.enter)="colar($any($event.target).value)"
+          />
+          @if (favoritas().length) {
+            <div class="atalhos">
+              @for (f of favoritas(); track f.id) {
+                <a class="atalho" [routerLink]="['/ferramentas', f.id]" [title]="f.desc">
+                  <span class="ico">{{ f.icone }}</span>
+                  {{ f.nome }}
+                </a>
+              }
+            </div>
+          } @else {
+            <p class="vazio-mini">Marque ☆ numa ferramenta para ela aparecer aqui.</p>
+          }
+          @if (recentes().length) {
+            <h3 class="dia">Recentes</h3>
+            <div class="atalhos">
+              @for (f of recentes(); track f.id) {
+                <a class="atalho leve" [routerLink]="['/ferramentas', f.id]" [title]="f.desc">
+                  <span class="ico">{{ f.icone }}</span>
+                  {{ f.nome }}
+                </a>
+              }
+            </div>
+          }
+        }
+
+        @case ('notas') {
+          <header>
+            <h2>Notas</h2>
+            <a routerLink="/notas">Todas →</a>
+          </header>
+          @if (notas().length) {
+            <h3 class="dia">Fixadas</h3>
+            <div class="atalhos">
+              @for (nt of notas(); track nt.id) {
+                <button type="button" class="atalho nota" [attr.data-cor]="nt.cor" (click)="notaAberta.set(nt)">
+                  {{ nt.titulo || 'Sem título' }}
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="vazio-mini">Fixe uma nota com 📌 para ela aparecer aqui.</p>
+          }
+          @if (notasRecentes().length) {
+            <h3 class="dia">Editadas recentemente</h3>
+            <div class="atalhos">
+              @for (nt of notasRecentes(); track nt.id) {
+                <button type="button" class="atalho nota leve" [attr.data-cor]="nt.cor" (click)="notaAberta.set(nt)">
+                  {{ nt.titulo || 'Sem título' }}
+                </button>
+              }
+            </div>
+          }
+        }
+
+        @case ('github') {
+          <header>
+            <h2>Issues fora do kanban</h2>
+          </header>
+          @if (foraKanban(); as l) {
+            <ul class="tarefas">
+              @for (i of l; track i.numero) {
+                <li>
+                  <a [href]="ISSUE_URL + i.numero" target="_blank" rel="noopener">
+                    <span class="num">#{{ i.numero }}</span>
+                    <span class="titulo" [title]="i.titulo">{{ i.titulo }}</span>
+                  </a>
+                  <button type="button" class="btn mini ghost" (click)="importar(i)">+ Kanban</button>
+                </li>
+              } @empty {
+                <li class="vazio-mini">Todas as issues atribuídas a você estão no kanban.</li>
+              }
+            </ul>
+          } @else {
+            <p class="vazio-mini">Sem consulta ao GitHub ainda (precisa do token em Dados).</p>
+          }
+        }
+
+        @case ('distribuicao') {
+          @let dist = distribuicao();
+          <header>
+            <h2>Sistemas e linguagens <small>{{ dist.total }} cards</small></h2>
+            <span class="alternar">
+              <button type="button" [class.ativo]="periodo() === 'mes'" (click)="periodo.set('mes')">mês</button>
+              <button type="button" [class.ativo]="periodo() === 'ano'" (click)="periodo.set('ano')">ano</button>
+            </span>
+          </header>
+          @for (g of dist.grupos; track g.nome) {
+            <h3 class="dia">{{ g.nome }}</h3>
+            <ul class="barras">
+              @for (i of g.itens; track i.nome) {
+                <li>
+                  <span class="nome" [title]="i.nome">{{ i.nome }}</span>
+                  <span class="barra"><span [style.width.%]="i.pct"></span></span>
+                  <b>{{ i.qtd }}</b>
+                </li>
+              } @empty {
+                <li class="vazio-mini">Sem cards no período.</li>
+              }
+            </ul>
+          }
+        }
+      }
+    </section>
+  }
+</ng-template>
+
 @if (notaAberta(); as nt) {
   <div class="overlay" (click)="notaAberta.set(null)">
-    <article
-      class="dialogo nota-dialogo"
-      [attr.data-cor]="nt.cor"
-      (click)="$event.stopPropagation()"
-    >
+    <article class="dialogo nota-dialogo" [attr.data-cor]="nt.cor" (click)="$event.stopPropagation()">
       <header>
         <h2>{{ nt.titulo || 'Sem título' }}</h2>
-        <a class="btn mini ghost" routerLink="/notas" [queryParams]="{ nota: nt.id }"
-          >Abrir em Notas ↗</a
-        >
-        <button class="btn mini ghost" (click)="notaAberta.set(null)" title="Fechar (Esc)">
-          ✕
-        </button>
+        <a class="btn mini ghost" routerLink="/notas" [queryParams]="{ nota: nt.id }">Abrir em Notas ↗</a>
+        <button class="btn mini ghost" (click)="notaAberta.set(null)" title="Fechar (Esc)">✕</button>
       </header>
       @for (b of nt.blocos; track b.id) {
         <div>

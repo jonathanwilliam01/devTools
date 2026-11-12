@@ -60,3 +60,18 @@ const num = (v: string) => v.split('.').reduce((a, p) => a * 1000 + +p, 0);
 // "novo" até ser aberta ou passar 2 versões da que entrou
 export const ehNova = (f: Ferramenta, vistas: string[] = []) =>
   !!f.desde && !vistas.includes(f.id) && num(VERSAO.numero) - num(f.desde) <= 2;
+
+// últimas ferramentas abertas, mais recente primeiro
+const CHAVE_RECENTES = 'devtools:ferr-recentes';
+export function lerRecentes(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(CHAVE_RECENTES) ?? '[]');
+  } catch {
+    return [];
+  }
+}
+export function marcarRecente(id: string) {
+  try {
+    localStorage.setItem(CHAVE_RECENTES, JSON.stringify([id, ...lerRecentes().filter((x) => x !== id)].slice(0, 10)));
+  } catch {}
+}
