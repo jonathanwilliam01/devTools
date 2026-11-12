@@ -18,6 +18,9 @@
   border-radius: 10px;
   padding: 14px 14px 8px;
 }
+.card-nota {
+  background: var(--bg-elev);
+}
 [data-cor='amarelo'] {
   background: var(--nota-amarelo);
 }
@@ -441,7 +444,6 @@ textarea.mono {
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
-  background: var(--bg-elev);
   border: 1px solid var(--borda);
   border-radius: 10px;
   padding: 12px 12px 8px;

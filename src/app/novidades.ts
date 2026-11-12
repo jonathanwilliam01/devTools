@@ -12,6 +12,7 @@ export const NOVIDADES: Versao[] = [
     versao: '1.0.26',
     data: '2026-11-12',
     itens: [
+      { tipo: 'correcao', texto: 'Notas: a cor da nota agora aparece na visão por cards.' },
       { tipo: 'novidade', texto: 'git-calm: novas funções de texto pela ponte — paraMarkdown, verificarOrtografia, corrigirOrtografia, traduzir, limparTexto, extrair, anonimizar, entidades, linhas e substituir.' },
       { tipo: 'novidade', texto: 'Corretor ortográfico (Ferramentas › Texto): marca erros de ortografia, gramática e estilo via LanguageTool e aplica as sugestões uma a uma ou todas.' },
       { tipo: 'novidade', texto: 'Tradutor (Ferramentas › Texto): português, inglês, espanhol, francês, italiano e alemão; usa o tradutor local do Chrome quando disponível, senão a MyMemory.' },
