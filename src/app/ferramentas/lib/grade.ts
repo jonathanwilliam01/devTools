@@ -17,7 +17,8 @@ export function lerGrade(texto: string): string[][] {
 const numero = (v: string) => /^-?[\d.,]+$/.test(v) && /\d/.test(v);
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-export function gerarTabela(linhas: string[][], formato: FormatoGrade, cabecalho: boolean) {
+// separar: linha entre os registros (ASCII e texto alinhado)
+export function gerarTabela(linhas: string[][], formato: FormatoGrade, cabecalho: boolean, separar = false) {
   if (!linhas.length) return '';
   const nCols = Math.max(...linhas.map((l) => l.length));
   const t = linhas.map((l) => Array.from({ length: nCols }, (_, i) => l[i] ?? ''));
@@ -45,9 +46,10 @@ export function gerarTabela(linhas: string[][], formato: FormatoGrade, cabecalho
   if (formato === 'ascii') {
     const borda = `+${larg.map((w) => '-'.repeat(w + 2)).join('+')}+`;
     const lin = (l: string[]) => `| ${l.map(ajustar).join(' | ')} |`;
-    return [borda, lin(cab), borda, ...corpo.map(lin), borda].join('\n');
+    return [borda, lin(cab), borda, ...corpo.flatMap((l, i) => (separar && i ? [borda, lin(l)] : [lin(l)])), borda].join('\n');
   }
 
   const lin = (l: string[]) => l.map(ajustar).join('  ').trimEnd();
-  return [lin(cab), larg.map((w) => '-'.repeat(w)).join('  '), ...corpo.map(lin)].join('\n');
+  const sep = larg.map((w) => '-'.repeat(w)).join('  ');
+  return [lin(cab), sep, ...corpo.flatMap((l, i) => (separar && i ? [sep, lin(l)] : [lin(l)]))].join('\n');
 }

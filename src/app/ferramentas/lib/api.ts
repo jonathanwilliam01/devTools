@@ -18,6 +18,8 @@ import { inserirLinhas, OpcoesLinhas, Par, substituir as _substituir } from './l
 import { aplicar, verificar } from './ortografia';
 import { Ajuste, gerar as gerarMd, ler as lerMd } from './paramd';
 import { traduzir as _traduzir } from './tradutor';
+import { comparar, contar, itens, unicos } from './listas';
+import { consultarCnpj } from './cnpj';
 import { DadosPix, gerarPix as _gerarPix, lerPix } from './pix';
 import { compactarSql, formatarSql as _formatarSql, OpcoesSqlFmt } from './sqlfmt';
 import { b64Decode, b64Encode, Charset, decode5t, encode5t, formatarXml, lerJwt, listaSql as _listaSql, OpcoesSql } from './texto';
@@ -135,6 +137,12 @@ export const API = {
     inserirLinhas(texto, { antes: '', depois: '', numerar: false, inicio: 1, passo: 1, digitos: 1, separador: '. ', pularVazias: true, ...o }),
   substituir: (texto: string, pares: Par[], o?: { caixa?: boolean; palavra?: boolean }) =>
     _substituir(texto, pares, { caixa: false, palavra: false, ...o }).texto,
+  // listas: array ou texto (uma por linha / separada por vírgula)
+  compararListas: (a: string | string[], b: string | string[], ignorarCaixa = false) =>
+    comparar(typeof a === 'string' ? itens(a) : a, typeof b === 'string' ? itens(b) : b, ignorarCaixa),
+  unicos: (l: string | string[], ignorarCaixa = false) => unicos(typeof l === 'string' ? itens(l) : l, ignorarCaixa),
+  contarValores: (l: string | string[], ignorarCaixa = false) => contar(typeof l === 'string' ? itens(l) : l, ignorarCaixa),
+  consultarCnpj: (cnpj: string) => consultarCnpj(cnpj),
   hash: async (texto: string) => Object.fromEntries(await hashes(new TextEncoder().encode(texto))),
 
   novidades: () => NOVIDADES,

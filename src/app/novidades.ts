@@ -9,6 +9,18 @@ export interface Versao {
 
 export const NOVIDADES: Versao[] = [
   {
+    versao: '1.0.27',
+    data: '2026-11-13',
+    itens: [
+      { tipo: 'novidade', texto: 'Listas (Ferramentas › Texto): compara duas listas (só em A, só em B, nas duas), tira repetidos, ordena e conta ocorrências; saída em linhas, vírgula ou IN (...).' },
+      { tipo: 'novidade', texto: 'Consulta CNPJ (Ferramentas › Documentos): dados da Receita pela kitana — situação, e-mail, endereço, CNAEs, sócios; vários CNPJs de uma vez com CSV.' },
+      { tipo: 'novidade', texto: 'CSV → tabela formatada: modo Visualizar com filtro, ordenação por coluna e contagem de valores por coluna (clique no valor para filtrar).' },
+      { tipo: 'melhoria', texto: 'Comparar textos agora aparece como "Comparar textos / JSON" no menu (o diff de JSON fica na aba JSON).' },
+      { tipo: 'novidade', texto: 'git-calm: compararListas, unicos, contarValores e consultarCnpj pela ponte.' },
+      { tipo: 'melhoria', texto: 'Grid → tabela agora se chama CSV → tabela formatada; abre ou arrasta arquivo .txt/.csv (UTF-8 ou Latin1) e opção "Linha entre registros" na Caixa ASCII e no texto alinhado.' },
+    ],
+  },
+  {
     versao: '1.0.26',
     data: '2026-11-12',
     itens: [
