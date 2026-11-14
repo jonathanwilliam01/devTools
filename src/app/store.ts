@@ -1,5 +1,5 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
-import { Card, Config, DIAS_LIXEIRA, Dados, MENUS, Nota, Removida, Sistema, Tarefa, chaveNome, hoje, mudarStatus, novoId, partes, semKanban } from './models';
+import { Card, Config, DIAS_LIXEIRA, Dados, MENUS, Nota, Receita, Removida, Sistema, Tarefa, chaveNome, hoje, mudarStatus, novoId, partes, semKanban } from './models';
 import { StatusCookie, lerCookies, salvarCookies } from './persist';
 import { Issue } from './github';
 import { Destino, LABELS_PADRAO, LINGUAGEM_PADRAO, SIGLAS_AREA, destinoLabel, semPrefixo } from './labels';
@@ -15,6 +15,7 @@ export class Store {
   readonly vars = signal<Record<string, string>>({});
   readonly config = signal<Config>({});
   readonly lixeira = signal<Removida[]>([]);
+  readonly receitas = signal<Receita[]>([]);
   // card vindo das tarefas para abrir pré-preenchido na tela de cards
   readonly rascunhoCard = signal<Partial<Card> | null>(null);
   readonly statusCookie = signal<StatusCookie | null>(null);
@@ -29,6 +30,7 @@ export class Store {
     vars: this.vars(),
     config: this.config(),
     lixeira: this.lixeira(),
+    receitas: this.receitas(),
   }));
 
   readonly areas = computed(() => unicos(this.cards().flatMap((c) => partes(c.area))).sort());
@@ -82,6 +84,7 @@ export class Store {
     this.vars.set(d.vars ?? {});
     this.config.set({ ...d.config, menusOcultos: d.config?.menusOcultos && semKanban(d.config.menusOcultos) });
     this.lixeira.set(validas(d.lixeira));
+    this.receitas.set(d.receitas ?? []);
     this.sincronizarSistemas();
   }
 
@@ -100,11 +103,12 @@ export class Store {
     this.cards.update((a) => mesclar(a, d.cards).map((c) => ({ ...c, sistema: this.normalizarSistemas(c.sistema) })));
     this.notas.update((a) => mesclar(a, d.notas));
     this.tarefas.update((a) => mesclar(a, d.tarefas));
+    this.receitas.update((a) => mesclar(a, d.receitas));
     const ativas = new Set(this.notas().map((n) => n.id));
     this.lixeira.update((a) => validas([...a, ...(d.lixeira ?? [])].filter((r, i, l) => !ativas.has(r.nota.id) && l.findIndex((x) => x.nota.id === r.nota.id) === i)));
     this.vars.update((v) => ({ ...d.vars, ...v }));
     this.sincronizarSistemas();
-    this.config.update((c) => ({ ...c, labels: { ...d.config?.labels, ...c.labels }, menusOcultos: c.menusOcultos ?? (d.config?.menusOcultos && semKanban(d.config.menusOcultos)), favoritas: unicos([...(c.favoritas ?? []), ...(d.config?.favoritas ?? [])]), vistas: unicos([...(c.vistas ?? []), ...(d.config?.vistas ?? [])]) }));
+    this.config.update((c) => ({ ...c, labels: { ...d.config?.labels, ...c.labels }, menusOcultos: c.menusOcultos ?? (d.config?.menusOcultos && semKanban(d.config.menusOcultos)), favoritas: unicos([...(c.favoritas ?? []), ...(d.config?.favoritas ?? [])]), vistas: unicos([...(c.vistas ?? []), ...(d.config?.vistas ?? [])]), ferramentasOcultas: c.ferramentasOcultas ?? d.config?.ferramentasOcultas, usoFerramentas: mesclarUso(c.usoFerramentas, d.config?.usoFerramentas), usoDesde: [c.usoDesde, d.config?.usoDesde].filter(Boolean).sort()[0] }));
     const senhaArq = d.config?.senha;
     if (!senhaArq) return '';
     if (!this.config().senha) {
@@ -276,6 +280,13 @@ export class Store {
     this.lixeira.update((l) => (id ? l.filter((x) => x.nota.id !== id) : []));
   }
 
+  salvarReceita(r: Receita) {
+    this.receitas.update((l) => upsert(l, r));
+  }
+  removerReceita(id: string) {
+    this.receitas.update((l) => l.filter((x) => x.id !== id));
+  }
+
   salvarTarefa(t: Tarefa) {
     this.tarefas.update((l) => upsert(l, t));
   }
@@ -293,6 +304,16 @@ function upsert<T extends { id: string }>(lista: T[], item: T): T[] {
 }
 
 const unicos = (l: string[]) => [...new Set(l)];
+
+// mesmo uso nas duas máquinas: fica o maior
+function mesclarUso(a: Config['usoFerramentas'] = {}, b: Config['usoFerramentas'] = {}) {
+  const r = { ...b };
+  for (const [k, v] of Object.entries(a)) {
+    const o = r[k];
+    r[k] = o ? { dias: Math.max(v.dias, o.dias), ultimo: v.ultimo > o.ultimo ? v.ultimo : o.ultimo } : v;
+  }
+  return r;
+}
 
 const validas = (l: Removida[] = []) => {
   const limite = Date.now() - DIAS_LIXEIRA * 86400000;

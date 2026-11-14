@@ -4,7 +4,9 @@ import { Router } from '@angular/router';
 import { Store } from '../store';
 import { Ui } from '../ui';
 import { Cofre } from '../cofre';
-import { Bloco, Nota, chaveNome } from '../models';
+import { Bloco, Nota, Receita, chaveNome } from '../models';
+import { preencher } from '../ferramentas/lib/estado';
+import { FERRAMENTAS, Ferramenta } from '../ferramentas/catalogo';
 import { Preencher, copiarOuPreencher } from '../notas/preencher';
 
 interface Item {
@@ -14,7 +16,9 @@ interface Item {
   busca: string;
 }
 
-// Ctrl+K: acha um bloco de qualquer nota pelo título/rótulo e copia
+type Linha = { receita?: Receita; ferramenta?: Ferramenta; it?: Item };
+
+// Ctrl+K: acha um bloco de qualquer nota pelo título/rótulo e copia; receita aplica no texto copiado; ferramenta abre
 @Component({
   selector: 'app-paleta',
   imports: [FormsModule, Preencher],
@@ -26,18 +30,28 @@ interface Item {
         <div class="dialogo paleta" (click)="$event.stopPropagation()">
           <input
             class="busca"
-            placeholder="Copiar bloco de nota... (↑↓ escolhe, Enter copia, Shift+Enter abre a nota)"
+            placeholder="Bloco de nota, receita ou ferramenta... (↑↓ escolhe, Enter usa, Shift+Enter abre)"
             [ngModel]="q()"
             (ngModelChange)="q.set($event); sel.set(0)"
             (keydown)="tecla($event)"
             autofocus
           />
           <ul>
-            @for (it of itens(); track it.bloco.id; let i = $index) {
-              <li [class.on]="i === sel()" (mouseenter)="sel.set(i)" (click)="copiar(it)" [attr.data-i]="i">
-                <span class="nome">{{ it.nome }}</span>
-                <span class="nota">{{ it.nota.titulo }}</span>
-                <span class="previa">{{ previa(it.bloco) }}</span>
+            @for (l of linhas(); track l.receita?.id ?? l.ferramenta?.id ?? l.it!.bloco.id; let i = $index) {
+              <li [class.on]="i === sel()" (mouseenter)="sel.set(i)" (click)="escolher(l, false)" [attr.data-i]="i">
+                @if (l.receita; as r) {
+                  <span class="nome">⛓ {{ r.nome }}</span>
+                  <span class="nota">receita</span>
+                  <span class="previa">aplica no texto copiado: {{ r.passos.length }} passo(s)</span>
+                } @else if (l.ferramenta; as f) {
+                  <span class="nome">{{ f.icone }} {{ f.nome }}</span>
+                  <span class="nota">ferramenta · {{ f.grupo }}</span>
+                  <span class="previa">{{ f.desc }}</span>
+                } @else if (l.it; as it) {
+                  <span class="nome">{{ it.nome }}</span>
+                  <span class="nota">{{ it.nota.titulo }}</span>
+                  <span class="previa">{{ previa(it.bloco) }}</span>
+                }
               </li>
             } @empty {
               <li class="vazio">Nenhum bloco encontrado.</li>
@@ -132,6 +146,24 @@ export class Paleta {
     return termos.length ? l.sort((a, b) => peso(b) - peso(a)).slice(0, 50) : l.slice(0, 50);
   });
 
+  private readonly receitas = computed(() => {
+    const termos = chaveNome(this.q()).split(' ').filter(Boolean);
+    return this.store.receitas().filter((r) => termos.every((t) => chaveNome(r.nome + ' receita').includes(t)));
+  });
+
+  // nome e grupo; inclui as escondidas do menu
+  private readonly ferramentas = computed(() => {
+    const termos = chaveNome(this.q()).split(' ').filter(Boolean);
+    return FERRAMENTAS.filter((f) => termos.every((t) => chaveNome(`${f.nome} ${f.grupo} ferramenta`).includes(t))).slice(0, 5);
+  });
+
+  // receitas e ferramentas só aparecem com busca, para não esconder as notas
+  protected readonly linhas = computed<Linha[]>(() => [
+    ...(this.q().trim() ? this.receitas().map((receita) => ({ receita })) : []),
+    ...(this.q().trim() ? this.ferramentas().map((ferramenta) => ({ ferramenta })) : []),
+    ...this.itens().map((it) => ({ it })),
+  ]);
+
   previa(b: Bloco) {
     if (b.secreto) return '••••••••';
     if (b.tabela) return b.conteudo.split('\n')[0].replace(/\t/g, ' │ ');
@@ -139,20 +171,53 @@ export class Paleta {
   }
 
   tecla(e: KeyboardEvent) {
-    const n = this.itens().length;
+    const n = this.linhas().length;
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       this.sel.update((i) => (n ? (i + (e.key === 'ArrowDown' ? 1 : n - 1)) % n : 0));
       setTimeout(() => document.querySelector(`.paleta [data-i="${this.sel()}"]`)?.scrollIntoView({ block: 'nearest' }));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      const it = this.itens()[this.sel()];
-      if (!it) return;
-      if (e.shiftKey) {
-        this.fechar.emit();
-        this.router.navigate(['/notas'], { queryParams: { nota: it.nota.id } });
-      } else this.copiar(it);
+      const l = this.linhas()[this.sel()];
+      if (l) this.escolher(l, e.shiftKey);
     }
+  }
+
+  escolher(l: Linha, abrir: boolean) {
+    if (l.receita) return abrir ? this.abrirReceita(l.receita) : this.aplicar(l.receita);
+    if (l.ferramenta) {
+      this.fechar.emit();
+      return this.router.navigate(['/ferramentas', l.ferramenta.id]);
+    }
+    if (!l.it) return;
+    if (!abrir) return this.copiar(l.it);
+    this.fechar.emit();
+    this.router.navigate(['/notas'], { queryParams: { nota: l.it.nota.id } });
+  }
+
+  private abrirReceita(r: Receita, entrada?: string) {
+    preencher('receitas', { sel: r.id, ...(entrada !== undefined && { entrada }) });
+    this.fechar.emit();
+    this.router.navigate(['/ferramentas', 'receitas'], { queryParams: { t: Date.now() } });
+  }
+
+  async aplicar(r: Receita) {
+    let texto = '';
+    try {
+      texto = await navigator.clipboard.readText();
+    } catch {}
+    if (!texto.trim()) {
+      this.ui.avisar('Nada copiado (ou leitura bloqueada): cole na entrada');
+      return this.abrirReceita(r);
+    }
+    const { executar } = await import('../ferramentas/lib/receitas');
+    const res = executar(texto, r.passos);
+    if (res.erro) {
+      this.ui.avisar(res.erro);
+      return this.abrirReceita(r, texto);
+    }
+    await this.ui.copiar(res.saida, `${r.nome}: resultado copiado`);
+    this.fechar.emit();
   }
 
   copiar(it: Item) {

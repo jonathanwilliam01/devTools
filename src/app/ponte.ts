@@ -37,7 +37,19 @@ export function iniciarPonte() {
   const github = inject(Github);
   const notificar = inject(Notificar);
   const origens = new Set<string>();
-  const api = import('./ferramentas/lib/api').then((m) => m.API as Record<string, (...a: unknown[]) => unknown>);
+  // receitas dependem dos dados salvos, por isso ficam fora da API pura
+  const api = import('./ferramentas/lib/api').then(
+    (m) =>
+      ({
+        ...m.API,
+        receitas: () => store.receitas().map((r) => r.nome),
+        receita: (nome: string, texto: string) => {
+          const r = store.receitas().find((x) => x.nome.toLowerCase() === String(nome).toLowerCase());
+          if (!r) throw new Error(`Receita não encontrada: ${nome}`);
+          return m.API.aplicarPassos(texto, r.passos);
+        },
+      }) as Record<string, (...a: any[]) => unknown>,
+  );
   const enviar = (msg: object, o: string) => window.parent.postMessage(msg, o);
   const notas = (o: string) => enviar({ tipo: 'devtools:notas', notas: store.notas().map(item) }, o);
   const pronto = async (o: string) => enviar({ tipo: 'devtools:pronto', versao: VERSAO.numero, funcoes: Object.keys(await api) }, o);

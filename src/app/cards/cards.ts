@@ -10,6 +10,7 @@ import { Github } from '../github';
 import { lerPref, prefSignal, salvarPref } from '../pref';
 import { LISTAS, Vistas } from '../vistas';
 import { Destino, chavesLabel, destinoLabel } from '../labels';
+import { Apontamento } from './apontamento';
 import { SEMANA, diaBr, itensResumo, lerDiasDaily, lerObsDaily, outraDaily, textoResumo } from '../resumo';
 
 interface Semana {
@@ -38,7 +39,7 @@ const COLUNAS_PLANILHA = ['Número do Card', 'Descrição', 'Sistema', 'Área Te
 
 @Component({
   selector: 'app-cards',
-  imports: [FormsModule, Multi, Vistas],
+  imports: [FormsModule, Multi, Vistas, Apontamento],
   templateUrl: './cards.html',
   styleUrl: './cards.css',
   host: { '(document:mousedown)': 'fecharMenu($event)', '(document:keydown)': 'teclas($event)', '(window:scroll)': 'menu.set(null)', '(window:resize)': 'menu.set(null)' },
@@ -62,6 +63,13 @@ export class Cards {
     return [...s].sort((a, b) => b - a);
   });
   protected readonly ano = signal(new Date().getFullYear());
+  // mês do apontamento: o filtrado ou o atual
+  protected readonly painelApontamento = signal(false);
+  protected readonly mesApontamento = computed(() => {
+    const atual = hoje().slice(0, 7);
+    const m = this.mes() || (this.ano() === +atual.slice(0, 4) ? +atual.slice(5, 7) : 12);
+    return `${this.ano()}-${String(m).padStart(2, '0')}`;
+  });
   protected readonly soIncompletos = signal(inject(ActivatedRoute).snapshot.queryParamMap.has('incompletos'));
 
   protected readonly doAno = computed(() => this.store.cards().filter((c) => +c.data.slice(0, 4) === this.ano()));
@@ -225,8 +233,9 @@ export class Cards {
         this.form.set(null);
         this.painelSistemas.set(false);
         this.painelResumo.set(false);
+        this.painelApontamento.set(false);
         this.menu.set(null);
-      } else if (a === 'novo' && !this.form() && !this.painelSistemas() && !this.painelResumo()) this.novo();
+      } else if (a === 'novo' && !this.form() && !this.painelSistemas() && !this.painelResumo() && !this.painelApontamento()) this.novo();
     });
   }
 

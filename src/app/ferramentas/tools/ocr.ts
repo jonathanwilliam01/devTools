@@ -4,6 +4,7 @@ import { Ui } from '../../ui';
 import { lembrado } from '../lib/estado';
 import { imagemDe } from '../lib/leitor';
 import { lerTexto } from '../lib/ocr';
+import { imagemPendente } from '../../compartilhado';
 
 @Component({
   selector: 'ft-ocr',
@@ -116,6 +117,14 @@ export class Ocr implements OnDestroy {
   protected readonly etapa = signal('');
   protected readonly sobre = signal(false);
   protected readonly filtro = lembrado('ocr.filtro', '');
+
+  constructor() {
+    const img = imagemPendente();
+    if (img) {
+      imagemPendente.set(null);
+      queueMicrotask(() => this.ler(img));
+    }
+  }
 
   // linhas que têm todas as palavras (sem acento e sem caixa), já partidas para destacar
   protected readonly filtrado = computed(() => {

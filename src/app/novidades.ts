@@ -9,6 +9,22 @@ export interface Versao {
 
 export const NOVIDADES: Versao[] = [
   {
+    versao: '1.0.28',
+    data: '2026-11-14',
+    itens: [
+      { tipo: 'novidade', texto: 'Revisor de script (Ferramentas › SQL): aponta UPDATE/DELETE sem WHERE, script sem BEGIN/COMMIT, DROP/TRUNCATE, INSERT sem colunas, parâmetro :x ou {{x}} esquecido, aspas curvas, invisíveis e acentuação quebrada; gera a versão corrigida.' },
+      { tipo: 'novidade', texto: 'Receitas (Ferramentas › Texto): encadeie passos (limpar, extrair, tirar repetidos, ordenar, IN, substituir, máscara, anonimizar...) e salve; vem com modelos prontos e mostra a saída de cada etapa.' },
+      { tipo: 'novidade', texto: 'Ctrl+K: digite o nome de uma receita e Enter aplica no texto copiado e já copia o resultado (Shift+Enter abre a receita).' },
+      { tipo: 'novidade', texto: 'Histórico › Apontamento: tempo por card, tipo, sistema e ajudas por pessoa no mês; copia para planilha ou baixa CSV.' },
+      { tipo: 'novidade', texto: 'Instalável como app (ícone na barra do navegador): abre offline e recebe texto ou imagem pelo "Compartilhar" do celular/Windows, abrindo a ferramenta certa (imagem com QR/código vai para o leitor, senão OCR).' },
+      { tipo: 'novidade', texto: 'App instalado: "Abrir com devTools" em .csv, .log, .sql, .txt, .json e imagens abre direto na ferramenta.' },
+      { tipo: 'novidade', texto: 'git-calm: revisarSql, aplicarPassos, receitas e receita(nome, texto) pela ponte.' },
+      { tipo: 'novidade', texto: 'Ferramentas: "⊘ Esconder do menu" no topo de cada ferramenta; a escondida continua na busca, no Ctrl+K e na colagem. "Mostrar ocultas" no fim do menu traz de volta.' },
+      { tipo: 'novidade', texto: 'Ferramentas: conta os dias de uso de cada uma; depois de 30 dias sugere esconder as que não foram abertas no período (favoritas e novas ficam).' },
+      { tipo: 'novidade', texto: 'Ctrl+K também abre ferramentas pelo nome ou grupo.' },
+    ],
+  },
+  {
     versao: '1.0.27',
     data: '2026-11-13',
     itens: [

@@ -89,6 +89,25 @@ export interface Config {
   favoritas?: string[];
   // ferramentas novas já abertas, para tirar o selo "novo"
   vistas?: string[];
+  // ferramentas escondidas do menu (continuam no Ctrl+K e na colagem)
+  ferramentasOcultas?: string[];
+  // dias em que cada ferramenta foi aberta e o último (yyyy-mm-dd)
+  usoFerramentas?: Record<string, { dias: number; ultimo: string }>;
+  usoDesde?: string;
+  // "agora não" da sugestão de esconder as sem uso
+  sugestaoOcultar?: string;
+}
+
+// sequência de passos de texto (Ferramentas › Receitas)
+export interface Passo {
+  tipo: string;
+  p: Record<string, string | boolean>;
+}
+
+export interface Receita {
+  id: string;
+  nome: string;
+  passos: Passo[];
 }
 
 export interface Dados {
@@ -100,6 +119,7 @@ export interface Dados {
   vars: Record<string, string>;
   config: Config;
   lixeira?: Removida[];
+  receitas?: Receita[];
 }
 
 export const MENUS = [

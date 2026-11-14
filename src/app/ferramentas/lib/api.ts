@@ -20,6 +20,9 @@ import { Ajuste, gerar as gerarMd, ler as lerMd } from './paramd';
 import { traduzir as _traduzir } from './tradutor';
 import { comparar, contar, itens, unicos } from './listas';
 import { consultarCnpj } from './cnpj';
+import { revisar } from './revisor';
+import { executar } from './receitas';
+import type { Passo } from '../../models';
 import { DadosPix, gerarPix as _gerarPix, lerPix } from './pix';
 import { compactarSql, formatarSql as _formatarSql, OpcoesSqlFmt } from './sqlfmt';
 import { b64Decode, b64Encode, Charset, decode5t, encode5t, formatarXml, lerJwt, listaSql as _listaSql, OpcoesSql } from './texto';
@@ -144,6 +147,14 @@ export const API = {
   contarValores: (l: string | string[], ignorarCaixa = false) => contar(typeof l === 'string' ? itens(l) : l, ignorarCaixa),
   consultarCnpj: (cnpj: string) => consultarCnpj(cnpj),
   hash: async (texto: string) => Object.fromEntries(await hashes(new TextEncoder().encode(texto))),
+
+  revisarSql: (sql: string) => revisar(sql),
+  // passos: [{ tipo: 'extrair', p: { tipo: 'cpf' } }, ...]; ver PASSOS em receitas.ts
+  aplicarPassos: (texto: string, passos: Passo[]) => {
+    const r = executar(texto, passos);
+    if (r.erro) throw new Error(r.erro);
+    return r.saida;
+  },
 
   novidades: () => NOVIDADES,
 };

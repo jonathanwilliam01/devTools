@@ -89,6 +89,7 @@
       }
     </button>
     <button class="btn ghost" (click)="abrirResumo()" title="Resumo dos concluídos por período ou datas, para a daily">Resumo daily</button>
+    <button class="btn ghost" (click)="painelApontamento.set(true)" title="Tempo por card, tipo e sistema no mês, para apontamento">Apontamento</button>
     <button class="btn ghost" data-abre-menu (click)="abrirMenuExportar($event)" title="Exportar os cards filtrados">Exportar ▾</button>
     <app-vistas [opcoes]="VISTAS" [(vista)]="vista" [comTexto]="false" />
     <button class="btn primario" (click)="novo()" title="Novo card (n)">+ Novo card</button>
@@ -417,6 +418,10 @@
       </div>
     </div>
   </div>
+}
+
+@if (painelApontamento()) {
+  <app-apontamento [inicial]="mesApontamento()" (fechar)="painelApontamento.set(false)" />
 }
 
 <datalist id="dl-times">@for (s of times(); track s) {<option [value]="s"></option>}</datalist>

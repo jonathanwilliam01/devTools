@@ -1,4 +1,5 @@
 import { VERSAO } from '../versao';
+import type { Config } from '../models';
 
 // sem dependências: o topo usa para o aviso de novidade sem carregar as ferramentas
 export interface Ferramenta {
@@ -36,7 +37,9 @@ export const FERRAMENTAS: Ferramenta[] = [
   { id: 'selectupd', grupo: 'SQL', nome: 'SELECT → UPDATE/DELETE', icone: 'U↺', desc: 'Transforma um SELECT em UPDATE ou DELETE com o mesmo filtro, dentro de transação, com contagem antes, backup opcional e ROLLBACK.', desde: '1.0.23' },
   { id: 'ddl', grupo: 'SQL', nome: 'Gerador de DDL', icone: 'DDL', desc: 'Cole planilha, CSV ou grid e gere o CREATE TABLE com os tipos inferidos e o INSERT dos dados.', desde: '1.0.23' },
   { id: 'pgdiag', grupo: 'SQL', nome: 'Diagnóstico PG', icone: '♥', desc: 'Consultas prontas do PostgreSQL: sessões, bloqueios, queries lentas, tamanho, índices sem uso, vacuum, sequences e dependências.', desde: '1.0.23' },
+  { id: 'revisor', grupo: 'SQL', nome: 'Revisor de script', icone: '⚑', desc: 'Revisa o script de entrega antes de rodar: UPDATE/DELETE sem WHERE, sem BEGIN/COMMIT, DROP/TRUNCATE, INSERT sem colunas, parâmetro esquecido, aspas curvas e acentuação quebrada; gera a versão corrigida.', desde: '1.0.28' },
   { id: 'grade', grupo: 'SQL', nome: 'CSV → tabela formatada', icone: '▦', desc: 'Cole ou abra um CSV, TXT, planilha ou resultado de consulta: visualize com filtro, ordenação e contagem por coluna, ou monte a tabela em ASCII, Markdown, texto ou HTML.' },
+  { id: 'receitas', grupo: 'Texto', nome: 'Receitas', icone: '⛓', desc: 'Encadeia passos (limpar, extrair, tirar repetidos, ordenar, IN, substituir...) e salva como receita; roda pelo Ctrl+K no texto copiado.', desde: '1.0.28' },
   { id: 'diff', grupo: 'Texto', nome: 'Comparar textos / JSON', icone: '±', desc: 'Diferença linha a linha entre dois textos, ou chave a chave entre dois JSON, com cor para o que saiu e o que entrou.' },
   { id: 'listas', grupo: 'Texto', nome: 'Listas', icone: 'A∩B', desc: 'Compara duas listas (só em A, só em B, nas duas), tira repetidos, ordena e conta quantas vezes cada valor aparece; sai em linhas, vírgula ou IN.', desde: '1.0.27' },
   { id: 'arrayjson', grupo: 'Texto', nome: 'Array → JSON', icone: '[]', desc: 'Converte array do PHP (literal, print_r, var_dump, var_export), hash do Ruby ou objeto JS em JSON.', desde: '1.0.20' },
@@ -80,4 +83,27 @@ export function marcarRecente(id: string) {
   try {
     localStorage.setItem(CHAVE_RECENTES, JSON.stringify([id, ...lerRecentes().filter((x) => x !== id)].slice(0, 10)));
   } catch {}
+}
+
+const hojeIso = () => new Date().toLocaleDateString('sv-SE');
+const dias = (a: string, b: string) => Math.round((Date.parse(b + 'T00:00') - Date.parse(a + 'T00:00')) / 86400000);
+export const DIAS_SEM_USO = 30;
+
+// conta dias de uso (uma vez por dia); mesmo dia devolve o mesmo objeto, sem gravar de novo
+export function registrarUso(c: Config, id: string): Config {
+  const h = hojeIso();
+  const uso = c.usoFerramentas ?? {};
+  if (uso[id]?.ultimo === h) return c;
+  return { ...c, usoDesde: c.usoDesde ?? h, usoFerramentas: { ...uso, [id]: { dias: (uso[id]?.dias ?? 0) + 1, ultimo: h } } };
+}
+
+// visíveis, não favoritas e não novas, sem abrir há DIAS_SEM_USO dias; só depois de DIAS_SEM_USO dias medindo
+export function semUso(c: Config): Ferramenta[] {
+  const h = hojeIso();
+  if (!c.usoDesde || dias(c.usoDesde, h) < DIAS_SEM_USO) return [];
+  if (c.sugestaoOcultar && dias(c.sugestaoOcultar, h) < DIAS_SEM_USO) return [];
+  const fora = new Set([...(c.ferramentasOcultas ?? []), ...(c.favoritas ?? [])]);
+  return FERRAMENTAS.filter(
+    (f) => !fora.has(f.id) && !ehNova(f, c.vistas) && dias(c.usoFerramentas?.[f.id]?.ultimo ?? c.usoDesde!, h) >= DIAS_SEM_USO,
+  );
 }

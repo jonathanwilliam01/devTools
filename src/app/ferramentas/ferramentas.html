@@ -7,6 +7,16 @@
       [(ngModel)]="busca"
       (keydown.enter)="abrirPrimeira()"
     />
+    @if (semUso().length && !busca()) {
+      <div class="ferr-sugestao">
+        <b>{{ semUso().length }} sem uso há {{ DIAS_SEM_USO }}+ dias</b>
+        <small [title]="nomesSemUso()">{{ nomesSemUso() }}</small>
+        <div>
+          <button type="button" class="btn mini" (click)="esconderSemUso()">Esconder</button>
+          <button type="button" class="btn mini ghost" (click)="adiarSugestao()">Agora não</button>
+        </div>
+      </div>
+    }
     <div class="ferr-lista">
       @for (g of grupos(); track g.nome) {
         <div class="ferr-grupo" [class.fechado]="g.fechado">
@@ -23,7 +33,7 @@
             </button>
           </h3>
           @for (f of g.itens; track f.id) {
-            <div class="ferr-item" [class.fav]="favoritas().includes(f.id)">
+            <div class="ferr-item" [class.fav]="favoritas().includes(f.id)" [class.oculta]="ocultas().includes(f.id) && !favoritas().includes(f.id)">
               <a [routerLink]="['/ferramentas', f.id]" [class.ativo]="f.id === atual().id" (click)="lembrar(f.id)">
                 <span class="ico">{{ f.icone }}</span>
                 {{ f.nome }}
@@ -41,6 +51,11 @@
       } @empty {
         <p class="ferr-nada">Nada encontrado.</p>
       }
+      @if (ocultas().length && !busca()) {
+        <button type="button" class="btn mini ghost ferr-ver-ocultas" (click)="verOcultas.set(!verOcultas())">
+          {{ verOcultas() ? 'Esconder ocultas' : 'Mostrar ocultas (' + ocultas().length + ')' }}
+        </button>
+      }
     </div>
   </aside>
 
@@ -53,6 +68,12 @@
           [title]="favoritas().includes(atual().id) ? 'Remover dos favoritos' : 'Favoritar'">
           {{ favoritas().includes(atual().id) ? '★' : '☆' }}
         </button>
+        @if (!favoritas().includes(atual().id)) {
+          <button type="button" class="btn mini ghost ferr-reset ferr-ocultar" (click)="alternarOculta(atual().id)"
+            [title]="ocultas().includes(atual().id) ? 'Volta a aparecer no menu' : 'Tira do menu; continua no Ctrl+K, na busca e na colagem'">
+            {{ ocultas().includes(atual().id) ? '◉ Mostrar no menu' : '⊘ Esconder do menu' }}
+          </button>
+        }
         <button type="button" class="btn mini ghost ferr-reset" (click)="resetar()" title="Limpa o que foi digitado nesta ferramenta">↺ Limpar</button>
       </h2>
       <p>{{ atual().desc }}</p>
@@ -107,6 +128,8 @@
       @case ('tradutor') { <ft-tradutor /> }
       @case ('listas') { <ft-listas /> }
       @case ('cnpj') { <ft-cnpj /> }
+      @case ('revisor') { <ft-revisor /> }
+      @case ('receitas') { <ft-receitas /> }
     }
     }
     <p class="ft-dica ferr-colar">Dica: cole (Ctrl+V) fora dos campos um boleto, Pix, JWT, CEP, documento, JSON, SQL, array PHP, Zend/Arel, SQL.Add do Delphi, EXPLAIN ou imagem com QR/código de barras para abrir na ferramenta certa.</p>
