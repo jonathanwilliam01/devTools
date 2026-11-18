@@ -9,6 +9,13 @@ export interface Versao {
 
 export const NOVIDADES: Versao[] = [
   {
+    versao: '1.0.29',
+    data: '2026-11-18',
+    itens: [
+      { tipo: 'melhoria', texto: 'Buscar no banco (PG): "Texto no código" agora também acha o texto dentro de views, views materializadas e definição de triggers, além de procs/funções.' },
+    ],
+  },
+  {
     versao: '1.0.28',
     data: '2026-11-14',
     itens: [

@@ -53,7 +53,7 @@ export class PgBusca {
     ['tabela', 'Tabela/view'],
     ['campo', 'Campo'],
     ['proc', 'Proc/função'],
-    ['codigo', 'Texto na proc'],
+    ['codigo', 'Texto no código'],
     ['dado', 'Dado'],
   ];
   protected readonly COMPARA: [ComparaPg, string][] = [
@@ -66,7 +66,7 @@ export class PgBusca {
     tabela: 'Tabelas, views e views materializadas pelo nome.',
     campo: 'Colunas pelo nome, com tabela e tipo.',
     proc: 'Funções e procedures pelo nome, com argumentos e retorno.',
-    codigo: 'Funções e procedures que têm o texto no corpo.',
+    codigo: 'Procs/funções (inclusive de trigger), views e definições de trigger que têm o texto.',
     dado: 'Varre cada coluna de cada tabela e lista onde o valor aparece. Pode demorar em banco grande; filtre pelo schema.',
   };
   protected readonly alvo = lembrado<AlvoPg>('pgbusca.alvo', 'tabela');

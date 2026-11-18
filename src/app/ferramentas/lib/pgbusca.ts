@@ -62,7 +62,7 @@ order by 1, 2, 3;`;
         ? `case when p.prokind = 'p' then 'procedure' when p.prokind = 'a' then 'agregada' when p.prokind = 'w' then 'janela'`
         : `case when p.proisagg then 'agregada' when p.proiswindow then 'janela'`;
     const cond = o.alvo === 'proc' ? filtro('p.proname', termo, o.compara) : filtro('p.prosrc', termo, o.compara === 'igual' ? 'contem' : o.compara);
-    return `select n.nspname as schema, p.proname as nome,
+    const procs = `select n.nspname as schema, p.proname as nome,
   pg_get_function_identity_arguments(p.oid) as argumentos,
   pg_get_function_result(p.oid) as retorno,
   ${tipo} when p.prorettype = 'trigger'::regtype then 'trigger' else 'função' end as tipo,
@@ -70,8 +70,30 @@ order by 1, 2, 3;`;
 from pg_proc p
 join pg_namespace n on n.oid = p.pronamespace
 where ${cond}
+  and ${schemas(o)}`;
+    if (o.alvo === 'proc') return procs + '\norder by 1, 2;';
+
+    const cont = o.compara === 'igual' ? 'contem' : o.compara;
+    return `${procs}
+union all
+select n.nspname, c.relname, null, null,
+  case c.relkind when 'm' then 'view materializada' else 'view' end,
+  'select pg_get_viewdef(' || quote_literal(c.oid::regclass::text) || '::regclass, true);'
+from pg_class c
+join pg_namespace n on n.oid = c.relnamespace
+where c.relkind in ('v', 'm')
+  and ${filtro('pg_get_viewdef(c.oid)', termo, cont)}
   and ${schemas(o)}
-order by 1, 2;`;
+union all
+select n.nspname, c.relname || '.' || t.tgname, null, null, 'trigger (definição)',
+  'select pg_get_triggerdef(' || t.oid || ');'
+from pg_trigger t
+join pg_class c on c.oid = t.tgrelid
+join pg_namespace n on n.oid = c.relnamespace
+where not t.tgisinternal
+  and ${filtro('pg_get_triggerdef(t.oid)', termo, cont)}
+  and ${schemas(o)}
+order by 1, 5, 2;`;
   }
 
   // dado: monta um select por coluna e só lista as que têm alguma linha que casa
