@@ -76,13 +76,16 @@ export class App {
     const l = await this.github.atribuidas();
     if (!l) return;
     await this.adicionarAtribuidas(l);
-    await this.registrarValidados();
+    await this.registrarValidados(new Set(l.map((i) => i.numero)));
   }
 
-  // tarefa de card que foi para Validar no quadro vira card registrado; card já registrado não repete (demanda que volta)
-  private async registrarValidados() {
+  // tarefa de card que foi para Validar no quadro vira card registrado; card já registrado não repete (demanda que volta).
+  // Só registra se a issue ainda está atribuída a mim: repassada a outro dev não entra no histórico
+  private async registrarValidados(atribuidas: Set<number>) {
     const registrados = new Set(this.store.cards().map((c) => c.numero));
-    const tarefas = this.store.tarefas().filter((t) => t.tipo === 'card' && t.numeroCard && !registrados.has(t.numeroCard));
+    const tarefas = this.store
+      .tarefas()
+      .filter((t) => t.tipo === 'card' && t.numeroCard && atribuidas.has(t.numeroCard) && !registrados.has(t.numeroCard));
     const status = await this.github.statusProjeto([...new Set(tarefas.map((t) => t.numeroCard!))]);
     for (const t of tarefas) {
       const s = status.get(t.numeroCard!);

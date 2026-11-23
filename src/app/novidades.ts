@@ -9,6 +9,13 @@ export interface Versao {
 
 export const NOVIDADES: Versao[] = [
   {
+    versao: '1.0.30',
+    data: '2026-11-23',
+    itens: [
+      { tipo: 'correcao', texto: 'Card repassado a outro dev (você tirou o assign) não volta mais para o Histórico ao ir para Validar; só entra se a issue ainda estiver atribuída a você.' },
+    ],
+  },
+  {
     versao: '1.0.29',
     data: '2026-11-18',
     itens: [
