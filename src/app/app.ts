@@ -4,7 +4,7 @@ import { Store } from './store';
 import { Ui } from './ui';
 import { Backup } from './backup';
 import { Cofre } from './cofre';
-import { MENUS, chaveNome, hoje, novoId, semKanban } from './models';
+import { MENUS, Status, chaveNome, hoje, mudarStatus, novoId, semKanban } from './models';
 import { Github } from './github';
 import { VERSAO } from './versao';
 import { ehNova, FERRAMENTAS } from './ferramentas/catalogo';
@@ -76,20 +76,37 @@ export class App {
     const l = await this.github.atribuidas();
     if (!l) return;
     await this.adicionarAtribuidas(l);
-    await this.registrarValidados(new Set(l.map((i) => i.numero)));
+    const atribuidas = new Set(l.map((i) => i.numero));
+    const status = await this.github.statusProjeto([...new Set(this.store.tarefas().filter((t) => t.tipo === 'card' && t.numeroCard && atribuidas.has(t.numeroCard)).map((t) => t.numeroCard!))]);
+    this.moverPeloQuadro(status);
+    await this.registrarValidados(atribuidas, status);
   }
 
-  // tarefa de card que foi para Validar no quadro vira card registrado; card já registrado não repete (demanda que volta).
+  // Status do quadro do GitHub move a tarefa de card; só age quando o status do quadro muda,
+  // para não desfazer o que foi movido à mão. Tarefa já concluída sem histórico do quadro só registra o status
+  private moverPeloQuadro(status: Map<number, { status: string; data: string }>) {
+    let mudou = false;
+    const l = this.store.tarefas().map((t) => {
+      const s = t.tipo === 'card' && t.numeroCard ? status.get(t.numeroCard) : undefined;
+      if (!s || t.statusGh === s.status) return t;
+      mudou = true;
+      const alvo = STATUS_QUADRO.find(([k]) => chaveNome(s.status).includes(k))?.[1];
+      const novo = { ...t, statusGh: s.status };
+      return alvo && alvo !== t.status && !(t.status === 'done' && t.statusGh === undefined) ? mudarStatus(novo, alvo) : novo;
+    });
+    if (mudou) this.store.setTarefas(l);
+  }
+
+  // tarefa de card que foi para Validar ou Fechar versão no quadro vira card registrado; card já registrado não repete (demanda que volta).
   // Só registra se a issue ainda está atribuída a mim: repassada a outro dev não entra no histórico
-  private async registrarValidados(atribuidas: Set<number>) {
+  private async registrarValidados(atribuidas: Set<number>, status: Map<number, { status: string; data: string }>) {
     const registrados = new Set(this.store.cards().map((c) => c.numero));
     const tarefas = this.store
       .tarefas()
       .filter((t) => t.tipo === 'card' && t.numeroCard && atribuidas.has(t.numeroCard) && !registrados.has(t.numeroCard));
-    const status = await this.github.statusProjeto([...new Set(tarefas.map((t) => t.numeroCard!))]);
     for (const t of tarefas) {
       const s = status.get(t.numeroCard!);
-      if (!s || !chaveNome(s.status).includes('VALIDA') || this.store.cards().some((c) => c.numero === t.numeroCard)) continue;
+      if (!s || !/VALIDA|FECHAR/.test(chaveNome(s.status)) || this.store.cards().some((c) => c.numero === t.numeroCard)) continue;
       const i = await this.github.issue(t.numeroCard!);
       if (!i) continue;
       const obs = (await this.github.trabalhoExecutado(t.numeroCard!, i.descricao)) || t.trabalho || '';
@@ -214,6 +231,13 @@ export class App {
     e.preventDefault();
   }
 }
+
+// Status do quadro do GitHub (sem acento) -> coluna da tarefa
+const STATUS_QUADRO: [string, Status][] = [
+  ['EXECUCAO', 'doing'],
+  ['IMPEDID', 'blocked'],
+  ['PAUSAD', 'todo'],
+];
 
 const REPO_DEVTOOLS = 'https://github.com/jonathanwilliam01/devTools';
 

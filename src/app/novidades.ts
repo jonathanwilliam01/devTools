@@ -9,6 +9,16 @@ export interface Versao {
 
 export const NOVIDADES: Versao[] = [
   {
+    versao: '1.0.31',
+    data: '2026-11-25',
+    itens: [
+      { tipo: 'novidade', texto: 'Notas: duplo clique num bloco ou tabela abre a edição da nota.' },
+      { tipo: 'novidade', texto: 'Tarefas: card movido no quadro do GitHub acompanha a tarefa — Execução vai para Fazendo, Impedidos para Impedido, Pausados dev para A fazer. Só age quando o status do quadro muda (o que você move à mão não é desfeito).' },
+      { tipo: 'melhoria', texto: 'Histórico: card que vai direto para Fechar versão (sem passar por Validar) também é registrado, sem repetir se já estiver no histórico.' },
+      { tipo: 'melhoria', texto: 'Ferramentas › JWT: ao colar uma URL ou texto com o token, fica só o JWT válido.' },
+    ],
+  },
+  {
     versao: '1.0.30',
     data: '2026-11-23',
     itens: [

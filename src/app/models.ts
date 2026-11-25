@@ -67,6 +67,8 @@ export interface Tarefa {
   // tempo em "Fazendo": acumulado (ms) e início da rodada atual (ISO)
   tempo?: number;
   inicio?: string | null;
+  // último Status do quadro do GitHub aplicado (só move a tarefa quando muda)
+  statusGh?: string;
 }
 
 export interface ItemChecklist {

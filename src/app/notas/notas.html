@@ -154,12 +154,12 @@
           <span class="label">{{ b.label }}</span>
         }
         @if (b.conteudo && celulas(b); as g) {
-          <div class="tabela-box">
+          <div class="tabela-box" (dblclick)="editar(n)">
             <table class="tabela">
               @for (linha of g; track $index) {
                 <tr>
                   @for (cel of linha; track $index) {
-                    <td (click)="copiarCelula(cel)" [title]="cel ? 'Clique para copiar' : ''">@for (p of partes(cel); track $index) {@if (p.v) {<mark>{{ p.t }}</mark>} @else {<ng-container>{{ p.t }}</ng-container>}}</td>
+                    <td (click)="copiarCelula(cel)" [title]="cel ? 'Clique copia · duplo clique edita' : ''">@for (p of partes(cel); track $index) {@if (p.v) {<mark>{{ p.t }}</mark>} @else {<ng-container>{{ p.t }}</ng-container>}}</td>
                   }
                 </tr>
               }
@@ -172,7 +172,7 @@
             </span>
           </div>
         } @else if (b.conteudo) {
-          <div class="copiavel" (click)="clicarBloco($event, b)" title="Clique para copiar">
+          <div class="copiavel" (click)="clicarBloco($event, b)" (dblclick)="editar(n)" title="Clique copia · duplo clique edita">
             @if (b.secreto) {
               <pre>{{ exibir(b) }}</pre>
             } @else if (b.sql) {

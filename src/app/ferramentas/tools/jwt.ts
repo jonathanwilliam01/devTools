@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { lembrado } from '../lib/estado';
 import { FormsModule } from '@angular/forms';
 import { Ui } from '../../ui';
-import { lerJwt } from '../lib/texto';
+import { extrairJwt, lerJwt } from '../lib/texto';
 
 const CLAIMS_DATA = ['exp', 'iat', 'nbf', 'auth_time'];
 const NOMES: Record<string, string> = { exp: 'Expira em', iat: 'Emitido em', nbf: 'Válido a partir de', auth_time: 'Autenticado em' };
@@ -23,7 +23,7 @@ const NOMES: Record<string, string> = { exp: 'Expira em', iat: 'Emitido em', nbf
             }
           }
         </h4>
-        <textarea class="ft-texto ft-jwt" [(ngModel)]="token" rows="4" spellcheck="false" placeholder="eyJhbGciOi... (aceita com 'Bearer ')"></textarea>
+        <textarea class="ft-texto ft-jwt" [(ngModel)]="token" (paste)="colar($event)" rows="4" spellcheck="false" placeholder="eyJhbGciOi... (aceita com 'Bearer ')"></textarea>
         @if (erro()) {
           <p class="ft-aviso">{{ erro() }}</p>
         }
@@ -75,6 +75,14 @@ const NOMES: Record<string, string> = { exp: 'Expira em', iat: 'Emitido em', nbf
 export class JwtTool {
   protected readonly ui = inject(Ui);
   protected readonly token = lembrado('jwt.token', '');
+
+  // colou URL ou texto com o token: fica só o JWT
+  protected colar(e: ClipboardEvent) {
+    const jwt = extrairJwt(e.clipboardData?.getData('text') ?? '');
+    if (!jwt) return;
+    e.preventDefault();
+    this.token.set(jwt);
+  }
 
   private readonly resultado = computed(() => {
     if (!this.token().trim()) return null;

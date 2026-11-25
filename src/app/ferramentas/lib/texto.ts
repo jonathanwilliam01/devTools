@@ -39,8 +39,11 @@ export interface Jwt {
   assinatura: string;
 }
 
+// pega só o JWT de um texto colado (URL, "Bearer ...", aspas, etc.)
+export const extrairJwt = (texto: string) => texto.match(/eyJ[\w-]*\.[\w-]+(?:\.[\w-]*)?/)?.[0] ?? '';
+
 export function lerJwt(token: string): Jwt {
-  const partes = token.trim().replace(/^Bearer\s+/i, '').split('.');
+  const partes = (extrairJwt(token) || token.trim().replace(/^Bearer\s+/i, '')).split('.');
   if (partes.length < 2) throw new Error('Token precisa ter ao menos 2 partes separadas por ponto.');
   const json = (p: string, nome: string) => {
     try {
